@@ -9,16 +9,27 @@ Short operational guide for local development and validation.
 - Database and credentials expected by default:
 	- DB: logistics_db
 	- User: logistics_user
-	- Password: logistics123
+	- Password: logistics123 (override via `SPRING_DATASOURCE_PASSWORD`)
 
-Configuration lives in src/main/resources/application.properties.
+Configuration lives in src/main/resources/application.properties. Secrets are
+read from the environment — see `.env.example`. The database schema is managed
+by Flyway migrations (`src/main/resources/db/migration`); Hibernate runs in
+`validate` mode and never modifies the schema.
 
 ## Run Locally
 
+The JWT signing key is required and has no committed default. Set it once
+(generate with `openssl rand -hex 32`), then run:
+
 ```powershell
+$env:SECURITY_JWT_SECRET_KEY = "your-generated-key"
 ./mvnw.cmd clean compile
 ./mvnw.cmd spring-boot:run
 ```
+
+On first start against an empty database, Flyway creates the full schema (V1).
+Against a database previously created by Hibernate `ddl-auto`, Flyway baselines
+it and applies any newer migrations.
 
 API and docs:
 
@@ -46,10 +57,10 @@ Protected endpoint policy:
 - GET /api/** requires authenticated token (ADMIN / OPERATOR / AUDITOR)
 - POST/PUT/PATCH/DELETE /api/** requires ADMIN
 
-JWT settings in application.properties:
+JWT settings (read from the environment, see `.env.example`):
 
-- security.jwt.secret-key
-- security.jwt.expiration-ms
+- `SECURITY_JWT_SECRET_KEY` (required, no committed default)
+- `SECURITY_JWT_EXPIRATION_MS` (optional, default 24h)
 
 ## UI Login (Session)
 
@@ -91,9 +102,7 @@ Full suite:
 ./mvnw.cmd test
 ```
 
-Current verified local status: 118 tests passing.
-
-Current workspace status: 141 tests passing.
+Current verified local status: 124 tests passing.
 
 ## CI Pipeline
 

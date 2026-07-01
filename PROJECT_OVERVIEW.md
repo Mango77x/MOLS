@@ -119,8 +119,13 @@ Implementation notes:
 
 ### Configuration
 - **Database**: PostgreSQL configured in `src/main/resources/application.properties`
-- **Credentials**: Hardcoded for development (no environment variables yet)
-- **Hibernate**: `ddl-auto=update` — auto-creates schema on startup
+- **Credentials/secrets**: Read from the environment. The JWT signing key
+  (`SECURITY_JWT_SECRET_KEY`) is **required and has no committed default**; DB
+  connection values have local-dev defaults that are overridable via env. See
+  `.env.example`.
+- **Schema management**: **Flyway** owns the schema (`src/main/resources/db/migration`).
+  Hibernate runs with `ddl-auto=validate` and never modifies the schema; a
+  mismatch between the entity model and the migrated schema fails fast at startup.
 - **SQL Logging**: `spring.jpa.show-sql=true`
 - **Port**: Application runs on `8080`
 - **OpenAPI/Swagger**:
@@ -130,9 +135,9 @@ Implementation notes:
 - **Security/JWT**:
    - Public auth endpoint: `POST /api/auth/login`
    - Admin-only: `POST /api/auth/register` (no public self-signup)
-    - JWT properties in `application.properties`:
-       - `security.jwt.secret-key`
-       - `security.jwt.expiration-ms`
+    - JWT configuration is provided via environment variables (see `.env.example`):
+       - `SECURITY_JWT_SECRET_KEY` (required, no committed default)
+       - `SECURITY_JWT_EXPIRATION_MS` (optional)
     - Authorization model:
        - `GET /api/**` requires authenticated token (ADMIN / OPERATOR / AUDITOR)
        - `POST/PUT/PATCH/DELETE /api/**` requires role `ADMIN`
@@ -411,9 +416,10 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 - **Framework**: Spring Boot 4.0.2 (Spring MVC, Spring Data JPA)
 - **API Documentation**: Springdoc OpenAPI (Swagger UI)
 - **Validation**: Spring Boot Starter Validation (Bean Validation)
-- **Observability**: Spring Boot Actuator
+- **Observability**: Spring Boot Actuator (`health`/`info` public, rest ADMIN-only)
 - **Database**: PostgreSQL
-- **ORM**: Hibernate (JPA)
+- **Schema migrations**: Flyway (versioned SQL migrations)
+- **ORM**: Hibernate (JPA, `validate` mode)
 - **Build Tool**: Maven 3.x (wrapper included)
 - **Containerization**: Docker + Docker Compose
 - **IDE**: The project is editor-agnostic, VS Code works fine.

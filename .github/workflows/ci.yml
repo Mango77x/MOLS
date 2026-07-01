@@ -69,10 +69,9 @@ jobs:
       - name: Run tests
         run: ./mvnw test -B
         env:
-          # Override application.properties with CI database values
+          # Point tests at the CI PostgreSQL service container. The JWT signing
+          # key and other test values come from src/test/resources, so no secret
+          # is committed here. Schema is created by Flyway; Hibernate validates.
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/logistics_db
           SPRING_DATASOURCE_USERNAME: logistics_user
           SPRING_DATASOURCE_PASSWORD: logistics123
-          SPRING_JPA_HIBERNATE_DDL_AUTO: update
-          SECURITY_JWT_SECRET_KEY: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-          SECURITY_JWT_EXPIRATION_MS: 86400000

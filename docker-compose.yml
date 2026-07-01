@@ -43,7 +43,11 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/logistics_db
       SPRING_DATASOURCE_USERNAME: logistics_user
       SPRING_DATASOURCE_PASSWORD: logistics123
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      # Schema is managed by Flyway; Hibernate only validates it.
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      # JWT signing key is read from the host environment / .env file and is
+      # never committed. `docker compose up` fails fast if it is missing.
+      SECURITY_JWT_SECRET_KEY: ${SECURITY_JWT_SECRET_KEY:?set SECURITY_JWT_SECRET_KEY (copy .env.example to .env)}
       # First-run setup: start with NO users and force creating the first ADMIN via /ui/setup
       BOOTSTRAP_ADMIN_ENABLED: "false"
     depends_on:

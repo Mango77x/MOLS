@@ -66,7 +66,11 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").denyAll()
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**",
                     "/v3/api-docs/**").permitAll()
-                .requestMatchers("/actuator/**").permitAll()
+                // Health/info are public (used by container/orchestrator probes);
+                // every other actuator endpoint is ADMIN-only.
+                .requestMatchers("/actuator/health", "/actuator/health/**",
+                    "/actuator/info").permitAll()
+                .requestMatchers("/actuator/**").hasRole("ADMIN")
                 // Read operations — any authenticated user (ADMIN/OPERATOR/AUDITOR)
                 .requestMatchers(HttpMethod.GET, "/api/**").authenticated()
                 // Write operations — ADMIN only

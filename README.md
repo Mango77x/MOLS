@@ -45,7 +45,8 @@ Para detalles técnicos y arquitectura, consulta [PROJECT_OVERVIEW.md](PROJECT_O
 ## Tech Stack
 
 - Java 21, Spring Boot 4 (Spring MVC)
-- PostgreSQL + Spring Data JPA (Hibernate)
+- PostgreSQL + Spring Data JPA (Hibernate, `validate` mode)
+- Flyway (versioned database migrations)
 - Spring Security (JWT for API + session login for UI)
 - Thymeleaf + Bootstrap 5.3
 - OpenAPI/Swagger (springdoc)
