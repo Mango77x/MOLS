@@ -15,6 +15,7 @@ public class Unit {
     private Long id;
 
     /** Name of the unit */
+    @Column(nullable = false)
     private String name;
 
     /** Physical location or description */

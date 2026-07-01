@@ -2,6 +2,8 @@ package com.mls.logistics.web;
 
 import com.mls.logistics.config.DashboardProperties;
 import com.mls.logistics.domain.Order;
+import com.mls.logistics.domain.OrderStatus;
+import com.mls.logistics.domain.ShipmentStatus;
 import com.mls.logistics.domain.Stock;
 import com.mls.logistics.service.OrderService;
 import com.mls.logistics.service.OrderItemService;
@@ -126,10 +128,11 @@ public class UiController {
         int criticalStockThreshold = dashboardProperties.getCriticalStockThreshold();
 
         long totalOrders = safeLong(orderService::getTotalOrdersCount, model);
-        long completedOrders = safeLong(() -> orderService.countByStatus("COMPLETED"), model);
-        long pendingOrders = safeLong(() -> orderService.countByStatus("CREATED") + orderService.countByStatus("VALIDATED"), model);
+        long completedOrders = safeLong(() -> orderService.countByStatus(OrderStatus.COMPLETED), model);
+        long pendingOrders = safeLong(() -> orderService.countByStatus(OrderStatus.CREATED)
+                + orderService.countByStatus(OrderStatus.VALIDATED), model);
 
-        long activeShipments = safeLong(() -> shipmentService.countByStatus("IN_TRANSIT"), model);
+        long activeShipments = safeLong(() -> shipmentService.countByStatus(ShipmentStatus.IN_TRANSIT), model);
 
         Map<String, Long> stockByWarehouse = safeMap(stockService::getStockQuantityByWarehouse, model);
         long totalStockQuantity = stockByWarehouse.values().stream().mapToLong(Long::longValue).sum();
@@ -187,10 +190,9 @@ public class UiController {
         );
         long entryCount = movementsByType.getOrDefault("ENTRY", 0L);
         long exitCount = movementsByType.getOrDefault("EXIT", 0L);
-        long adjustmentCount = movementsByType.getOrDefault("ADJUSTMENT", 0L);
-        long movementsTotal = entryCount + exitCount + adjustmentCount;
+        long movementsTotal = entryCount + exitCount;
 
-        long cancelledOrders = safeLong(() -> orderService.countByStatus("CANCELLED"), model);
+        long cancelledOrders = safeLong(() -> orderService.countByStatus(OrderStatus.CANCELLED), model);
 
         Map<String, Object> chartData = new HashMap<>();
         chartData.put("stockByWarehouse", Map.of(
@@ -198,8 +200,8 @@ public class UiController {
             "values", stockWarehouseValues
         ));
         chartData.put("movementsByType", Map.of(
-            "labels", List.of("ENTRY", "EXIT", "ADJUSTMENT"),
-            "values", List.of(entryCount, exitCount, adjustmentCount),
+            "labels", List.of("ENTRY", "EXIT"),
+            "values", List.of(entryCount, exitCount),
             "total", movementsTotal
         ));
         chartData.put("ordersByStatus", Map.of(
@@ -434,6 +436,11 @@ public class UiController {
             shipmentService.createShipment(form);
             redirectAttributes.addFlashAttribute("successMessage", "Shipment created successfully.");
             return "redirect:/ui/shipments";
+        } catch (InsufficientStockException | InvalidRequestException ex) {
+            populateShipmentReferenceData(model);
+            model.addAttribute("formMode", "create");
+            model.addAttribute("errorMessage", ex.getMessage());
+            return "ui/shipment-form";
         } catch (DataIntegrityViolationException ex) {
             populateShipmentReferenceData(model);
             model.addAttribute("formMode", "create");
@@ -467,7 +474,7 @@ public class UiController {
                 if (shipment.getWarehouse() != null) {
                     form.setWarehouseId(shipment.getWarehouse().getId());
                 }
-                form.setStatus(shipment.getStatus());
+                form.setStatus(shipment.getStatus() != null ? shipment.getStatus().name() : null);
                 model.addAttribute("shipmentForm", form);
             }
 
@@ -547,6 +554,10 @@ public class UiController {
         try {
             shipmentService.deleteShipment(id);
             redirectAttributes.addFlashAttribute("successMessage", "Shipment deleted successfully.");
+        } catch (InvalidRequestException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        } catch (ResourceNotFoundException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Shipment not found.");
         } catch (DataIntegrityViolationException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", "This shipment is in use and cannot be deleted.");
         } catch (DataAccessException ex) {
@@ -826,6 +837,10 @@ public class UiController {
             vehicleService.createVehicle(form);
             redirectAttributes.addFlashAttribute("successMessage", "Vehicle created successfully.");
             return "redirect:/ui/vehicles";
+        } catch (InvalidRequestException ex) {
+            model.addAttribute("formMode", "create");
+            model.addAttribute("errorMessage", ex.getMessage());
+            return "ui/vehicle-form";
         } catch (DataAccessException ex) {
             model.addAttribute("formMode", "create");
             model.addAttribute("errorMessage", "We couldn't save your changes right now. Please try again.");
@@ -848,7 +863,7 @@ public class UiController {
                 CreateVehicleRequest form = new CreateVehicleRequest();
                 form.setType(normalizeVehicleType(vehicle.getType()));
                 form.setCapacity(vehicle.getCapacity());
-                form.setStatus(normalizeVehicleStatus(vehicle.getStatus()));
+                form.setStatus(vehicle.getStatus() != null ? vehicle.getStatus().name() : null);
                 model.addAttribute("vehicleForm", form);
             }
 
@@ -895,6 +910,11 @@ public class UiController {
         } catch (ResourceNotFoundException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", "Vehicle not found.");
             return "redirect:/ui/vehicles";
+        } catch (InvalidRequestException ex) {
+            model.addAttribute("vehicleId", id);
+            model.addAttribute("formMode", "edit");
+            model.addAttribute("errorMessage", ex.getMessage());
+            return "ui/vehicle-form";
         } catch (DataAccessException ex) {
             model.addAttribute("vehicleId", id);
             model.addAttribute("formMode", "edit");
@@ -1134,6 +1154,15 @@ public class UiController {
             clearDraftOrder(session);
             redirectAttributes.addFlashAttribute("successMessage", "Order created successfully.");
             return "redirect:/ui/orders";
+        } catch (InvalidRequestException ex) {
+            populateOrderReferenceData(model);
+            addDraftOrderItemsToModel(session, model);
+            if (!model.containsAttribute("draftItemForm")) {
+                model.addAttribute("draftItemForm", new OrderDraftItemForm());
+            }
+            model.addAttribute("formMode", "create");
+            model.addAttribute("errorMessage", ex.getMessage());
+            return "ui/order-form";
         } catch (InsufficientStockException ex) {
             populateOrderReferenceData(model);
             addDraftOrderItemsToModel(session, model);
@@ -1247,7 +1276,7 @@ public class UiController {
                     form.setUnitId(order.getUnit().getId());
                 }
                 form.setDateCreated(order.getDateCreated());
-                form.setStatus(order.getStatus());
+                form.setStatus(order.getStatus() != null ? order.getStatus().name() : null);
                 model.addAttribute("orderForm", form);
             }
 
@@ -1306,6 +1335,17 @@ public class UiController {
         } catch (ResourceNotFoundException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", "Order not found.");
             return "redirect:/ui/orders";
+        } catch (InvalidRequestException ex) {
+            populateOrderReferenceData(model);
+            populateOrderItemReferenceData(model);
+            model.addAttribute("orderItems", safeList(() -> orderItemService.getOrderItemsByOrderId(id, Sort.by(Sort.Direction.ASC, "id")), model));
+            if (!model.containsAttribute("inlineItemForm")) {
+                model.addAttribute("inlineItemForm", new OrderDraftItemForm());
+            }
+            model.addAttribute("orderId", id);
+            model.addAttribute("formMode", "edit");
+            model.addAttribute("errorMessage", ex.getMessage());
+            return "ui/order-form";
         } catch (DataIntegrityViolationException ex) {
             populateOrderReferenceData(model);
             populateOrderItemReferenceData(model);
@@ -1354,7 +1394,7 @@ public class UiController {
                     orderForm.setUnitId(order.getUnit().getId());
                 }
                 orderForm.setDateCreated(order.getDateCreated());
-                orderForm.setStatus(order.getStatus());
+                orderForm.setStatus(order.getStatus() != null ? order.getStatus().name() : null);
                 model.addAttribute("orderForm", orderForm);
 
                 populateOrderReferenceData(model);
@@ -1459,6 +1499,10 @@ public class UiController {
         try {
             orderService.deleteOrder(id);
             redirectAttributes.addFlashAttribute("successMessage", "Order deleted successfully.");
+        } catch (InvalidRequestException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        } catch (ResourceNotFoundException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Order not found.");
         } catch (DataIntegrityViolationException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", "Cannot delete this order because it is referenced by other records.");
         } catch (DataAccessException ex) {
@@ -1678,6 +1722,10 @@ public class UiController {
         try {
             stockService.deleteStock(id);
             redirectAttributes.addFlashAttribute("successMessage", "Stock record deleted successfully.");
+        } catch (InvalidRequestException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        } catch (ResourceNotFoundException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Stock record not found.");
         } catch (DataIntegrityViolationException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", "Cannot delete stock because it is referenced by other records.");
         } catch (DataAccessException ex) {
@@ -1844,16 +1892,18 @@ public class UiController {
         Sort vehicleSort = Sort.by(Sort.Direction.ASC, "id");
         Sort warehouseSort = Sort.by(Sort.Direction.ASC, "name").and(Sort.by(Sort.Direction.ASC, "id"));
 
-        model.addAttribute("orders", safeList(() -> orderService.getOrdersExcludingStatus("COMPLETED", orderSort), model));
+        model.addAttribute("orders", safeList(() -> orderService.getOpenOrders(orderSort), model));
         model.addAttribute("vehicles", safeList(() -> vehicleService.getAllVehicles(vehicleSort), model));
         model.addAttribute("warehouses", safeList(() -> warehouseService.getAllWarehouses(warehouseSort), model));
-        model.addAttribute("shipmentStatuses", List.of("PLANNED", "IN_TRANSIT", "DELIVERED"));
+        model.addAttribute("shipmentStatuses",
+            java.util.Arrays.stream(ShipmentStatus.values()).map(Enum::name).toList());
     }
 
     private void populateOrderReferenceData(Model model) {
         Sort unitSort = Sort.by(Sort.Direction.ASC, "name").and(Sort.by(Sort.Direction.ASC, "id"));
         model.addAttribute("units", safeList(() -> unitService.getAllUnits(unitSort), model));
-        model.addAttribute("orderStatuses", List.of("CREATED", "VALIDATED", "COMPLETED"));
+        model.addAttribute("orderStatuses",
+            java.util.Arrays.stream(OrderStatus.values()).map(Enum::name).toList());
     }
 
     private void populateOrderItemReferenceData(Model model) {
@@ -1890,22 +1940,6 @@ public class UiController {
             case "AERIAL" -> "AIR";
 
             default -> rawType;
-        };
-    }
-
-    private String normalizeVehicleStatus(String rawStatus) {
-        if (rawStatus == null) {
-            return null;
-        }
-        String value = rawStatus.trim().toUpperCase();
-        return switch (value) {
-            // canonical
-            case "AVAILABLE", "IN_USE", "IN_REPAIR" -> value;
-
-            // legacy variants
-            case "INREPAIR", "REPAIR", "REPAIRS", "MAINTENANCE", "IN_MAINTENANCE" -> "IN_REPAIR";
-
-            default -> rawStatus;
         };
     }
 

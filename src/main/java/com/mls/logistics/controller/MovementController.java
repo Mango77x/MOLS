@@ -1,13 +1,9 @@
 package com.mls.logistics.controller;
 
 import com.mls.logistics.domain.Movement;
-import com.mls.logistics.dto.request.CreateMovementRequest;
-import com.mls.logistics.dto.request.UpdateMovementRequest;
 import com.mls.logistics.dto.response.MovementResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.MovementService;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.stream.Collectors;
@@ -20,14 +16,17 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 
 /**
- * REST controller exposing Movement-related API endpoints.
+ * REST controller exposing the Movement audit trail (read-only).
  *
- * This controller is responsible only for HTTP request/response handling.
- * All business logic is delegated to the MovementService.
+ * <p>Movements are append-only audit records generated automatically by the
+ * system whenever stock changes (see {@code StockService}). They cannot be
+ * created, modified, or deleted through the API: corrections are made by
+ * applying a new stock adjustment via {@code PATCH /api/stocks/{id}/adjust},
+ * which records a compensating movement.</p>
  */
 @RestController
 @RequestMapping("/api/movements")
-@Tag(name = "Movements", description = "Operations for stock movement and auditing")
+@Tag(name = "Movements", description = "Read-only stock movement audit trail")
 public class MovementController {
 
     private final MovementService movementService;
@@ -69,7 +68,7 @@ public class MovementController {
      * GET /api/movements/{id}
      *
      * @param id movement identifier
-    * @return movement if found; otherwise ResourceNotFoundException is thrown and translated to 404
+     * @return movement if found; otherwise ResourceNotFoundException is thrown and translated to 404
      */
     @Operation(
         summary = "Get movement by ID",
@@ -87,78 +86,5 @@ public class MovementController {
                 .getMovementById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Movement", "id", id));
         return ResponseEntity.ok(MovementResponse.from(movement));
-    }
-
-    /**
-     * Creates a new movement record.
-     *
-     * POST /api/movements
-     *
-     * @param request DTO containing movement data
-     * @return created movement with HTTP 201 status
-     */
-    @Operation(
-        summary = "Create a movement",
-        description = "Creates a new movement record and returns the created entity"
-    )
-    @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "Movement created successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid request data")
-    })
-    @PostMapping
-    public ResponseEntity<MovementResponse> createMovement(@Valid @RequestBody CreateMovementRequest request) {
-        Movement createdMovement = movementService.createMovement(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(MovementResponse.from(createdMovement));
-    }
-
-    /**
-     * Updates an existing movement record.
-     *
-     * PUT /api/movements/{id}
-     *
-     * @param id movement identifier
-     * @param request update data
-     * @return updated movement with HTTP 200 status
-     */
-    @Operation(
-        summary = "Update a movement",
-        description = "Updates an existing movement record. Only provided fields are updated."
-    )
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Movement updated successfully"),
-        @ApiResponse(responseCode = "404", description = "Movement not found"),
-        @ApiResponse(responseCode = "400", description = "Invalid request data")
-    })
-    @PutMapping("/{id}")
-    public ResponseEntity<MovementResponse> updateMovement(
-            @Parameter(description = "Movement identifier", example = "1")
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateMovementRequest request) {
-        Movement updatedMovement = movementService.updateMovement(id, request);
-        return ResponseEntity.ok(MovementResponse.from(updatedMovement));
-    }
-
-    /**
-     * Deletes a movement record.
-     *
-     * DELETE /api/movements/{id}
-     *
-     * @param id movement identifier
-     * @return 204 No Content on success
-     */
-    @Operation(
-        summary = "Delete a movement",
-        description = "Permanently deletes a movement record from the system"
-    )
-    @ApiResponses({
-        @ApiResponse(responseCode = "204", description = "Movement deleted successfully"),
-        @ApiResponse(responseCode = "404", description = "Movement not found")
-    })
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteMovement(
-            @Parameter(description = "Movement identifier", example = "1")
-            @PathVariable Long id) {
-        movementService.deleteMovement(id);
-        return ResponseEntity.noContent().build();
     }
 }

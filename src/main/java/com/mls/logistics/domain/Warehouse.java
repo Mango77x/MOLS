@@ -15,6 +15,7 @@ public class Warehouse {
     private Long id;
 
     /** Name of the warehouse */
+    @Column(nullable = false)
     private String name;
 
     /** Location of the warehouse */

@@ -72,13 +72,14 @@
                                 </a>
                             </th>
                             <th>Reason</th>
+                            <th>By</th>
                             <th class="text-end">Order</th>
                             <th class="text-end">Shipment</th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr th:if="${#lists.isEmpty(movements)}">
-                            <td colspan="9" class="text-center text-secondary py-4">No audit entries to display.</td>
+                            <td colspan="10" class="text-center text-secondary py-4">No audit entries to display.</td>
                         </tr>
                         <tr th:each="movement : ${movements}">
                             <td>
@@ -86,11 +87,10 @@
                             </td>
                             <td>
                                 <span class="badge"
-                                      th:classappend="${movement.type == 'ENTRY'} ? ' text-bg-success' : (${movement.type == 'EXIT'} ? ' text-bg-warning' : ' text-bg-secondary')">
-                                    <span th:switch="${movement.type}">
+                                      th:classappend="${movement.type?.name() == 'ENTRY'} ? ' text-bg-success' : (${movement.type?.name() == 'EXIT'} ? ' text-bg-warning' : ' text-bg-secondary')">
+                                    <span th:switch="${movement.type?.name()}">
                                         <span th:case="'ENTRY'">Increase</span>
                                         <span th:case="'EXIT'">Decrease</span>
-                                        <span th:case="'TRANSFER'">Transfer</span>
                                         <span th:case="*" th:text="${movement.type}"></span>
                                     </span>
                                 </span>
@@ -110,6 +110,7 @@
                             </td>
                             <td class="text-end" th:text="${movement.stock != null ? movement.stock.id : '-'}"></td>
                             <td th:text="${movement.reason != null ? movement.reason : '-'}"></td>
+                            <td th:text="${movement.createdBy != null ? movement.createdBy : '-'}"></td>
                             <td class="text-end" th:text="${movement.orderId != null ? movement.orderId : '-'}"></td>
                             <td class="text-end" th:text="${movement.shipmentId != null ? movement.shipmentId : '-'}"></td>
                         </tr>

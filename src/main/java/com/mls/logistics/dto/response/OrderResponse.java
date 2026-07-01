@@ -51,7 +51,7 @@ public class OrderResponse {
                 order.getId(),
                 order.getUnit().getId(),
                 order.getDateCreated(),
-                order.getStatus()
+                order.getStatus() != null ? order.getStatus().name() : null
         );
     }
 

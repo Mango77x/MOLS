@@ -214,8 +214,8 @@
                             <td class="text-nowrap" th:text="${m.dateTime != null ? #temporals.format(m.dateTime, 'HH:mm') : '-'}">00:00</td>
                             <td>
                                 <span class="badge"
-                                      th:classappend="${m.type == 'ENTRY'} ? ' text-bg-success' : (${m.type == 'EXIT'} ? ' text-bg-danger' : ' text-bg-warning')"
-                                      th:text="${m.type != null ? m.type : 'UNKNOWN'}">ENTRY</span>
+                                      th:classappend="${m.type?.name() == 'ENTRY'} ? ' text-bg-success' : (${m.type?.name() == 'EXIT'} ? ' text-bg-danger' : ' text-bg-warning')"
+                                      th:text="${m.type != null ? m.type.name() : 'UNKNOWN'}">ENTRY</span>
                             </td>
                             <td th:text="${m.stock != null && m.stock.resource != null ? m.stock.resource.name : '-'}">-</td>
                             <td class="text-end" th:text="${m.quantity}">0</td>

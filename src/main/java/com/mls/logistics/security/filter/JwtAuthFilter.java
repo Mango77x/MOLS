@@ -11,8 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -80,11 +80,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
-        } catch (JwtException | IllegalArgumentException | UsernameNotFoundException ex) {
-            // Expired, malformed, tampered, or otherwise unusable token.
-            // Fail fast with a clean 401 instead of letting the exception
-            // propagate (which would surface as a 500 with a stack trace,
-            // since filter exceptions bypass @RestControllerAdvice).
+        } catch (JwtException | IllegalArgumentException | AuthenticationException ex) {
+            // Expired, malformed, tampered, or otherwise unusable token —
+            // or a user that no longer resolves (unknown / temporarily
+            // locked account). Fail fast with a clean 401 instead of letting
+            // the exception propagate (which would surface as a 500 with a
+            // stack trace, since filter exceptions bypass @RestControllerAdvice).
             SecurityContextHolder.clearContext();
             writeUnauthorized(response);
             return;

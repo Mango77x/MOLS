@@ -59,7 +59,7 @@
                                         th:classappend="${#fields.hasErrors('status')} ? ' is-invalid'">
                                     <option value="" selected disabled>Select a status</option>
                                     <option th:each="s : ${orderStatuses}" th:value="${s}"
-                                            th:text="${s == 'CREATED' ? 'Created' : (s == 'VALIDATED' ? 'Validated' : (s == 'COMPLETED' ? 'Completed' : s))}">
+                                            th:text="${s == 'CREATED' ? 'Created' : (s == 'VALIDATED' ? 'Validated' : (s == 'COMPLETED' ? 'Completed' : (s == 'CANCELLED' ? 'Cancelled' : s)))}">
                                     </option>
                                 </select>
                                 <div class="invalid-feedback" th:errors="*{status}">Please check this field.</div>

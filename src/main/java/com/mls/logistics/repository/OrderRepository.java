@@ -1,19 +1,21 @@
 package com.mls.logistics.repository;
 
 import com.mls.logistics.domain.Order;
+import com.mls.logistics.domain.OrderStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Sort;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 /**
  * Repository for accessing Order data from the database.
  */
 public interface OrderRepository extends JpaRepository<Order, Long> {
-    long countByStatus(String status);
+    long countByStatus(OrderStatus status);
 
-    List<Order> findByStatusAndDateCreatedBefore(String status, LocalDate cutoffDate);
+    List<Order> findByStatusInAndDateCreatedBefore(Collection<OrderStatus> statuses, LocalDate cutoffDate);
 
-    List<Order> findByStatusNot(String status, Sort sort);
+    List<Order> findByStatusNotIn(Collection<OrderStatus> statuses, Sort sort);
 }

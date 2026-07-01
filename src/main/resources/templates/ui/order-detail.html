@@ -80,7 +80,7 @@
                                         <td th:text="${s.warehouse != null ? s.warehouse.name : '—'}"></td>
                                         <td>
                                             <span class="badge"
-                                                  th:classappend="${s.status == 'DELIVERED'} ? ' text-bg-success' : (${s.status == 'IN_TRANSIT'} ? ' text-bg-warning' : ' text-bg-secondary')"
+                                                  th:classappend="${s.status?.name() == 'DELIVERED'} ? ' text-bg-success' : (${s.status?.name() == 'IN_TRANSIT'} ? ' text-bg-warning' : ' text-bg-secondary')"
                                                   th:text="${s.status}"></span>
                                         </td>
                                         <td class="text-end">
@@ -118,7 +118,7 @@
                                         <td th:text="${m.dateTime != null ? #temporals.format(m.dateTime, 'yyyy-MM-dd HH:mm') : '-'}"></td>
                                         <td>
                                             <span class="badge"
-                                                  th:classappend="${m.type == 'ENTRY'} ? ' text-bg-success' : (${m.type == 'EXIT'} ? ' text-bg-warning' : ' text-bg-secondary')"
+                                                  th:classappend="${m.type?.name() == 'ENTRY'} ? ' text-bg-success' : (${m.type?.name() == 'EXIT'} ? ' text-bg-warning' : ' text-bg-secondary')"
                                                   th:text="${m.type}"></span>
                                         </td>
                                         <td class="text-end fw-semibold" th:text="${m.quantity}"></td>

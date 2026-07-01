@@ -3,6 +3,7 @@ package com.mls.logistics.service;
 import com.mls.logistics.domain.Order;
 import com.mls.logistics.domain.OrderItem;
 import com.mls.logistics.domain.Shipment;
+import com.mls.logistics.domain.ShipmentStatus;
 import com.mls.logistics.domain.Vehicle;
 import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.AdjustStockRequest;
@@ -25,6 +26,11 @@ import java.util.Optional;
  * <p>This service sits between controllers and repositories and is responsible for applying
  * shipment business rules while keeping controllers free of business logic.</p>
  *
+ * <h3>Status state machine</h3>
+ * <p>Shipment statuses follow the {@link ShipmentStatus} state machine. In particular,
+ * {@code DELIVERED} is terminal: reverting a delivered shipment would corrupt stock
+ * accounting, so it is rejected.</p>
+ *
  * <h3>Fulfillment rule</h3>
  * <ul>
  *   <li>When a shipment transitions to {@code DELIVERED}, the system deducts stock from the
@@ -32,16 +38,10 @@ import java.util.Optional;
  *   <li>Stock deduction is performed via {@link StockService#adjustStock(Long, com.mls.logistics.dto.request.AdjustStockRequest)}
  *   to guarantee that each deduction produces a {@code Movement} audit record (EXIT).</li>
  * </ul>
- *
- * <p><strong>Important:</strong> If a shipment is already {@code DELIVERED}, it cannot be reverted
- * to a non-delivered status. This avoids accidental double accounting and keeps the audit trail deterministic.</p>
  */
 @Service
 @Transactional(readOnly = true)
 public class ShipmentService {
-
-    private static final String STATUS_DELIVERED = "DELIVERED";
-    private static final String ORDER_STATUS_COMPLETED = "COMPLETED";
 
     private final ShipmentRepository shipmentRepository;
     private final OrderItemService orderItemService;
@@ -112,7 +112,7 @@ public class ShipmentService {
     @Transactional
     public Shipment createShipment(Shipment shipment) {
         Long orderId = shipment != null && shipment.getOrder() != null ? shipment.getOrder().getId() : null;
-        assertOrderNotCompleted(orderId);
+        assertOrderIsOpen(orderId);
 
         Shipment saved = shipmentRepository.save(shipment);
 
@@ -127,7 +127,8 @@ public class ShipmentService {
      * Creates a new shipment from a DTO request.
      *
      * <p>This keeps API contracts (DTOs) separate from domain entities. The request is mapped to a
-     * {@link Shipment} with references to {@link Order}, {@link Vehicle} and {@link Warehouse} using IDs.</p>
+     * {@link Shipment} with references to {@link Order}, {@link Vehicle} and {@link Warehouse} using IDs.
+     * The status string is validated and converted to {@link ShipmentStatus}.</p>
      *
      * <p>If the shipment is created with status {@code DELIVERED}, fulfillment is executed immediately.</p>
      *
@@ -150,9 +151,9 @@ public class ShipmentService {
         shipment.setOrder(order);
         shipment.setVehicle(vehicle);
         shipment.setWarehouse(warehouse);
-        shipment.setStatus(request.getStatus());
+        shipment.setStatus(ShipmentStatus.from(request.getStatus()));
 
-        assertOrderNotCompleted(request.getOrderId());
+        assertOrderIsOpen(request.getOrderId());
 
         Shipment saved = shipmentRepository.save(shipment);
 
@@ -166,7 +167,8 @@ public class ShipmentService {
     /**
      * Updates an existing shipment.
      *
-     * <p>Only non-null fields from {@code request} are applied.</p>
+     * <p>Only non-null fields from {@code request} are applied. Status changes are validated
+     * against the {@link ShipmentStatus} state machine.</p>
      *
      * <p>When the shipment transitions from a non-delivered status to {@code DELIVERED}, this method
      * triggers fulfillment (stock deductions + movement audit entries).</p>
@@ -175,7 +177,7 @@ public class ShipmentService {
      * @param request update request
      * @return updated shipment
      * @throws ResourceNotFoundException if shipment doesn't exist
-     * @throws InvalidRequestException if attempting to revert a delivered shipment or if required references are missing
+     * @throws InvalidRequestException if the status transition is invalid or required references are missing
      * @throws InsufficientStockException if stock is insufficient to fulfill the order from the origin warehouse
      */
     @Transactional
@@ -184,18 +186,18 @@ public class ShipmentService {
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Shipment", "id", id));
 
-        String previousStatus = shipment.getStatus();
+        ShipmentStatus previousStatus = shipment.getStatus();
 
-        // If the shipment is linked to a completed order, no further changes should be allowed.
+        // If the shipment is linked to a closed order, no further changes should be allowed.
         Long existingOrderId = shipment.getOrder() != null ? shipment.getOrder().getId() : null;
-        if (existingOrderId != null && isOrderCompleted(existingOrderId)) {
+        if (existingOrderId != null && isOrderClosed(existingOrderId)) {
             throw new InvalidRequestException(
-                "Cannot modify a shipment for a COMPLETED order. Shipment id: " + id + ", order id: " + existingOrderId
+                "Cannot modify a shipment for a COMPLETED or CANCELLED order. Shipment id: " + id + ", order id: " + existingOrderId
             );
         }
 
         if (request.getOrderId() != null) {
-            assertOrderNotCompleted(request.getOrderId());
+            assertOrderIsOpen(request.getOrderId());
             Order order = new Order();
             order.setId(request.getOrderId());
             shipment.setOrder(order);
@@ -211,18 +213,17 @@ public class ShipmentService {
             shipment.setWarehouse(warehouse);
         }
         if (request.getStatus() != null) {
-            shipment.setStatus(request.getStatus());
+            ShipmentStatus nextStatus = ShipmentStatus.from(request.getStatus());
+            ShipmentStatus current = previousStatus != null ? previousStatus : ShipmentStatus.PLANNED;
+            if (!current.canTransitionTo(nextStatus)) {
+                throw new InvalidRequestException(
+                    "Invalid shipment status transition: " + current + " -> " + nextStatus +
+                    ". Shipment id: " + id);
+            }
+            shipment.setStatus(nextStatus);
         }
 
-        String nextStatus = shipment.getStatus();
-
-        if (isDelivered(previousStatus) && !isDelivered(nextStatus)) {
-            throw new InvalidRequestException(
-                    "Cannot revert a DELIVERED shipment to a non-delivered status. Shipment id: " + id
-            );
-        }
-
-        if (!isDelivered(previousStatus) && isDelivered(nextStatus)) {
+        if (!isDelivered(previousStatus) && isDelivered(shipment.getStatus())) {
             fulfillIfOrderIsComplete(shipment);
         }
 
@@ -234,16 +235,25 @@ public class ShipmentService {
      *
      * @param id shipment identifier
      * @throws ResourceNotFoundException if shipment doesn't exist
+     * @throws InvalidRequestException if the shipment is DELIVERED (its stock movements already happened)
      */
     @Transactional
     public void deleteShipment(Long id) {
-        if (!shipmentRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Shipment", "id", id);
+        Shipment shipment = shipmentRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Shipment", "id", id));
+
+        // A delivered shipment already produced stock deductions and audit records;
+        // deleting it would orphan that history.
+        if (isDelivered(shipment.getStatus())) {
+            throw new InvalidRequestException(
+                "Cannot delete a DELIVERED shipment: its stock movements are part of the audit trail. Shipment id: " + id);
         }
+
         shipmentRepository.deleteById(id);
     }
 
-    public long countByStatus(String status) {
+    public long countByStatus(ShipmentStatus status) {
         return shipmentRepository.countByStatus(status);
     }
 
@@ -281,8 +291,8 @@ public class ShipmentService {
             return;
         }
 
-        // Guard: if the order is already completed, do not fulfill again.
-        if (isOrderCompleted(orderId)) {
+        // Guard: if the order is already closed, do not fulfill again.
+        if (isOrderClosed(orderId)) {
             return;
         }
 
@@ -342,26 +352,27 @@ public class ShipmentService {
         return shipments.stream().allMatch(s -> isDelivered(s.getStatus()));
     }
 
-    private void assertOrderNotCompleted(Long orderId) {
+    private void assertOrderIsOpen(Long orderId) {
         if (orderId == null) {
             return;
         }
-        if (isOrderCompleted(orderId)) {
-            throw new InvalidRequestException("Cannot create or update shipments for a COMPLETED order. Order id: " + orderId);
+        if (isOrderClosed(orderId)) {
+            throw new InvalidRequestException(
+                "Cannot create or update shipments for a COMPLETED or CANCELLED order. Order id: " + orderId);
         }
     }
 
-    private boolean isOrderCompleted(Long orderId) {
+    /**
+     * True when the order is in a terminal status (COMPLETED / CANCELLED).
+     */
+    private boolean isOrderClosed(Long orderId) {
         return orderService
                 .getOrderById(orderId)
-                .map(o -> o.getStatus() != null && ORDER_STATUS_COMPLETED.equalsIgnoreCase(o.getStatus().trim()))
+                .map(o -> o.getStatus() != null && o.getStatus().isTerminal())
                 .orElse(false);
     }
 
-    /**
-     * Case-insensitive check for DELIVERED status.
-     */
-    private boolean isDelivered(String status) {
-        return status != null && STATUS_DELIVERED.equalsIgnoreCase(status.trim());
+    private boolean isDelivered(ShipmentStatus status) {
+        return status == ShipmentStatus.DELIVERED;
     }
 }

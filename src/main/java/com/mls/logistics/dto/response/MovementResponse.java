@@ -20,6 +20,7 @@ public class MovementResponse {
     private Long orderId;
     private Long shipmentId;
     private String reason;
+    private String createdBy;
 
     /**
      * Default constructor for serialization.
@@ -43,7 +44,8 @@ public class MovementResponse {
                             LocalDateTime dateTime,
                             Long orderId,
                             Long shipmentId,
-                            String reason) {
+                            String reason,
+                            String createdBy) {
         this.id = id;
         this.stockId = stockId;
         this.type = type;
@@ -52,6 +54,7 @@ public class MovementResponse {
         this.orderId = orderId;
         this.shipmentId = shipmentId;
         this.reason = reason;
+        this.createdBy = createdBy;
     }
 
     /**
@@ -67,12 +70,13 @@ public class MovementResponse {
         return new MovementResponse(
                 movement.getId(),
                 movement.getStock().getId(),
-                movement.getType(),
+                movement.getType() != null ? movement.getType().name() : null,
                 movement.getQuantity(),
                 movement.getDateTime(),
                 movement.getOrderId(),
                 movement.getShipmentId(),
-                movement.getReason()
+                movement.getReason(),
+                movement.getCreatedBy()
         );
     }
 
@@ -140,5 +144,13 @@ public class MovementResponse {
 
     public void setReason(String reason) {
         this.reason = reason;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
     }
 }

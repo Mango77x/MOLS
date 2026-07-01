@@ -28,8 +28,10 @@ public class Shipment {
     @JoinColumn(name = "warehouse_id")
     private Warehouse warehouse;
 
-    /** Status: PLANNED, IN_TRANSIT, DELIVERED */
-    private String status;
+    /** Lifecycle status — transitions are enforced by ShipmentService (see ShipmentStatus) */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private ShipmentStatus status;
 
     // Getters & Setters
     public Long getId() { return id; }
@@ -44,6 +46,6 @@ public class Shipment {
     public Warehouse getWarehouse() { return warehouse; }
     public void setWarehouse(Warehouse warehouse) { this.warehouse = warehouse; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public ShipmentStatus getStatus() { return status; }
+    public void setStatus(ShipmentStatus status) { this.status = status; }
 }

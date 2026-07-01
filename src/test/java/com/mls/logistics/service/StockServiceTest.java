@@ -6,6 +6,7 @@ import com.mls.logistics.domain.Stock;
 import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.CreateStockRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
+import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.repository.MovementRepository;
 import com.mls.logistics.repository.StockRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -119,9 +120,10 @@ class StockServiceTest {
     }
 
     @Test
-    void deleteStock_WhenExists_ShouldDeleteSuccessfully() {
+    void deleteStock_WhenExistsWithoutHistory_ShouldDeleteSuccessfully() {
         // Given
         when(stockRepository.existsById(1L)).thenReturn(true);
+        when(movementRepository.existsByStockId(1L)).thenReturn(false);
         doNothing().when(stockRepository).deleteById(1L);
 
         // When
@@ -130,6 +132,20 @@ class StockServiceTest {
         // Then
         verify(stockRepository, times(1)).existsById(1L);
         verify(stockRepository, times(1)).deleteById(1L);
+    }
+
+    @Test
+    void deleteStock_WithMovementHistory_ShouldThrowException() {
+        // Given: the stock has audit history — deleting it would erase the trail
+        when(stockRepository.existsById(1L)).thenReturn(true);
+        when(movementRepository.existsByStockId(1L)).thenReturn(true);
+
+        // When & Then
+        assertThatThrownBy(() -> stockService.deleteStock(1L))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("audit trail");
+
+        verify(stockRepository, never()).deleteById(any());
     }
 
     @Test

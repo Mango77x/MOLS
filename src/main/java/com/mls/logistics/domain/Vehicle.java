@@ -21,8 +21,10 @@ public class Vehicle {
     /** Capacity (number of items, weight, etc.) */
     private int capacity;
 
-    /** Status: AVAILABLE, IN_USE */
-    private String status;
+    /** Operational status (see VehicleStatus) */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private VehicleStatus status;
 
     /** Shipments assigned to this vehicle */
     @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL)
@@ -38,8 +40,8 @@ public class Vehicle {
     public int getCapacity() { return capacity; }
     public void setCapacity(int capacity) { this.capacity = capacity; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public VehicleStatus getStatus() { return status; }
+    public void setStatus(VehicleStatus status) { this.status = status; }
 
     public List<Shipment> getShipments() { return shipments; }
     public void setShipments(List<Shipment> shipments) { this.shipments = shipments; }

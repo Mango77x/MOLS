@@ -1,10 +1,12 @@
 package com.mls.logistics.service;
 
 import com.mls.logistics.domain.Order;
+import com.mls.logistics.domain.OrderStatus;
 import com.mls.logistics.domain.Unit;
 import com.mls.logistics.dto.request.CreateOrderRequest;
 import com.mls.logistics.dto.request.CreateOrderItemRequest;
 import com.mls.logistics.dto.request.UpdateOrderRequest;
+import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.OrderRepository;
 import org.springframework.data.domain.Sort;
@@ -13,22 +15,32 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
 /**
  * Service layer for Order-related business operations.
- * 
+ *
  * This class acts as an intermediary between controllers and repositories,
  * enforcing business rules and application logic.
+ *
+ * <h3>Status state machine</h3>
+ * Order statuses are a formal state machine (see {@link OrderStatus}).
+ * Any status change goes through {@link #applyStatusTransition(Order, OrderStatus)}
+ * which rejects invalid transitions (e.g. reopening a COMPLETED order).
  */
 @Service
 @Transactional(readOnly = true)
 public class OrderService {
 
-    private static final String STATUS_COMPLETED = "COMPLETED";
+    /** Statuses that still accept work (items, shipments, edits). */
+    private static final List<OrderStatus> OPEN_STATUSES =
+            List.of(OrderStatus.CREATED, OrderStatus.VALIDATED);
+
+    /** Terminal statuses — no further changes allowed. */
+    private static final List<OrderStatus> TERMINAL_STATUSES =
+            List.of(OrderStatus.COMPLETED, OrderStatus.CANCELLED);
 
     private final OrderRepository orderRepository;
     private final OrderItemService orderItemService;
@@ -53,11 +65,13 @@ public class OrderService {
         return orderRepository.findAll(sort);
     }
 
-    public List<Order> getOrdersExcludingStatus(String excludedStatus, Sort sort) {
-        if (excludedStatus == null || excludedStatus.isBlank()) {
-            return orderRepository.findAll(sort);
-        }
-        return orderRepository.findByStatusNot(excludedStatus, sort);
+    /**
+     * Retrieves orders that are still open (not COMPLETED / CANCELLED).
+     *
+     * Used by the UI to offer valid targets for new shipments.
+     */
+    public List<Order> getOpenOrders(Sort sort) {
+        return orderRepository.findByStatusNotIn(TERMINAL_STATUSES, sort);
     }
 
     /**
@@ -69,9 +83,6 @@ public class OrderService {
 
     /**
      * Creates a new order.
-     * 
-     * Business rules can be added here in the future
-     * (e.g. order validation, price calculations).
      */
     @Transactional
     public Order createOrder(Order order) {
@@ -80,8 +91,10 @@ public class OrderService {
 
     /**
      * Creates a new order from a DTO request.
-     * 
-     * This method separates API contracts from domain logic.
+     *
+     * This method separates API contracts from domain logic. The status
+     * string is validated and converted to {@link OrderStatus}; unknown
+     * values are rejected with a 400.
      *
      * @param request DTO containing order data
      * @return created order entity
@@ -95,7 +108,7 @@ public class OrderService {
 
         order.setUnit(unit);
         order.setDateCreated(request.getDateCreated());
-        order.setStatus(request.getStatus());
+        order.setStatus(OrderStatus.from(request.getStatus()));
 
         return orderRepository.save(order);
     }
@@ -125,13 +138,15 @@ public class OrderService {
 
     /**
      * Updates an existing order.
-     * 
-     * Only non-null fields from the request are updated.
+     *
+     * Only non-null fields from the request are updated. Status changes are
+     * validated against the {@link OrderStatus} state machine.
      *
      * @param id order identifier
      * @param request update data
      * @return updated order
      * @throws ResourceNotFoundException if order doesn't exist
+     * @throws InvalidRequestException if the status transition is not allowed
      */
     @Transactional
     public Order updateOrder(Long id, UpdateOrderRequest request) {
@@ -148,7 +163,7 @@ public class OrderService {
             order.setDateCreated(request.getDateCreated());
         }
         if (request.getStatus() != null) {
-            order.setStatus(request.getStatus());
+            applyStatusTransition(order, OrderStatus.from(request.getStatus()));
         }
 
         return orderRepository.save(order);
@@ -159,12 +174,21 @@ public class OrderService {
      *
      * @param id order identifier
      * @throws ResourceNotFoundException if order doesn't exist
+     * @throws InvalidRequestException if the order is COMPLETED (its stock movements are part of the audit trail)
      */
     @Transactional
     public void deleteOrder(Long id) {
-        if (!orderRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Order", "id", id);
+        Order order = orderRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", id));
+
+        // A completed order was fulfilled: stock was deducted and movements were
+        // recorded against it. Deleting it would orphan that audit history.
+        if (order.getStatus() == OrderStatus.COMPLETED) {
+            throw new InvalidRequestException(
+                "Cannot delete a COMPLETED order: its stock movements are part of the audit trail. Order id: " + id);
         }
+
         orderRepository.deleteById(id);
     }
 
@@ -172,7 +196,7 @@ public class OrderService {
         return orderRepository.count();
     }
 
-    public long countByStatus(String status) {
+    public long countByStatus(OrderStatus status) {
         return orderRepository.countByStatus(status);
     }
 
@@ -185,14 +209,16 @@ public class OrderService {
             return 0.0;
         }
 
-        long completed = orderRepository.countByStatus(STATUS_COMPLETED);
+        long completed = orderRepository.countByStatus(OrderStatus.COMPLETED);
         return (completed * 100.0) / total;
     }
 
     /**
      * Marks an order as completed.
      *
-     * Used by shipment fulfillment: when a shipment is delivered, the parent order should be considered fulfilled.
+     * Used by shipment fulfillment: when all shipments of an order are
+     * delivered, the parent order is considered fulfilled. Idempotent —
+     * already-completed orders are left untouched.
      */
     @Transactional
     public void markOrderCompleted(Long orderId) {
@@ -204,29 +230,44 @@ public class OrderService {
                 .findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
 
-        if (STATUS_COMPLETED.equalsIgnoreCase(order.getStatus() != null ? order.getStatus().trim() : null)) {
+        if (order.getStatus() == OrderStatus.COMPLETED) {
             return;
         }
 
-        order.setStatus(STATUS_COMPLETED);
+        applyStatusTransition(order, OrderStatus.COMPLETED);
         orderRepository.save(order);
     }
 
     /**
-     * Returns pending orders older than the provided threshold (in days).
-     *
-     * The system currently uses CREATED and VALIDATED as pre-fulfillment statuses.
+     * Returns open (pre-fulfillment) orders older than the provided threshold (in days).
      */
     public List<Order> getStaleOrders(int daysThreshold) {
         LocalDate cutoff = LocalDate.now().minus(daysThreshold, ChronoUnit.DAYS);
 
-        List<Order> results = new ArrayList<>();
-        results.addAll(orderRepository.findByStatusAndDateCreatedBefore("CREATED", cutoff));
-        results.addAll(orderRepository.findByStatusAndDateCreatedBefore("VALIDATED", cutoff));
+        List<Order> results = orderRepository
+                .findByStatusInAndDateCreatedBefore(OPEN_STATUSES, cutoff);
 
-        results.sort(Comparator
-                .comparing(Order::getDateCreated, Comparator.nullsLast(Comparator.naturalOrder()))
-                .thenComparing(Order::getId, Comparator.nullsLast(Comparator.naturalOrder())));
-        return results;
+        return results.stream()
+                .sorted(Comparator
+                        .comparing(Order::getDateCreated, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(Order::getId, Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+    }
+
+    /**
+     * Applies a status change after validating it against the state machine.
+     *
+     * A null current status (legacy rows) is treated as CREATED.
+     *
+     * @throws InvalidRequestException if the transition is not allowed
+     */
+    private void applyStatusTransition(Order order, OrderStatus next) {
+        OrderStatus current = order.getStatus() != null ? order.getStatus() : OrderStatus.CREATED;
+        if (!current.canTransitionTo(next)) {
+            throw new InvalidRequestException(
+                "Invalid order status transition: " + current + " -> " + next +
+                ". Order id: " + order.getId());
+        }
+        order.setStatus(next);
     }
 }

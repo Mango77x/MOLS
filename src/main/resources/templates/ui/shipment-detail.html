@@ -106,7 +106,7 @@
                                         <td th:text="${m.dateTime != null ? #temporals.format(m.dateTime, 'yyyy-MM-dd HH:mm') : '-'}"></td>
                                         <td>
                                             <span class="badge"
-                                                  th:classappend="${m.type == 'ENTRY'} ? ' text-bg-success' : (${m.type == 'EXIT'} ? ' text-bg-warning' : ' text-bg-secondary')"
+                                                  th:classappend="${m.type?.name() == 'ENTRY'} ? ' text-bg-success' : (${m.type?.name() == 'EXIT'} ? ' text-bg-warning' : ' text-bg-secondary')"
                                                   th:text="${m.type}"></span>
                                         </td>
                                         <td class="text-end fw-semibold" th:text="${m.quantity}"></td>

@@ -54,7 +54,7 @@ public class ShipmentResponse {
                 shipment.getOrder().getId(),
                 shipment.getVehicle().getId(),
                 shipment.getWarehouse().getId(),
-                shipment.getStatus()
+                shipment.getStatus() != null ? shipment.getStatus().name() : null
         );
     }
 

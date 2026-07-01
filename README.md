@@ -22,7 +22,16 @@ MOLS is a logistics app to manage warehouses, resources, stock, orders and shipm
 
 ## Highlights
 
-- Stock adjustments automatically create Movement audit records (`ENTRY` / `EXIT`)
+- **Append-only audit trail**: every stock change automatically records a Movement
+  (`ENTRY` / `EXIT`) with the acting user; movements can never be edited or deleted
+- **Status state machines**: order and shipment lifecycles are enforced enums
+  (e.g. a `DELIVERED` shipment or `COMPLETED` order can never be reverted)
+- **Concurrency-safe stock**: optimistic locking detects simultaneous adjustments
+  (HTTP 409) instead of silently losing updates
+- **Database-level integrity**: CHECK/UNIQUE/NOT NULL constraints and FK indexes
+  managed by Flyway migrations
+- **Hardened login**: temporary lockout after repeated failures, security event
+  logging, 12+ character password policy
 - Orders with items (create/edit, inline item management)
 - Shipments with fulfillment on delivery
 - Traceability views (Order/Shipment details show linked movements)

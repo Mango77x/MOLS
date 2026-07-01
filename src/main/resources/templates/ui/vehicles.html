@@ -81,8 +81,8 @@
                             <td th:text="${vehicle.capacity} + ' kg'"></td>
                             <td>
                                 <span class="badge"
-                                      th:classappend="${vehicle.status == 'AVAILABLE'} ? ' text-bg-success' : (${vehicle.status == 'IN_USE'} ? ' text-bg-warning' : (${vehicle.status == 'IN_REPAIR'} ? ' text-bg-danger' : ' text-bg-secondary'))">
-                                    <span th:switch="${vehicle.status}">
+                                      th:classappend="${vehicle.status?.name() == 'AVAILABLE'} ? ' text-bg-success' : (${vehicle.status?.name() == 'IN_USE'} ? ' text-bg-warning' : (${vehicle.status?.name() == 'IN_REPAIR'} ? ' text-bg-danger' : ' text-bg-secondary'))">
+                                    <span th:switch="${vehicle.status?.name()}">
                                         <span th:case="'AVAILABLE'">Available</span>
                                         <span th:case="'IN_USE'">In use</span>
                                         <span th:case="'IN_REPAIR'">In repair</span>

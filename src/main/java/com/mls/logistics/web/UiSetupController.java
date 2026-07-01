@@ -52,6 +52,11 @@ public class UiSetupController {
             return "ui/setup";
         }
 
+        if (password.length() < 12) {
+            model.addAttribute("errorMessage", "Password must be at least 12 characters.");
+            return "ui/setup";
+        }
+
         if (appUserRepository.existsByUsername(normalizedUsername)) {
             model.addAttribute("errorMessage", "Username already exists.");
             return "ui/setup";

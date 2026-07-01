@@ -1,9 +1,8 @@
 package com.mls.logistics.service;
 
 import com.mls.logistics.domain.Movement;
+import com.mls.logistics.domain.MovementType;
 import com.mls.logistics.domain.Stock;
-import com.mls.logistics.dto.request.CreateMovementRequest;
-import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.MovementRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,18 +14,18 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for MovementService.
  *
- * Tests business logic without requiring database or Spring context.
- * Uses Mockito to mock repository dependencies.
+ * The movement audit trail is append-only: this service is read-only
+ * (movements are created internally by StockService), so only query
+ * operations are tested here.
  */
 @ExtendWith(MockitoExtension.class)
 class MovementServiceTest {
@@ -47,7 +46,7 @@ class MovementServiceTest {
         testMovement = new Movement();
         testMovement.setId(1L);
         testMovement.setStock(stock);
-        testMovement.setType("IN");
+        testMovement.setType(MovementType.ENTRY);
         testMovement.setQuantity(5);
         testMovement.setDateTime(LocalDateTime.of(2024, 1, 1, 10, 0));
     }
@@ -63,7 +62,7 @@ class MovementServiceTest {
 
         // Then
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getType()).isEqualTo("IN");
+        assertThat(result.get(0).getType()).isEqualTo(MovementType.ENTRY);
         verify(movementRepository, times(1)).findAll();
     }
 
@@ -77,7 +76,7 @@ class MovementServiceTest {
 
         // Then
         assertThat(result).isPresent();
-        assertThat(result.get().getType()).isEqualTo("IN");
+        assertThat(result.get().getType()).isEqualTo(MovementType.ENTRY);
         verify(movementRepository, times(1)).findById(1L);
     }
 
@@ -95,45 +94,20 @@ class MovementServiceTest {
     }
 
     @Test
-    void createMovement_WithValidRequest_ShouldReturnCreatedMovement() {
+    void getMovementCountByType_ShouldGroupByEnumName() {
         // Given
-        CreateMovementRequest request = new CreateMovementRequest(1L, "IN", 5, LocalDateTime.now());
-        when(movementRepository.save(any(Movement.class))).thenReturn(testMovement);
+        Movement exit = new Movement();
+        exit.setType(MovementType.EXIT);
+        LocalDateTime since = LocalDateTime.of(2024, 1, 1, 0, 0);
+        when(movementRepository.findByDateTimeAfter(since))
+                .thenReturn(List.of(testMovement, exit, testMovement));
 
         // When
-        Movement result = movementService.createMovement(request);
+        Map<String, Long> result = movementService.getMovementCountByType(since);
 
         // Then
-        assertThat(result).isNotNull();
-        assertThat(result.getType()).isEqualTo("IN");
-        verify(movementRepository, times(1)).save(any(Movement.class));
-    }
-
-    @Test
-    void deleteMovement_WhenExists_ShouldDeleteSuccessfully() {
-        // Given
-        when(movementRepository.existsById(1L)).thenReturn(true);
-        doNothing().when(movementRepository).deleteById(1L);
-
-        // When
-        movementService.deleteMovement(1L);
-
-        // Then
-        verify(movementRepository, times(1)).existsById(1L);
-        verify(movementRepository, times(1)).deleteById(1L);
-    }
-
-    @Test
-    void deleteMovement_WhenNotExists_ShouldThrowException() {
-        // Given
-        when(movementRepository.existsById(999L)).thenReturn(false);
-
-        // When & Then
-        assertThatThrownBy(() -> movementService.deleteMovement(999L))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Movement not found with id: '999'");
-
-        verify(movementRepository, times(1)).existsById(999L);
-        verify(movementRepository, never()).deleteById(any());
+        assertThat(result)
+                .containsEntry("ENTRY", 2L)
+                .containsEntry("EXIT", 1L);
     }
 }

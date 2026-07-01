@@ -15,9 +15,9 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -105,7 +105,9 @@ public class AuthController {
                     new AuthResponse(token, user.getUsername(),
                             user.getRole().name()));
 
-        } catch (BadCredentialsException e) {
+        } catch (AuthenticationException e) {
+            // Covers bad credentials, disabled accounts, and temporary
+            // lockouts. A single generic 401 avoids leaking which case it was.
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }

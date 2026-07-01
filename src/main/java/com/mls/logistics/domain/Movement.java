@@ -1,13 +1,22 @@
 package com.mls.logistics.domain;
 
 import jakarta.persistence.*;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import java.time.LocalDateTime;
 
 /**
- * Represents a movement of stock (IN, OUT, TRANSFER) for audit purposes.
+ * Append-only audit record of a stock change.
+ *
+ * <p>Movements are created exclusively by {@code StockService} whenever stock
+ * quantity changes. They are never updated or deleted — corrections are made
+ * by recording a new compensating movement. The acting user is captured
+ * automatically via JPA auditing ({@link CreatedBy}).</p>
  */
 @Entity
 @Table(name = "movements")
+@EntityListeners(AuditingEntityListener.class)
 public class Movement {
 
     @Id
@@ -19,10 +28,12 @@ public class Movement {
     @JoinColumn(name = "stock_id")
     private Stock stock;
 
-    /** Type of movement: ENTRY, EXIT, TRANSFER */
-    private String type;
+    /** Type of movement: ENTRY (increase) or EXIT (decrease) */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type")
+    private MovementType type;
 
-    /** Quantity affected */
+    /** Quantity affected (always positive) */
     private int quantity;
 
     /** Timestamp of the movement */
@@ -40,6 +51,11 @@ public class Movement {
     @Column(name = "reason", length = 200)
     private String reason;
 
+    /** Username of the actor who caused this movement (set automatically, never updated) */
+    @CreatedBy
+    @Column(name = "created_by", length = 50, updatable = false)
+    private String createdBy;
+
     // Getters & Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -47,8 +63,8 @@ public class Movement {
     public Stock getStock() { return stock; }
     public void setStock(Stock stock) { this.stock = stock; }
 
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
+    public MovementType getType() { return type; }
+    public void setType(MovementType type) { this.type = type; }
 
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
@@ -64,4 +80,6 @@ public class Movement {
 
     public String getReason() { return reason; }
     public void setReason(String reason) { this.reason = reason; }
+
+    public String getCreatedBy() { return createdBy; }
 }

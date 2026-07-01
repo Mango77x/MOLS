@@ -1,6 +1,7 @@
 package com.mls.logistics.service;
 
 import com.mls.logistics.domain.Vehicle;
+import com.mls.logistics.domain.VehicleStatus;
 import com.mls.logistics.dto.request.CreateVehicleRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.VehicleRepository;
@@ -43,7 +44,7 @@ class VehicleServiceTest {
         testVehicle.setId(1L);
         testVehicle.setType("Truck");
         testVehicle.setCapacity(1000);
-        testVehicle.setStatus("AVAILABLE");
+        testVehicle.setStatus(VehicleStatus.AVAILABLE);
     }
 
     @Test

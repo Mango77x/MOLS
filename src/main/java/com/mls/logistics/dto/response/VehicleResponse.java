@@ -50,7 +50,7 @@ public class VehicleResponse {
                 vehicle.getId(),
                 vehicle.getType(),
                 vehicle.getCapacity(),
-                vehicle.getStatus()
+                vehicle.getStatus() != null ? vehicle.getStatus().name() : null
         );
     }
 

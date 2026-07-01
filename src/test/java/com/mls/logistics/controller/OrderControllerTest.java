@@ -2,6 +2,7 @@ package com.mls.logistics.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mls.logistics.domain.Order;
+import com.mls.logistics.domain.OrderStatus;
 import com.mls.logistics.domain.Unit;
 import com.mls.logistics.dto.request.CreateOrderRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
@@ -61,7 +62,7 @@ class OrderControllerTest {
         testOrder.setId(1L);
         testOrder.setUnit(unit);
         testOrder.setDateCreated(LocalDate.of(2024, 1, 1));
-        testOrder.setStatus("CREATED");
+        testOrder.setStatus(OrderStatus.CREATED);
     }
 
     @Test

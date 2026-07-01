@@ -4,6 +4,8 @@ import com.mls.logistics.domain.Order;
 import com.mls.logistics.domain.OrderItem;
 import com.mls.logistics.domain.Resource;
 import com.mls.logistics.domain.Shipment;
+import com.mls.logistics.domain.OrderStatus;
+import com.mls.logistics.domain.ShipmentStatus;
 import com.mls.logistics.domain.Stock;
 import com.mls.logistics.domain.Vehicle;
 import com.mls.logistics.domain.Warehouse;
@@ -74,7 +76,7 @@ class ShipmentServiceTest {
         testShipment.setOrder(order);
         testShipment.setVehicle(vehicle);
         testShipment.setWarehouse(warehouse);
-        testShipment.setStatus("PLANNED");
+        testShipment.setStatus(ShipmentStatus.PLANNED);
     }
 
     @Test
@@ -88,7 +90,7 @@ class ShipmentServiceTest {
 
         // Then
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getStatus()).isEqualTo("PLANNED");
+        assertThat(result.get(0).getStatus()).isEqualTo(ShipmentStatus.PLANNED);
         verify(shipmentRepository, times(1)).findAll();
     }
 
@@ -102,7 +104,7 @@ class ShipmentServiceTest {
 
         // Then
         assertThat(result).isPresent();
-        assertThat(result.get().getStatus()).isEqualTo("PLANNED");
+        assertThat(result.get().getStatus()).isEqualTo(ShipmentStatus.PLANNED);
         verify(shipmentRepository, times(1)).findById(1L);
     }
 
@@ -130,7 +132,7 @@ class ShipmentServiceTest {
 
         // Then
         assertThat(result).isNotNull();
-        assertThat(result.getStatus()).isEqualTo("PLANNED");
+        assertThat(result.getStatus()).isEqualTo(ShipmentStatus.PLANNED);
         verify(shipmentRepository, times(1)).save(any(Shipment.class));
     }
 
@@ -143,7 +145,7 @@ class ShipmentServiceTest {
 
         Order order = new Order();
         order.setId(1L);
-        order.setStatus("CREATED");
+        order.setStatus(OrderStatus.CREATED);
         when(orderService.getOrderById(1L)).thenReturn(Optional.of(order));
 
         Resource r1 = new Resource();
@@ -185,7 +187,7 @@ class ShipmentServiceTest {
     @Test
     void updateShipment_WhenAlreadyDelivered_ShouldNotDeductStockAgain() {
         // Given
-        testShipment.setStatus("DELIVERED");
+        testShipment.setStatus(ShipmentStatus.DELIVERED);
         when(shipmentRepository.findById(1L)).thenReturn(Optional.of(testShipment));
         when(shipmentRepository.save(any(Shipment.class))).thenReturn(testShipment);
 
@@ -210,7 +212,7 @@ class ShipmentServiceTest {
         otherShipment.setOrder(testShipment.getOrder());
         otherShipment.setVehicle(testShipment.getVehicle());
         otherShipment.setWarehouse(testShipment.getWarehouse());
-        otherShipment.setStatus("PLANNED");
+        otherShipment.setStatus(ShipmentStatus.PLANNED);
 
         when(shipmentRepository.findById(1L)).thenReturn(Optional.of(testShipment));
         when(shipmentRepository.save(any(Shipment.class))).thenReturn(testShipment);
@@ -218,7 +220,7 @@ class ShipmentServiceTest {
 
         Order order = new Order();
         order.setId(1L);
-        order.setStatus("CREATED");
+        order.setStatus(OrderStatus.CREATED);
         when(orderService.getOrderById(1L)).thenReturn(Optional.of(order));
 
         UpdateShipmentRequest req = new UpdateShipmentRequest();
@@ -237,7 +239,7 @@ class ShipmentServiceTest {
         // Given
         Order completed = new Order();
         completed.setId(1L);
-        completed.setStatus("COMPLETED");
+        completed.setStatus(OrderStatus.COMPLETED);
         when(orderService.getOrderById(1L)).thenReturn(Optional.of(completed));
 
         CreateShipmentRequest request = new CreateShipmentRequest(1L, 1L, 1L, "PLANNED");
@@ -245,7 +247,7 @@ class ShipmentServiceTest {
         // When & Then
         assertThatThrownBy(() -> shipmentService.createShipment(request))
                 .isInstanceOf(InvalidRequestException.class)
-                .hasMessageContaining("COMPLETED order");
+                .hasMessageContaining("COMPLETED or CANCELLED order");
         verify(shipmentRepository, never()).save(any(Shipment.class));
     }
 
@@ -257,7 +259,7 @@ class ShipmentServiceTest {
 
         Order order = new Order();
         order.setId(1L);
-        order.setStatus("CREATED");
+        order.setStatus(OrderStatus.CREATED);
         when(orderService.getOrderById(1L)).thenReturn(Optional.of(order));
 
         Resource r1 = new Resource();
@@ -281,28 +283,57 @@ class ShipmentServiceTest {
     @Test
     void deleteShipment_WhenExists_ShouldDeleteSuccessfully() {
         // Given
-        when(shipmentRepository.existsById(1L)).thenReturn(true);
+        when(shipmentRepository.findById(1L)).thenReturn(Optional.of(testShipment));
         doNothing().when(shipmentRepository).deleteById(1L);
 
         // When
         shipmentService.deleteShipment(1L);
 
         // Then
-        verify(shipmentRepository, times(1)).existsById(1L);
         verify(shipmentRepository, times(1)).deleteById(1L);
     }
 
     @Test
     void deleteShipment_WhenNotExists_ShouldThrowException() {
         // Given
-        when(shipmentRepository.existsById(999L)).thenReturn(false);
+        when(shipmentRepository.findById(999L)).thenReturn(Optional.empty());
 
         // When & Then
         assertThatThrownBy(() -> shipmentService.deleteShipment(999L))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Shipment not found with id: '999'");
 
-        verify(shipmentRepository, times(1)).existsById(999L);
         verify(shipmentRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void deleteShipment_WhenDelivered_ShouldThrowException() {
+        // Given: delivered shipments already produced audited stock movements
+        testShipment.setStatus(ShipmentStatus.DELIVERED);
+        when(shipmentRepository.findById(1L)).thenReturn(Optional.of(testShipment));
+
+        // When & Then
+        assertThatThrownBy(() -> shipmentService.deleteShipment(1L))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("audit trail");
+
+        verify(shipmentRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void updateShipment_RevertingDelivered_ShouldThrowInvalidTransition() {
+        // Given: DELIVERED is terminal in the state machine
+        testShipment.setStatus(ShipmentStatus.DELIVERED);
+        when(shipmentRepository.findById(1L)).thenReturn(Optional.of(testShipment));
+
+        UpdateShipmentRequest request = new UpdateShipmentRequest();
+        request.setStatus("PLANNED");
+
+        // When & Then
+        assertThatThrownBy(() -> shipmentService.updateShipment(1L, request))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("Invalid shipment status transition");
+
+        verify(shipmentRepository, never()).save(any());
     }
 }

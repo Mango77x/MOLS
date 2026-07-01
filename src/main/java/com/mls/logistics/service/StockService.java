@@ -1,6 +1,7 @@
 package com.mls.logistics.service;
 
 import com.mls.logistics.domain.Movement;
+import com.mls.logistics.domain.MovementType;
 import com.mls.logistics.domain.Resource;
 import com.mls.logistics.domain.Stock;
 import com.mls.logistics.domain.Warehouse;
@@ -117,7 +118,7 @@ public class StockService {
 
         // Rule 2: if initial quantity > 0, record an ENTRY movement
         if (request.getQuantity() > 0) {
-            recordMovement(savedStock, "ENTRY", request.getQuantity(), null, null, null);
+            recordMovement(savedStock, MovementType.ENTRY, request.getQuantity(), null, null, null);
         }
 
         return savedStock;
@@ -171,7 +172,7 @@ public class StockService {
         Stock savedStock = stockRepository.save(stock);
 
         // Rule 2: record movement automatically
-        String movementType = delta > 0 ? "ENTRY" : "EXIT";
+        MovementType movementType = delta > 0 ? MovementType.ENTRY : MovementType.EXIT;
         recordMovement(savedStock, movementType, Math.abs(delta), request.getReason(), request.getOrderId(), request.getShipmentId());
 
         return savedStock;
@@ -233,13 +234,24 @@ public class StockService {
     /**
      * Deletes a stock record.
      *
+     * <p>Only stock records with no movement history can be deleted. Once a
+     * stock row has movements, deleting it would destroy part of the audit
+     * trail; the correct way to retire it is to adjust its quantity to zero
+     * (which itself is audited).</p>
+     *
      * @param id stock identifier
      * @throws ResourceNotFoundException if stock does not exist
+     * @throws InvalidRequestException if the stock has movement history
      */
     @Transactional
     public void deleteStock(Long id) {
         if (!stockRepository.existsById(id)) {
             throw new ResourceNotFoundException("Stock", "id", id);
+        }
+        if (movementRepository.existsByStockId(id)) {
+            throw new InvalidRequestException(
+                "Cannot delete stock with movement history: the audit trail is append-only. " +
+                "Adjust the quantity to zero instead. Stock id: " + id);
         }
         stockRepository.deleteById(id);
     }
@@ -255,7 +267,7 @@ public class StockService {
      * @param quantity absolute quantity affected (always positive)
      */
     private void recordMovement(Stock stock,
-                                String type,
+                                MovementType type,
                                 int quantity,
                                 String reason,
                                 Long orderId,

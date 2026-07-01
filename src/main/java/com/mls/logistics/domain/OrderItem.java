@@ -14,13 +14,13 @@ public class OrderItem {
     private Long id;
 
     /** Order this item belongs to */
-    @ManyToOne
-    @JoinColumn(name = "order_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
     /** Resource requested */
-    @ManyToOne
-    @JoinColumn(name = "resource_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "resource_id", nullable = false)
     private Resource resource;
 
     /** Quantity requested */

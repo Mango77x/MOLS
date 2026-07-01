@@ -23,8 +23,10 @@ public class Order {
     /** Date of creation */
     private LocalDate dateCreated;
 
-    /** Status: CREATED, VALIDATED, COMPLETED */
-    private String status;
+    /** Lifecycle status — transitions are enforced by OrderService (see OrderStatus) */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private OrderStatus status;
 
     /** List of items requested */
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
@@ -44,8 +46,8 @@ public class Order {
     public LocalDate getDateCreated() { return dateCreated; }
     public void setDateCreated(LocalDate dateCreated) { this.dateCreated = dateCreated; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public OrderStatus getStatus() { return status; }
+    public void setStatus(OrderStatus status) { this.status = status; }
 
     public List<OrderItem> getItems() { return items; }
     public void setItems(List<OrderItem> items) { this.items = items; }

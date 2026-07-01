@@ -1,7 +1,10 @@
 package com.mls.logistics.exception;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -22,6 +25,8 @@ import java.util.Map;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     /**
      * Handles ResourceNotFoundException.
@@ -87,14 +92,57 @@ public class GlobalExceptionHandler {
             Exception ex,
             WebRequest request) {
 
+        // Spring MVC exceptions (405 Method Not Allowed, 406, 415, ...) carry
+        // their own status — preserve it instead of masking it as a 500.
+        if (ex instanceof org.springframework.web.ErrorResponse springError) {
+            HttpStatus status = HttpStatus.valueOf(springError.getStatusCode().value());
+            ErrorResponse body = new ErrorResponse(
+                    status.value(),
+                    status.getReasonPhrase(),
+                    status.getReasonPhrase(),
+                    request.getDescription(false).replace("uri=", "")
+            );
+            return new ResponseEntity<>(body, status);
+        }
+
+        // Log the full exception server-side; never echo internal details
+        // (class names, SQL, stack fragments) back to the client.
+        log.error("Unhandled exception processing {}", request.getDescription(false), ex);
+
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-                "An unexpected error occurred: " + ex.getMessage(),
+                "An unexpected error occurred. Please try again or contact an administrator.",
                 request.getDescription(false).replace("uri=", "")
         );
 
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    /**
+     * Handles optimistic-locking conflicts.
+     *
+     * Returns 409 Conflict when two requests modified the same row
+     * concurrently (e.g. two simultaneous stock adjustments). The losing
+     * request should be retried against the fresh state.
+     *
+     * @param ex      the optimistic locking failure
+     * @param request the web request during which the exception occurred
+     * @return ResponseEntity with error details and 409 status
+     */
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLockingFailure(
+            ObjectOptimisticLockingFailureException ex,
+            WebRequest request) {
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                "The record was modified by another operation at the same time. Please retry.",
+                request.getDescription(false).replace("uri=", "")
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.mls.logistics.service;
 
 import com.mls.logistics.domain.Vehicle;
+import com.mls.logistics.domain.VehicleStatus;
 import com.mls.logistics.dto.request.CreateVehicleRequest;
 import com.mls.logistics.dto.request.UpdateVehicleRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
@@ -74,7 +75,7 @@ public class VehicleService {
         Vehicle vehicle = new Vehicle();
         vehicle.setType(request.getType());
         vehicle.setCapacity(request.getCapacity());
-        vehicle.setStatus(request.getStatus());
+        vehicle.setStatus(VehicleStatus.from(request.getStatus()));
         return vehicleRepository.save(vehicle);
     }
 
@@ -101,7 +102,7 @@ public class VehicleService {
             vehicle.setCapacity(request.getCapacity());
         }
         if (request.getStatus() != null) {
-            vehicle.setStatus(request.getStatus());
+            vehicle.setStatus(VehicleStatus.from(request.getStatus()));
         }
 
         return vehicleRepository.save(vehicle);

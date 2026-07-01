@@ -50,6 +50,10 @@ services:
       SECURITY_JWT_SECRET_KEY: ${SECURITY_JWT_SECRET_KEY:?set SECURITY_JWT_SECRET_KEY (copy .env.example to .env)}
       # First-run setup: start with NO users and force creating the first ADMIN via /ui/setup
       BOOTSTRAP_ADMIN_ENABLED: "false"
+      # Production-like posture: Swagger UI / OpenAPI spec are disabled by
+      # default in the containerized deployment. Opt back in for demos by
+      # setting SPRINGDOC_ENABLED=true in your .env file.
+      SPRINGDOC_ENABLED: ${SPRINGDOC_ENABLED:-false}
     depends_on:
       db:
         condition: service_healthy   # Wait for PostgreSQL to be ready before starting app

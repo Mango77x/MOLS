@@ -78,7 +78,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/api/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/**").hasRole("ADMIN")
-                .anyRequest().permitAll())
+                // Secure default: anything not explicitly matched above
+                // (e.g. HEAD/OPTIONS on /api/**) is denied, not allowed.
+                .anyRequest().denyAll())
             // Register JWT filter before Spring's default auth filter
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

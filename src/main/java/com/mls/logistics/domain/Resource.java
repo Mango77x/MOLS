@@ -16,6 +16,7 @@ public class Resource {
     private Long id;
 
     /** Name of the resource */
+    @Column(nullable = false)
     private String name;
 
     /** Type of resource (equipment, material, etc.) */

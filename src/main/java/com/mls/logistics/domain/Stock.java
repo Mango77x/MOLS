@@ -15,20 +15,33 @@ public class Stock {
     private Long id;
 
     /** The resource stored */
-    @ManyToOne
-    @JoinColumn(name = "resource_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "resource_id", nullable = false)
     private Resource resource;
 
     /** The warehouse where the stock is located */
-    @ManyToOne
-    @JoinColumn(name = "warehouse_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "warehouse_id", nullable = false)
     private Warehouse warehouse;
 
     /** Quantity available (cannot be negative) */
     private int quantity;
 
-    /** Historical movements of this stock */
-    @OneToMany(mappedBy = "stock", cascade = CascadeType.ALL)
+    /**
+     * Optimistic-lock version. Detects concurrent modifications of the same
+     * stock row (two simultaneous adjustments) and fails one of them instead
+     * of silently losing an update.
+     */
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
+
+    /**
+     * Historical movements of this stock. No cascade: movements are an
+     * append-only audit trail and must never be deleted through this
+     * association (StockService blocks deleting stock that has history).
+     */
+    @OneToMany(mappedBy = "stock")
     private List<Movement> movements;
 
     // Getters & Setters
@@ -43,6 +56,8 @@ public class Stock {
 
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
+
+    public long getVersion() { return version; }
 
     public List<Movement> getMovements() { return movements; }
     public void setMovements(List<Movement> movements) { this.movements = movements; }

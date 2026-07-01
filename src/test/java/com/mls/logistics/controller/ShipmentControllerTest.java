@@ -3,6 +3,7 @@ package com.mls.logistics.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mls.logistics.domain.Order;
 import com.mls.logistics.domain.Shipment;
+import com.mls.logistics.domain.ShipmentStatus;
 import com.mls.logistics.domain.Vehicle;
 import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.CreateShipmentRequest;
@@ -69,7 +70,7 @@ class ShipmentControllerTest {
         testShipment.setOrder(order);
         testShipment.setVehicle(vehicle);
         testShipment.setWarehouse(warehouse);
-        testShipment.setStatus("PLANNED");
+        testShipment.setStatus(ShipmentStatus.PLANNED);
     }
 
     @Test

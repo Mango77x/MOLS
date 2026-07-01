@@ -2,6 +2,7 @@ package com.mls.logistics.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mls.logistics.domain.Vehicle;
+import com.mls.logistics.domain.VehicleStatus;
 import com.mls.logistics.dto.request.CreateVehicleRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.security.service.AppUserService;
@@ -56,7 +57,7 @@ class VehicleControllerTest {
         testVehicle.setId(1L);
         testVehicle.setType("Truck");
         testVehicle.setCapacity(1000);
-        testVehicle.setStatus("AVAILABLE");
+        testVehicle.setStatus(VehicleStatus.AVAILABLE);
     }
 
     @Test

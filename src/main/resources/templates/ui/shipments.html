@@ -90,8 +90,13 @@
                             </td>
                             <td>
                                 <span class="badge"
-                                      th:classappend="${shipment.status == 'DELIVERED'} ? ' text-bg-success' : (${shipment.status == 'IN_TRANSIT'} ? ' text-bg-warning' : (${shipment.status == 'PLANNED'} ? ' text-bg-secondary' : ' text-bg-info'))">
-                                    <span th:text="${shipment.status == 'IN_TRANSIT' ? 'In transit' : (shipment.status == 'PLANNED' ? 'Planned' : (shipment.status == 'DELIVERED' ? 'Delivered' : shipment.status))}"></span>
+                                      th:classappend="${shipment.status?.name() == 'DELIVERED'} ? ' text-bg-success' : (${shipment.status?.name() == 'IN_TRANSIT'} ? ' text-bg-warning' : (${shipment.status?.name() == 'PLANNED'} ? ' text-bg-secondary' : ' text-bg-info'))">
+                                    <span th:switch="${shipment.status?.name()}">
+                                        <span th:case="'IN_TRANSIT'">In transit</span>
+                                        <span th:case="'PLANNED'">Planned</span>
+                                        <span th:case="'DELIVERED'">Delivered</span>
+                                        <span th:case="*" th:text="${shipment.status}"></span>
+                                    </span>
                                 </span>
                             </td>
                             <td class="text-end">

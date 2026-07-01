@@ -81,8 +81,13 @@
                             <td th:text="${order.dateCreated != null ? order.dateCreated : '-'}"></td>
                             <td>
                                 <span class="badge"
-                                      th:classappend="${order.status == 'COMPLETED'} ? ' text-bg-success' : (${order.status == 'VALIDATED'} ? ' text-bg-warning' : ' text-bg-secondary')">
-                                    <span th:text="${order.status == 'VALIDATED' ? 'Validated' : (order.status == 'COMPLETED' ? 'Completed' : 'Created')}"></span>
+                                      th:classappend="${order.status?.name() == 'COMPLETED'} ? ' text-bg-success' : (${order.status?.name() == 'VALIDATED'} ? ' text-bg-warning' : (${order.status?.name() == 'CANCELLED'} ? ' text-bg-danger' : ' text-bg-secondary'))">
+                                    <span th:switch="${order.status?.name()}">
+                                        <span th:case="'VALIDATED'">Validated</span>
+                                        <span th:case="'COMPLETED'">Completed</span>
+                                        <span th:case="'CANCELLED'">Cancelled</span>
+                                        <span th:case="*">Created</span>
+                                    </span>
                                 </span>
                             </td>
                             <td class="text-end">
