@@ -69,10 +69,12 @@
 			<artifactId>postgresql</artifactId>
 		</dependency>
 
-		<!-- Flyway: versioned database migrations (schema is owned by Flyway) -->
+		<!-- Flyway: versioned database migrations (schema is owned by Flyway).
+		     In Spring Boot 4 the Flyway auto-configuration lives in the dedicated
+		     spring-boot-flyway module; flyway-core alone does not auto-run. -->
 		<dependency>
-			<groupId>org.flywaydb</groupId>
-			<artifactId>flyway-core</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-flyway</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.flywaydb</groupId>
