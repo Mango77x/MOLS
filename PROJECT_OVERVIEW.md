@@ -349,15 +349,26 @@ src/main/resources/
 
 ### Continuous Integration (GitHub Actions)
 
-- Workflow file: `.github/workflows/ci.yml`
-- Triggers: `push` and `pull_request` on `main`
-- Runner: `ubuntu-latest`
-- Java setup: Temurin JDK 21
-- Build checks:
-   - `./mvnw clean compile -B`
-   - `./mvnw test -B`
-- CI database: PostgreSQL 17 service container (`logistics_db`, `logistics_user`)
+- **`ci.yml`** — on every push/PR to `main`: `./mvnw verify -B` runs the full
+  suite (unit + Testcontainers integration tests — no DB service container
+  needed), enforces the JaCoCo line-coverage floor, and publishes the
+  CycloneDX SBOM and coverage report as artifacts.
+- **`codeql.yml`** — CodeQL static security analysis (push/PR + weekly).
+- **`security-scan.yml`** — OWASP Dependency-Check against the NVD
+  (weekly + manual dispatch, fails on CVSS ≥ 7). Supports an optional
+  `NVD_API_KEY` secret for faster feed downloads.
+- **`dependabot.yml`** — weekly dependency update PRs (Maven + Actions).
 - CI optimization: Maven dependency caching (`~/.m2`)
+
+### Test suite layout
+
+- **Unit / slice tests** (`@WebMvcTest`, Mockito) — controllers and services
+  in isolation.
+- **Integration tests** (`src/test/java/.../integration`) — boot the full
+  application against a disposable PostgreSQL (Testcontainers,
+  `@ServiceConnection`, singleton container). They cover the end-to-end
+  fulfillment flow, the role authorization matrix, login lockout, audit
+  immutability, and concurrent stock adjustments (optimistic locking).
 
 ## Implementation Notes
 
@@ -456,7 +467,7 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 
 **Next steps (practical)**:
 
-- Add integration tests around auth + role restrictions
 - Decide whether shipments should support partial fulfillment (would require shipment line items)
+- API pagination/filtering, then split the monolithic UI controller
 
 **Last updated**: 2026-07-01

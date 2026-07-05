@@ -11,20 +11,25 @@
 	<groupId>com.mls.logistics</groupId>
 	<artifactId>logistics</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>logistics</name>
-	<description>Demo project for Spring Boot</description>
-	<url/>
+	<name>MOLS</name>
+	<description>Military-Oriented Logistics System — stock, orders, shipments and an append-only movement audit trail</description>
+	<url>https://github.com/Mango77x/MOLS</url>
 	<licenses>
-		<license/>
+		<license>
+			<name>MIT License</name>
+			<url>https://opensource.org/licenses/MIT</url>
+		</license>
 	</licenses>
 	<developers>
-		<developer/>
+		<developer>
+			<name>Antoine Gizpa</name>
+			<url>https://github.com/Mango77x</url>
+		</developer>
 	</developers>
 	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
+		<connection>scm:git:https://github.com/Mango77x/MOLS.git</connection>
+		<developerConnection>scm:git:git@github.com:Mango77x/MOLS.git</developerConnection>
+		<url>https://github.com/Mango77x/MOLS</url>
 	</scm>
 	<properties>
 		<java.version>21</java.version>
@@ -149,6 +154,43 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<!-- Testcontainers: real PostgreSQL for integration tests. The
+		     spring-boot-testcontainers module provides @ServiceConnection so the
+		     container's datasource is wired automatically (no manual URL props). -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-testcontainers</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>testcontainers-junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>testcontainers-postgresql</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Spring Boot 4 modularization: TestRestTemplate (spring-boot-resttestclient)
+		     builds on RestTemplateBuilder, which lives in the separate
+		     spring-boot-restclient module — required at test runtime. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-restclient</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Apache HttpClient 5: TestRestTemplate picks it up automatically and
+		     gains PATCH support (the JDK's default client cannot send PATCH),
+		     needed to exercise /api/stocks/{id}/adjust in integration tests. -->
+		<dependency>
+			<groupId>org.apache.httpcomponents.client5</groupId>
+			<artifactId>httpclient5</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -156,6 +198,74 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+
+			<!-- Code coverage: instruments the test run and generates the report
+			     during `verify`. The check goal enforces a minimum line coverage so
+			     coverage regressions fail the build (and CI). -->
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.13</version>
+				<executions>
+					<execution>
+						<id>prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>check</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<rule>
+									<element>BUNDLE</element>
+									<limits>
+										<!-- Ratchet: current coverage is ~42% (the monolithic UI
+										     controller is untested). Raise this floor as the UI
+										     layer gets refactored and covered — never lower it. -->
+										<limit>
+											<counter>LINE</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.40</minimum>
+										</limit>
+									</limits>
+								</rule>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- Supply-chain transparency: generates a CycloneDX SBOM
+			     (target/sbom.json) listing every dependency, published as a CI
+			     artifact for vulnerability tracking and compliance review. -->
+			<plugin>
+				<groupId>org.cyclonedx</groupId>
+				<artifactId>cyclonedx-maven-plugin</artifactId>
+				<version>2.9.1</version>
+				<configuration>
+					<outputName>sbom</outputName>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>makeAggregateBom</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

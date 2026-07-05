@@ -1,0 +1,22 @@
+# ================================================
+# Dependabot: automated dependency update PRs
+#
+# Complements the weekly OWASP Dependency-Check scan — Dependabot opens
+# PRs proactively when new (or patched) versions are published, including
+# security advisories from the GitHub Advisory Database.
+# ================================================
+
+version: 2
+updates:
+  - package-ecosystem: "maven"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"

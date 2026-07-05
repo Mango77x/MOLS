@@ -1,6 +1,11 @@
 # ================================================
 # MOLS CI Pipeline
 # Runs on every push and pull request to main
+#
+# The test suite includes Testcontainers-based integration tests, which
+# start their own disposable PostgreSQL — no service container needed.
+# `verify` also enforces the JaCoCo coverage floor and generates the
+# CycloneDX SBOM, both published as build artifacts.
 # ================================================
 
 name: CI
@@ -15,25 +20,6 @@ jobs:
   build-and-test:
     name: Build and Test
     runs-on: ubuntu-latest
-
-    # -----------------------------------------------
-    # PostgreSQL service container
-    # Tests that require DB will use this instance
-    # -----------------------------------------------
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          POSTGRES_DB: logistics_db
-          POSTGRES_USER: logistics_user
-          POSTGRES_PASSWORD: logistics123
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
 
@@ -61,17 +47,21 @@ jobs:
       - name: Make mvnw executable
         run: chmod +x mvnw
 
-      # Step 5: Compile the project
-      - name: Build with Maven
-        run: ./mvnw clean compile -B
+      # Step 5: Full verification — compile, unit + integration tests
+      # (Testcontainers), JaCoCo coverage gate, package, SBOM generation.
+      - name: Build, test and verify
+        run: ./mvnw verify -B
 
-      # Step 6: Run all tests
-      - name: Run tests
-        run: ./mvnw test -B
-        env:
-          # Point tests at the CI PostgreSQL service container. The JWT signing
-          # key and other test values come from src/test/resources, so no secret
-          # is committed here. Schema is created by Flyway; Hibernate validates.
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/logistics_db
-          SPRING_DATASOURCE_USERNAME: logistics_user
-          SPRING_DATASOURCE_PASSWORD: logistics123
+      # Step 6: Publish the SBOM (supply-chain transparency)
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: target/classes/META-INF/sbom/application.cdx.json
+
+      # Step 7: Publish the coverage report
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: target/site/jacoco/
