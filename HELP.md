@@ -52,10 +52,13 @@ Admin-only:
 
 - POST /api/auth/register (no public self-signup)
 
-Protected endpoint policy:
+Protected endpoint policy (aligned with the UI role model):
 
 - GET /api/** requires authenticated token (ADMIN / OPERATOR / AUDITOR)
-- POST/PUT/PATCH/DELETE /api/** requires ADMIN
+- POST/PUT/PATCH on /api/orders/**, /api/order-items/**, /api/shipments/**
+  requires ADMIN or OPERATOR (DELETE /api/order-items/** too — removing a
+  line item is part of editing an order)
+- Deleting whole orders/shipments and every other write requires ADMIN
 
 JWT settings (read from the environment, see `.env.example`):
 

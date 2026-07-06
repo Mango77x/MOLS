@@ -48,6 +48,56 @@ class SecurityRolesIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void operator_CanManageOrdersAndShipments_ButNotDeleteThem() {
+        String admin = createUserAndLogin("admin-ops-seed", Role.ADMIN);
+        String operator = createUserAndLogin("operator-ops", Role.OPERATOR);
+        long unitId = seedUnit(admin);
+
+        // OPERATOR creates and edits orders (parity with the UI role model)
+        var created = restTemplate.postForEntity("/api/orders",
+                jsonEntity(orderBody(unitId, "CREATED"), operator), String.class);
+        assertThat(created.getStatusCode().value()).isEqualTo(201);
+        long orderId = readJson(created.getBody()).get("id").asLong();
+
+        assertThat(restTemplate.exchange("/api/orders/" + orderId, HttpMethod.PUT,
+                jsonEntity("{\"status\":\"VALIDATED\"}", operator),
+                String.class).getStatusCode().value()).isEqualTo(200);
+
+        // ...but deleting a whole order remains ADMIN-only
+        assertThat(restTemplate.exchange("/api/orders/" + orderId, HttpMethod.DELETE,
+                jsonEntity(null, operator), String.class).getStatusCode().value()).isEqualTo(403);
+
+        // Master data stays out of reach for OPERATOR
+        assertThat(restTemplate.postForEntity("/api/warehouses",
+                jsonEntity(WAREHOUSE_BODY, operator), String.class).getStatusCode().value()).isEqualTo(403);
+    }
+
+    @Test
+    void auditor_CannotWriteOrdersOrShipments() {
+        String admin = createUserAndLogin("admin-auditor-seed", Role.ADMIN);
+        String auditor = createUserAndLogin("auditor-ops", Role.AUDITOR);
+        long unitId = seedUnit(admin);
+
+        assertThat(restTemplate.postForEntity("/api/orders",
+                jsonEntity(orderBody(unitId, "CREATED"), auditor), String.class)
+                .getStatusCode().value()).isEqualTo(403);
+        assertThat(restTemplate.postForEntity("/api/shipments",
+                jsonEntity("{}", auditor), String.class).getStatusCode().value()).isEqualTo(403);
+    }
+
+    /** Seeds a unit through the API (as ADMIN) and returns its id. */
+    private long seedUnit(String adminToken) {
+        var response = restTemplate.postForEntity("/api/units",
+                jsonEntity("{\"name\":\"Ops Unit\",\"location\":\"Zaragoza\"}", adminToken), String.class);
+        assertThat(response.getStatusCode().value()).isEqualTo(201);
+        return readJson(response.getBody()).get("id").asLong();
+    }
+
+    private static String orderBody(long unitId, String status) {
+        return "{\"unitId\":" + unitId + ",\"dateCreated\":\"2026-07-06\",\"status\":\"" + status + "\"}";
+    }
+
+    @Test
     void admin_CanWrite_AndRegisterUsers() {
         String admin = createUserAndLogin("admin-matrix", Role.ADMIN);
 

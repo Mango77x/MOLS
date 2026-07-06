@@ -146,9 +146,13 @@ Implementation notes:
     - JWT configuration is provided via environment variables (see `.env.example`):
        - `SECURITY_JWT_SECRET_KEY` (required, no committed default)
        - `SECURITY_JWT_EXPIRATION_MS` (optional)
-    - Authorization model:
+    - Authorization model (aligned with the UI role model):
        - `GET /api/**` requires authenticated token (ADMIN / OPERATOR / AUDITOR)
-       - `POST/PUT/PATCH/DELETE /api/**` requires role `ADMIN`
+       - `POST/PUT/PATCH` on `/api/orders/**`, `/api/order-items/**`,
+         `/api/shipments/**` requires `ADMIN` or `OPERATOR`; `DELETE
+         /api/order-items/**` too (removing a line item is part of editing an
+         order, mirroring the UI's inline item removal)
+       - Deleting whole orders/shipments and every other write requires `ADMIN`
        - Anything not explicitly matched is denied (`denyAll` fallback)
 - **Brute-force protection**: after `SECURITY_LOCKOUT_MAX_ATTEMPTS` (default 5)
   consecutive failed logins a username is locked for
