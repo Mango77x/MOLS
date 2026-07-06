@@ -4,8 +4,9 @@ Short operational guide for local development and validation.
 
 ## Prerequisites
 
-- Java 21+
-- PostgreSQL running locally
+- Java 21+ (Maven is not needed — the wrapper `mvnw`/`mvnw.cmd` is included)
+- PostgreSQL running locally (or use Docker Compose, which brings its own)
+- Docker, for the Testcontainers integration tests (`./mvnw.cmd verify`)
 - Database and credentials expected by default:
 	- DB: logistics_db
 	- User: logistics_user
@@ -99,26 +100,31 @@ WHERE username = 'admin';
 
 ## Run Tests
 
-Full suite:
+Full suite (unit + Testcontainers integration tests — requires a running
+Docker daemon):
 
 ```powershell
-./mvnw.cmd test
+./mvnw.cmd verify
 ```
 
-Current verified local status: 124 tests passing.
+`verify` is what CI runs: it also enforces the JaCoCo line-coverage floor
+and generates the CycloneDX SBOM. To run only the unit/slice tests without
+Docker, exclude the integration package:
 
-## CI Pipeline
+```powershell
+./mvnw.cmd test "-Dtest=!com.mls.logistics.integration.*"
+```
 
-GitHub Actions workflow:
+## CI Pipelines
 
-- .github/workflows/ci.yml
+GitHub Actions workflows:
 
-Triggers and checks:
-
-- Runs on push and pull_request to main
-- Executes:
-	- ./mvnw clean compile -B
-	- ./mvnw test -B
+- .github/workflows/ci.yml — on push/PR to main: `./mvnw verify -B`
+  (full test suite, JaCoCo coverage gate), publishes the SBOM and the
+  coverage report as artifacts
+- .github/workflows/codeql.yml — CodeQL static security analysis
+- .github/workflows/security-scan.yml — weekly OWASP Dependency-Check
+- .github/dependabot.yml — weekly dependency update PRs
 
 ## Useful References
 
