@@ -13,6 +13,8 @@ import com.mls.logistics.exception.InsufficientStockException;
 import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.ShipmentRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -82,6 +84,16 @@ public class ShipmentService {
      */
     public List<Shipment> getAllShipments(Sort sort) {
         return shipmentRepository.findAll(sort);
+    }
+
+    /**
+     * Retrieves a page of shipments.
+     *
+     * @param pageable pagination configuration
+     * @return page of shipments
+     */
+    public Page<Shipment> getAllShipments(Pageable pageable) {
+        return shipmentRepository.findAll(pageable);
     }
 
     /**

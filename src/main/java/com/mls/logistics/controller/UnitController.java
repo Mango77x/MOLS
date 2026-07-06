@@ -7,6 +7,10 @@ import com.mls.logistics.dto.response.UnitResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.UnitService;
 import jakarta.validation.Valid;
+import com.mls.logistics.dto.request.PageQuery;
+import com.mls.logistics.dto.response.PageResponse;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +22,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * REST controller exposing Unit-related API endpoints.
@@ -41,26 +46,47 @@ public class UnitController {
         this.unitService = unitService;
     }
 
+    /** Fields clients may sort by on the list endpoint. */
+    private static final Set<String> SORTABLE_FIELDS = Set.of("id", "name", "location");
+
     /**
-     * Retrieves all units.
+     * Retrieves all units, optionally paginated.
      *
      * GET /api/units
      *
-     * @return list of units
+     * Without query parameters the full list is returned (original contract).
+     * Passing any of page/size/sort switches the response to a
+     * {@link PageResponse} envelope.
+     *
+     * @return list of units, or a page of units when paginated
      */
     @Operation(
         summary = "List all units",
-        description = "Returns a list of all registered units in the system"
+        description = "Returns all registered units. Pass page/size/sort to receive a paginated envelope instead of the plain list."
     )
-    @ApiResponse(responseCode = "200", description = "Units retrieved successfully")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Units retrieved successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid pagination or sort parameters")
+    })
     @GetMapping
-    public ResponseEntity<List<UnitResponse>> getAllUnits() {
-        List<UnitResponse> units = unitService
-                .getAllUnits()
-                .stream()
-                .map(UnitResponse::from)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(units);
+    public ResponseEntity<?> getAllUnits(
+            @Parameter(description = "Zero-based page index (enables pagination)", example = "0")
+            @RequestParam(required = false) Integer page,
+            @Parameter(description = "Page size, 1-100 (enables pagination)", example = "20")
+            @RequestParam(required = false) Integer size,
+            @Parameter(description = "Sort as 'field' or 'field,desc' (enables pagination)", example = "name,asc")
+            @RequestParam(required = false) String sort) {
+        if (page == null && size == null && sort == null) {
+            List<UnitResponse> units = unitService
+                    .getAllUnits()
+                    .stream()
+                    .map(UnitResponse::from)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(units);
+        }
+        Pageable pageable = PageQuery.toPageable(page, size, sort, SORTABLE_FIELDS, Sort.by("id"));
+        return ResponseEntity.ok(PageResponse.from(
+                unitService.getAllUnits(pageable), UnitResponse::from));
     }
 
     /**

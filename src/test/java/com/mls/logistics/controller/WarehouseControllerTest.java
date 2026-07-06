@@ -15,7 +15,13 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -71,6 +77,50 @@ class WarehouseControllerTest {
                 .andExpect(jsonPath("$[0].name").value("Test Warehouse"));
 
         verify(warehouseService, times(1)).getAllWarehouses();
+    }
+
+    @Test
+    @WithMockUser
+    void getAllWarehouses_WithPagination_ShouldReturnPageEnvelope() throws Exception {
+        // Given — 11 matching rows, page of 5
+        when(warehouseService.getAllWarehouses(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(testWarehouse),
+                        PageRequest.of(0, 5, Sort.by("name")), 11));
+
+        // When & Then
+        mockMvc.perform(get("/api/warehouses")
+                        .param("page", "0")
+                        .param("size", "5")
+                        .param("sort", "name,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].name").value("Test Warehouse"))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(5))
+                .andExpect(jsonPath("$.totalElements").value(11))
+                .andExpect(jsonPath("$.totalPages").value(3));
+
+        verify(warehouseService, times(1)).getAllWarehouses(any(Pageable.class));
+        verify(warehouseService, never()).getAllWarehouses();
+    }
+
+    @Test
+    @WithMockUser
+    void getAllWarehouses_WithUnknownSortField_ShouldReturn400() throws Exception {
+        // Sort fields are whitelisted — arbitrary property paths must be rejected
+        mockMvc.perform(get("/api/warehouses").param("sort", "stockItems.quantity"))
+                .andExpect(status().isBadRequest());
+
+        verify(warehouseService, never()).getAllWarehouses(any(Pageable.class));
+    }
+
+    @Test
+    @WithMockUser
+    void getAllWarehouses_WithExcessivePageSize_ShouldReturn400() throws Exception {
+        mockMvc.perform(get("/api/warehouses").param("size", "1000"))
+                .andExpect(status().isBadRequest());
+
+        verify(warehouseService, never()).getAllWarehouses(any(Pageable.class));
     }
 
     @Test

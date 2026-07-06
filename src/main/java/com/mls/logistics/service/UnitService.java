@@ -5,6 +5,8 @@ import com.mls.logistics.dto.request.CreateUnitRequest;
 import com.mls.logistics.dto.request.UpdateUnitRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.UnitRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +43,13 @@ public class UnitService {
 
     public List<Unit> getAllUnits(Sort sort) {
         return unitRepository.findAll(sort);
+    }
+
+    /**
+     * Retrieves a page of units.
+     */
+    public Page<Unit> getAllUnits(Pageable pageable) {
+        return unitRepository.findAll(pageable);
     }
 
     /**

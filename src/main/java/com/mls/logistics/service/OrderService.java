@@ -9,6 +9,8 @@ import com.mls.logistics.dto.request.UpdateOrderRequest;
 import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.OrderRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,6 +65,13 @@ public class OrderService {
 
     public List<Order> getAllOrders(Sort sort) {
         return orderRepository.findAll(sort);
+    }
+
+    /**
+     * Retrieves a page of orders.
+     */
+    public Page<Order> getAllOrders(Pageable pageable) {
+        return orderRepository.findAll(pageable);
     }
 
     /**

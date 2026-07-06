@@ -6,6 +6,8 @@ import com.mls.logistics.dto.request.CreateVehicleRequest;
 import com.mls.logistics.dto.request.UpdateVehicleRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.VehicleRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +44,13 @@ public class VehicleService {
 
     public List<Vehicle> getAllVehicles(Sort sort) {
         return vehicleRepository.findAll(sort);
+    }
+
+    /**
+     * Retrieves a page of vehicles.
+     */
+    public Page<Vehicle> getAllVehicles(Pageable pageable) {
+        return vehicleRepository.findAll(pageable);
     }
 
     /**

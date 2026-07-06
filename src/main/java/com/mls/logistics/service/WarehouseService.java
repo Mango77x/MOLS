@@ -4,6 +4,8 @@ import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.UpdateWarehouseRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.WarehouseRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import com.mls.logistics.dto.request.CreateWarehouseRequest;
@@ -41,6 +43,13 @@ public class WarehouseService {
 
     public List<Warehouse> getAllWarehouses(Sort sort) {
         return warehouseRepository.findAll(sort);
+    }
+
+    /**
+     * Retrieves a page of warehouses.
+     */
+    public Page<Warehouse> getAllWarehouses(Pageable pageable) {
+        return warehouseRepository.findAll(pageable);
     }
 
     /**

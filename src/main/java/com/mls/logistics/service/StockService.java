@@ -12,6 +12,8 @@ import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.MovementRepository;
 import com.mls.logistics.repository.StockRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,6 +68,13 @@ public class StockService {
 
     public List<Stock> getAllStocks(Sort sort) {
         return stockRepository.findAll(sort);
+    }
+
+    /**
+     * Retrieves a page of stock records.
+     */
+    public Page<Stock> getAllStocks(Pageable pageable) {
+        return stockRepository.findAll(pageable);
     }
 
     /**

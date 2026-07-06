@@ -2,6 +2,8 @@ package com.mls.logistics.service;
 
 import com.mls.logistics.domain.Movement;
 import com.mls.logistics.repository.MovementRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +50,13 @@ public class MovementService {
      */
     public List<Movement> getAllMovements(Sort sort) {
         return movementRepository.findAll(sort);
+    }
+
+    /**
+     * Retrieves a page of movements.
+     */
+    public Page<Movement> getAllMovements(Pageable pageable) {
+        return movementRepository.findAll(pageable);
     }
 
     /**
