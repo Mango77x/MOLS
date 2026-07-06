@@ -4,8 +4,10 @@
 #
 # The test suite includes Testcontainers-based integration tests, which
 # start their own disposable PostgreSQL — no service container needed.
-# `verify` also enforces the JaCoCo coverage floor and generates the
-# CycloneDX SBOM, both published as build artifacts.
+# `verify` also lints, tests and builds the React frontend (via the
+# frontend-maven-plugin, which installs its own pinned Node), enforces
+# the JaCoCo coverage floor and generates the CycloneDX SBOM, both
+# published as build artifacts.
 # ================================================
 
 name: CI
@@ -42,6 +44,14 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
+
+      # Step 3b: Cache the npm download cache used by the frontend build
+      - name: Cache npm packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-npm
 
       # Step 4: Make mvnw executable (required on Linux)
       - name: Make mvnw executable

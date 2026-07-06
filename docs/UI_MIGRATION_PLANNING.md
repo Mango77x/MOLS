@@ -59,11 +59,11 @@ Estimates follow the plan's ~21-day budget, re-sequenced so backend prerequisite
 
 ### Sprint 1 — Scaffold + auth + shell (2–3 days)
 
-- [ ] `npm create vite@latest frontend -- --template react-ts`; Tailwind, React Router, Zustand, Axios (interceptors for 401 → redirect)
-- [ ] Design tokens: military-green palette, status colors (green/yellow/red), 8px grid, dark/light theme
-- [ ] App shell: sidebar/topbar layout, protected routes, login flow against the cookie-based auth, role context (hide ADMIN-only nav for OPERATOR/AUDITOR)
-- [ ] Maven/CI integration (D2): `mvn package` produces a jar containing the SPA; CI lints/tests/builds the frontend
-- Exit criteria: `docker compose up` serves the React shell with working login/logout
+- [x] `npm create vite@latest frontend -- --template react-ts`; Tailwind 4, React Router, Zustand, Axios (401 interceptor drops the session → login)
+- [x] Design tokens: military-green palette, status colors (green/yellow/red), dark/light theme (class-based)
+- [x] App shell: sidebar/topbar layout, protected routes, login flow against the cookie-based auth (plus new `GET /api/auth/me` for session restore), role-aware nav (ADMIN-only entries hidden and route-guarded)
+- [x] Maven/CI integration (D2): `mvn package` builds the SPA (frontend-maven-plugin, pinned Node) into the jar at `static/app`, served at `/app` with SPA fallback (`SpaWebConfig`); CI lints/tests/builds the frontend inside `mvnw verify`; `-Dskip.frontend=true` for backend-only loops
+- Exit criteria: `docker compose up` serves the React shell with working login/logout — verified against the packaged jar
 
 ### Sprint 2 — Dashboard (3 days)
 

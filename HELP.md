@@ -7,6 +7,10 @@ Short operational guide for local development and validation.
 - Java 21+ (Maven is not needed — the wrapper `mvnw`/`mvnw.cmd` is included)
 - PostgreSQL running locally (or use Docker Compose, which brings its own)
 - Docker, for the Testcontainers integration tests (`./mvnw.cmd verify`)
+- Node.js is NOT required for building: the Maven build downloads its own
+  pinned Node to lint/test/build the React frontend. Install Node 22+ only
+  if you want the frontend dev server (`npm run dev` in `frontend/`).
+  Backend-only build loops can skip the frontend with `-Dskip.frontend=true`.
 - Database and credentials expected by default:
 	- DB: logistics_db
 	- User: logistics_user
@@ -42,6 +46,16 @@ UI:
 
 - UI entry: http://localhost:8080/ui
 - Login page: http://localhost:8080/ui/login
+- New React interface: http://localhost:8080/app (served from the jar;
+  requires a build without `-Dskip.frontend=true`)
+
+Frontend dev loop (optional, needs local Node 22+):
+
+```powershell
+cd frontend
+npm install
+npm run dev     # Vite dev server, proxies /api to localhost:8080
+```
 
 ## Authentication and Authorization (JWT)
 

@@ -58,8 +58,9 @@ Para detalles técnicos y arquitectura, consulta [PROJECT_OVERVIEW.md](PROJECT_O
 - Flyway (versioned database migrations)
 - Testcontainers (end-to-end integration tests on a real PostgreSQL)
 - CI: GitHub Actions with JaCoCo coverage gate, CodeQL, OWASP Dependency-Check, CycloneDX SBOM and Dependabot
-- Spring Security (JWT for API + session login for UI)
-- Thymeleaf + Bootstrap 5.3
+- Spring Security (JWT for API — header or HttpOnly cookie — + session login for UI)
+- React 19 + TypeScript + Vite + Tailwind 4 (new SPA at `/app`, incremental migration)
+- Thymeleaf + Bootstrap 5.3 (current admin UI at `/ui`)
 - OpenAPI/Swagger (springdoc)
 - Docker + Docker Compose
 
@@ -70,6 +71,7 @@ Para detalles técnicos y arquitectura, consulta [PROJECT_OVERVIEW.md](PROJECT_O
 With the application running:
 
 - UI dashboard: http://localhost:8080/ui
+- New React interface (incremental migration): http://localhost:8080/app
 - First-run setup: http://localhost:8080/ui/setup
 - Swagger UI: http://localhost:8080/swagger-ui.html
 
