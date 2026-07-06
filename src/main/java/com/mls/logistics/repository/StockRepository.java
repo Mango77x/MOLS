@@ -2,6 +2,7 @@ package com.mls.logistics.repository;
 
 import com.mls.logistics.domain.Stock;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
 import java.util.Optional;
@@ -9,7 +10,8 @@ import java.util.Optional;
 /**
  * Repository for accessing Stock data from the database.
  */
-public interface StockRepository extends JpaRepository<Stock, Long> {
+public interface StockRepository
+        extends JpaRepository<Stock, Long>, JpaSpecificationExecutor<Stock> {
 
     /**
      * Finds the stock record for a specific resource in a specific warehouse.

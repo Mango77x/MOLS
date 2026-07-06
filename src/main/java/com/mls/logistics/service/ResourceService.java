@@ -5,10 +5,14 @@ import com.mls.logistics.dto.request.CreateResourceRequest;
 import com.mls.logistics.dto.request.UpdateResourceRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.ResourceRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,6 +45,32 @@ public class ResourceService {
 
     public List<Resource> getAllResources(Sort sort) {
         return resourceRepository.findAll(sort);
+    }
+
+    /**
+     * Retrieves a page of resources.
+     */
+    public Page<Resource> getAllResources(Pageable pageable) {
+        return resourceRepository.findAll(pageable);
+    }
+
+    /**
+     * Retrieves a page of resources matching the optional filters.
+     *
+     * @param name case-insensitive name fragment; ignored when null/blank
+     * @param type exact type (case-insensitive); ignored when null/blank
+     */
+    public Page<Resource> searchResources(String name, String type, Pageable pageable) {
+        List<Specification<Resource>> filters = new ArrayList<>();
+        if (name != null && !name.isBlank()) {
+            String pattern = "%" + name.trim().toLowerCase() + "%";
+            filters.add((root, query, cb) -> cb.like(cb.lower(root.get("name")), pattern));
+        }
+        if (type != null && !type.isBlank()) {
+            String value = type.trim().toLowerCase();
+            filters.add((root, query, cb) -> cb.equal(cb.lower(root.get("type")), value));
+        }
+        return resourceRepository.findAll(Specification.allOf(filters), pageable);
     }
 
     /**

@@ -2,6 +2,8 @@ package com.mls.logistics.repository;
 
 import com.mls.logistics.domain.OrderItem;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import java.util.Collection;
@@ -32,4 +34,9 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      * Finds all items belonging to a list of orders.
      */
     List<OrderItem> findByOrderIdIn(Collection<Long> orderIds, Sort sort);
+
+    /**
+     * Finds a page of items belonging to a specific order.
+     */
+    Page<OrderItem> findByOrderId(Long orderId, Pageable pageable);
 }

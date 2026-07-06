@@ -80,11 +80,4 @@ class StockConcurrencyIntegrationTest extends AbstractIntegrationTest {
         }
     }
 
-    private long postForId(String path, String body, String token) {
-        var response = restTemplate.postForEntity(path, jsonEntity(body, token), String.class);
-        assertThat(response.getStatusCode().value())
-                .as("POST %s -> %s", path, response.getBody())
-                .isEqualTo(201);
-        return readJson(response.getBody()).get("id").asLong();
-    }
 }

@@ -4,8 +4,9 @@ Short operational guide for local development and validation.
 
 ## Prerequisites
 
-- Java 21+
-- PostgreSQL running locally
+- Java 21+ (Maven is not needed — the wrapper `mvnw`/`mvnw.cmd` is included)
+- PostgreSQL running locally (or use Docker Compose, which brings its own)
+- Docker, for the Testcontainers integration tests (`./mvnw.cmd verify`)
 - Database and credentials expected by default:
 	- DB: logistics_db
 	- User: logistics_user
@@ -47,20 +48,29 @@ UI:
 Public endpoints:
 
 - POST /api/auth/login
+- POST /api/auth/logout (clears the auth cookie)
 
 Admin-only:
 
 - POST /api/auth/register (no public self-signup)
 
-Protected endpoint policy:
+Browser clients: login also sets the JWT in an HttpOnly, SameSite=Strict
+cookie scoped to /api, and the API accepts the token from the Authorization
+header or that cookie. Set `SECURITY_JWT_COOKIE_SECURE=true` behind HTTPS.
+
+Protected endpoint policy (aligned with the UI role model):
 
 - GET /api/** requires authenticated token (ADMIN / OPERATOR / AUDITOR)
-- POST/PUT/PATCH/DELETE /api/** requires ADMIN
+- POST/PUT/PATCH on /api/orders/**, /api/order-items/**, /api/shipments/**
+  requires ADMIN or OPERATOR (DELETE /api/order-items/** too — removing a
+  line item is part of editing an order)
+- Deleting whole orders/shipments and every other write requires ADMIN
 
 JWT settings (read from the environment, see `.env.example`):
 
 - `SECURITY_JWT_SECRET_KEY` (required, no committed default)
 - `SECURITY_JWT_EXPIRATION_MS` (optional, default 24h)
+- `SECURITY_JWT_COOKIE_SECURE` (optional, default false; true behind HTTPS)
 
 ## UI Login (Session)
 
@@ -96,26 +106,31 @@ WHERE username = 'admin';
 
 ## Run Tests
 
-Full suite:
+Full suite (unit + Testcontainers integration tests — requires a running
+Docker daemon):
 
 ```powershell
-./mvnw.cmd test
+./mvnw.cmd verify
 ```
 
-Current verified local status: 124 tests passing.
+`verify` is what CI runs: it also enforces the JaCoCo line-coverage floor
+and generates the CycloneDX SBOM. To run only the unit/slice tests without
+Docker, exclude the integration package:
 
-## CI Pipeline
+```powershell
+./mvnw.cmd test "-Dtest=!com.mls.logistics.integration.*"
+```
 
-GitHub Actions workflow:
+## CI Pipelines
 
-- .github/workflows/ci.yml
+GitHub Actions workflows:
 
-Triggers and checks:
-
-- Runs on push and pull_request to main
-- Executes:
-	- ./mvnw clean compile -B
-	- ./mvnw test -B
+- .github/workflows/ci.yml — on push/PR to main: `./mvnw verify -B`
+  (full test suite, JaCoCo coverage gate), publishes the SBOM and the
+  coverage report as artifacts
+- .github/workflows/codeql.yml — CodeQL static security analysis
+- .github/workflows/security-scan.yml — weekly OWASP Dependency-Check
+- .github/dependabot.yml — weekly dependency update PRs
 
 ## Useful References
 

@@ -5,10 +5,14 @@ import com.mls.logistics.dto.request.CreateUnitRequest;
 import com.mls.logistics.dto.request.UpdateUnitRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.UnitRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,6 +48,27 @@ public class UnitService {
     }
 
     /**
+     * Retrieves a page of units.
+     */
+    public Page<Unit> getAllUnits(Pageable pageable) {
+        return unitRepository.findAll(pageable);
+    }
+
+    /**
+     * Retrieves a page of units matching the optional filters.
+     *
+     * @param name case-insensitive name fragment; ignored when null/blank
+     */
+    public Page<Unit> searchUnits(String name, Pageable pageable) {
+        List<Specification<Unit>> filters = new ArrayList<>();
+        if (name != null && !name.isBlank()) {
+            String pattern = "%" + name.trim().toLowerCase() + "%";
+            filters.add((root, query, cb) -> cb.like(cb.lower(root.get("name")), pattern));
+        }
+        return unitRepository.findAll(Specification.allOf(filters), pageable);
+    }
+
+    /**
      * Retrieves a unit by its identifier.
      */
     public Optional<Unit> getUnitById(Long id) {
@@ -74,6 +99,8 @@ public class UnitService {
         Unit unit = new Unit();
         unit.setName(request.getName());
         unit.setLocation(request.getLocation());
+        unit.setLatitude(request.getLatitude());
+        unit.setLongitude(request.getLongitude());
         return unitRepository.save(unit);
     }
 
@@ -98,6 +125,12 @@ public class UnitService {
         }
         if (request.getLocation() != null) {
             unit.setLocation(request.getLocation());
+        }
+        if (request.getLatitude() != null) {
+            unit.setLatitude(request.getLatitude());
+        }
+        if (request.getLongitude() != null) {
+            unit.setLongitude(request.getLongitude());
         }
 
         return unitRepository.save(unit);

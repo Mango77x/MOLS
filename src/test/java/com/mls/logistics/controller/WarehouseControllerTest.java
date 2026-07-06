@@ -15,11 +15,18 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -71,6 +78,66 @@ class WarehouseControllerTest {
                 .andExpect(jsonPath("$[0].name").value("Test Warehouse"));
 
         verify(warehouseService, times(1)).getAllWarehouses();
+    }
+
+    @Test
+    @WithMockUser
+    void getAllWarehouses_WithPagination_ShouldReturnPageEnvelope() throws Exception {
+        // Given — 11 matching rows, page of 5
+        when(warehouseService.searchWarehouses(any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(testWarehouse),
+                        PageRequest.of(0, 5, Sort.by("name")), 11));
+
+        // When & Then
+        mockMvc.perform(get("/api/warehouses")
+                        .param("page", "0")
+                        .param("size", "5")
+                        .param("sort", "name,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].name").value("Test Warehouse"))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(5))
+                .andExpect(jsonPath("$.totalElements").value(11))
+                .andExpect(jsonPath("$.totalPages").value(3));
+
+        verify(warehouseService, times(1)).searchWarehouses(any(), any(Pageable.class));
+        verify(warehouseService, never()).getAllWarehouses();
+    }
+
+    @Test
+    @WithMockUser
+    void getAllWarehouses_WithNameFilter_PassesItToTheService() throws Exception {
+        // Given
+        when(warehouseService.searchWarehouses(any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(testWarehouse)));
+
+        // When & Then — a filter alone also switches to the paginated envelope
+        mockMvc.perform(get("/api/warehouses").param("name", "central"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)));
+
+        verify(warehouseService, times(1)).searchWarehouses(eq("central"), any(Pageable.class));
+        verify(warehouseService, never()).getAllWarehouses();
+    }
+
+    @Test
+    @WithMockUser
+    void getAllWarehouses_WithUnknownSortField_ShouldReturn400() throws Exception {
+        // Sort fields are whitelisted — arbitrary property paths must be rejected
+        mockMvc.perform(get("/api/warehouses").param("sort", "stockItems.quantity"))
+                .andExpect(status().isBadRequest());
+
+        verify(warehouseService, never()).searchWarehouses(any(), any(Pageable.class));
+    }
+
+    @Test
+    @WithMockUser
+    void getAllWarehouses_WithExcessivePageSize_ShouldReturn400() throws Exception {
+        mockMvc.perform(get("/api/warehouses").param("size", "1000"))
+                .andExpect(status().isBadRequest());
+
+        verify(warehouseService, never()).searchWarehouses(any(), any(Pageable.class));
     }
 
     @Test
@@ -128,6 +195,35 @@ class WarehouseControllerTest {
         mockMvc.perform(post("/api/warehouses")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+
+        verify(warehouseService, never()).createWarehouse(any(CreateWarehouseRequest.class));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void createWarehouse_WithCoordinates_ReturnsThem() throws Exception {
+        // Given
+        testWarehouse.setLatitude(40.4168);
+        testWarehouse.setLongitude(-3.7038);
+        when(warehouseService.createWarehouse(any(CreateWarehouseRequest.class))).thenReturn(testWarehouse);
+
+        // When & Then
+        mockMvc.perform(post("/api/warehouses")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Geo Depot\",\"location\":\"Madrid\",\"latitude\":40.4168,\"longitude\":-3.7038}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.latitude").value(40.4168))
+                .andExpect(jsonPath("$.longitude").value(-3.7038));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void createWarehouse_WithOutOfRangeLatitude_ShouldReturn400() throws Exception {
+        // Latitude must stay within [-90, 90]
+        mockMvc.perform(post("/api/warehouses")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Geo Depot\",\"location\":\"Madrid\",\"latitude\":91.0}"))
                 .andExpect(status().isBadRequest());
 
         verify(warehouseService, never()).createWarehouse(any(CreateWarehouseRequest.class));

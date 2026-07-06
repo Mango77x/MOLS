@@ -1,10 +1,12 @@
 package com.mls.logistics.security.filter;
 
+import com.mls.logistics.security.config.JwtProperties;
 import com.mls.logistics.security.service.AppUserService;
 import com.mls.logistics.security.service.JwtService;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
@@ -23,8 +25,9 @@ import java.io.IOException;
  * JWT authentication filter.
  *
  * Intercepts every HTTP request exactly once.
- * Extracts the JWT from the Authorization header,
- * validates it, and sets the authentication in the SecurityContext
+ * Extracts the JWT from the Authorization header (API clients) or, when the
+ * header is absent, from the HttpOnly auth cookie (browser clients such as
+ * the SPA), validates it, and sets the authentication in the SecurityContext
  * so Spring Security knows the request is authenticated.
  *
  * Flow:
@@ -47,15 +50,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
+        final String headerToken = extractHeaderToken(request);
+        final String jwt = headerToken != null ? headerToken : extractCookieToken(request);
 
-        // Skip filter if no Authorization header or not a Bearer token
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        // Skip filter if the request carries no token at all
+        if (jwt == null) {
             filterChain.doFilter(request, response);
             return;
         }
-
-        final String jwt = authHeader.substring(7); // Remove "Bearer " prefix
 
         try {
             final String username = jwtService.extractUsername(jwt);
@@ -83,15 +85,50 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         } catch (JwtException | IllegalArgumentException | AuthenticationException ex) {
             // Expired, malformed, tampered, or otherwise unusable token —
             // or a user that no longer resolves (unknown / temporarily
-            // locked account). Fail fast with a clean 401 instead of letting
-            // the exception propagate (which would surface as a 500 with a
-            // stack trace, since filter exceptions bypass @RestControllerAdvice).
+            // locked account).
             SecurityContextHolder.clearContext();
-            writeUnauthorized(response);
-            return;
+            if (headerToken != null) {
+                // The client explicitly presented credentials: fail fast with
+                // a clean 401 instead of letting the exception propagate
+                // (which would surface as a 500, since filter exceptions
+                // bypass @RestControllerAdvice).
+                writeUnauthorized(response);
+                return;
+            }
+            // Cookie tokens are sent implicitly by the browser: treat an
+            // unusable one as anonymous so the user can still reach
+            // /api/auth/login and start a fresh session (an expired cookie
+            // must never lock the user out of logging in again).
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * Extracts the Bearer token from the Authorization header (API clients).
+     */
+    private String extractHeaderToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+        return null;
+    }
+
+    /**
+     * Extracts the JWT from the HttpOnly auth cookie (browser clients).
+     */
+    private String extractCookieToken(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (JwtProperties.AUTH_COOKIE.equals(cookie.getName())
+                        && cookie.getValue() != null && !cookie.getValue().isBlank()) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
     }
 
     /**

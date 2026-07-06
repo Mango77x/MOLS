@@ -7,6 +7,10 @@ import com.mls.logistics.dto.response.OrderResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.OrderService;
 import jakarta.validation.Valid;
+import com.mls.logistics.dto.request.PageQuery;
+import com.mls.logistics.dto.response.PageResponse;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +22,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * REST controller exposing Order-related API endpoints.
@@ -41,26 +46,52 @@ public class OrderController {
         this.orderService = orderService;
     }
 
+    /** Fields clients may sort by on the list endpoint. */
+    private static final Set<String> SORTABLE_FIELDS = Set.of("id", "dateCreated", "status");
+
     /**
-     * Retrieves all orders.
+     * Retrieves all orders, optionally paginated.
      *
      * GET /api/orders
      *
-     * @return list of orders
+     * Without query parameters the full list is returned (original contract).
+     * Passing any of page/size/sort or a filter switches the response to a
+     * {@link PageResponse} envelope.
+     *
+     * @return list of orders, or a page of orders when paginated
      */
     @Operation(
         summary = "List all orders",
-        description = "Returns a list of all registered orders in the system"
+        description = "Returns all registered orders. Pass page/size/sort to receive a paginated envelope instead of the plain list."
     )
-    @ApiResponse(responseCode = "200", description = "Orders retrieved successfully")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Orders retrieved successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid pagination or sort parameters")
+    })
     @GetMapping
-    public ResponseEntity<List<OrderResponse>> getAllOrders() {
-        List<OrderResponse> orders = orderService
-                .getAllOrders()
-                .stream()
-                .map(OrderResponse::from)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(orders);
+    public ResponseEntity<?> getAllOrders(
+            @Parameter(description = "Zero-based page index (enables pagination)", example = "0")
+            @RequestParam(required = false) Integer page,
+            @Parameter(description = "Page size, 1-100 (enables pagination)", example = "20")
+            @RequestParam(required = false) Integer size,
+            @Parameter(description = "Sort as 'field' or 'field,desc' (enables pagination)", example = "dateCreated,desc")
+            @RequestParam(required = false) String sort,
+            @Parameter(description = "Filter: order status", example = "CREATED")
+            @RequestParam(required = false) String status,
+            @Parameter(description = "Filter: requesting unit identifier", example = "1")
+            @RequestParam(required = false) Long unitId) {
+        if (page == null && size == null && sort == null
+                && status == null && unitId == null) {
+            List<OrderResponse> orders = orderService
+                    .getAllOrders()
+                    .stream()
+                    .map(OrderResponse::from)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(orders);
+        }
+        Pageable pageable = PageQuery.toPageable(page, size, sort, SORTABLE_FIELDS, Sort.by("id"));
+        return ResponseEntity.ok(PageResponse.from(
+                orderService.searchOrders(status, unitId, pageable), OrderResponse::from));
     }
 
     /**

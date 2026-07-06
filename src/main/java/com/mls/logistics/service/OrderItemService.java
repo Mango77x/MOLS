@@ -11,6 +11,8 @@ import com.mls.logistics.exception.InsufficientStockException;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import java.util.List;
@@ -44,6 +46,25 @@ public class OrderItemService {
      */
     public List<OrderItem> getAllOrderItems() {
         return orderItemRepository.findAll();
+    }
+
+    /**
+     * Retrieves a page of order items.
+     */
+    public Page<OrderItem> getAllOrderItems(Pageable pageable) {
+        return orderItemRepository.findAll(pageable);
+    }
+
+    /**
+     * Retrieves a page of order items matching the optional filters.
+     *
+     * @param orderId restrict to one order; ignored when null
+     */
+    public Page<OrderItem> searchOrderItems(Long orderId, Pageable pageable) {
+        if (orderId == null) {
+            return orderItemRepository.findAll(pageable);
+        }
+        return orderItemRepository.findByOrderId(orderId, pageable);
     }
 
     /**

@@ -14,11 +14,19 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -78,6 +86,26 @@ class MovementControllerTest {
                 .andExpect(jsonPath("$[0].quantity").value(5));
 
         verify(movementService, times(1)).getAllMovements();
+    }
+
+    @Test
+    @WithMockUser
+    void getAllMovements_WithPagination_DefaultsToNewestFirst() throws Exception {
+        // Given
+        when(movementService.searchMovements(any(), any(), any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(testMovement)));
+
+        // When & Then — enabling pagination without a sort orders by dateTime desc
+        mockMvc.perform(get("/api/movements").param("page", "0"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].type").value("ENTRY"));
+
+        ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+        verify(movementService).searchMovements(any(), any(), any(), pageable.capture());
+        Sort.Order order = pageable.getValue().getSort().getOrderFor("dateTime");
+        assertThat(order).isNotNull();
+        assertThat(order.getDirection()).isEqualTo(Sort.Direction.DESC);
     }
 
     @Test

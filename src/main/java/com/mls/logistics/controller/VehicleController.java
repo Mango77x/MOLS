@@ -7,6 +7,10 @@ import com.mls.logistics.dto.response.VehicleResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.VehicleService;
 import jakarta.validation.Valid;
+import com.mls.logistics.dto.request.PageQuery;
+import com.mls.logistics.dto.response.PageResponse;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +22,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * REST controller exposing Vehicle-related API endpoints.
@@ -41,26 +46,51 @@ public class VehicleController {
         this.vehicleService = vehicleService;
     }
 
+    /** Fields clients may sort by on the list endpoint. */
+    private static final Set<String> SORTABLE_FIELDS = Set.of("id", "type", "capacity", "status");
+
     /**
-     * Retrieves all vehicles.
+     * Retrieves all vehicles, optionally paginated.
      *
      * GET /api/vehicles
      *
-     * @return list of vehicles
+     * Without query parameters the full list is returned (original contract).
+     * Passing any of page/size/sort or a filter switches the response to a
+     * {@link PageResponse} envelope.
+     *
+     * @return list of vehicles, or a page of vehicles when paginated
      */
     @Operation(
         summary = "List all vehicles",
-        description = "Returns a list of all registered vehicles in the system"
+        description = "Returns all registered vehicles. Pass page/size/sort to receive a paginated envelope instead of the plain list."
     )
-    @ApiResponse(responseCode = "200", description = "Vehicles retrieved successfully")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Vehicles retrieved successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid pagination or sort parameters")
+    })
     @GetMapping
-    public ResponseEntity<List<VehicleResponse>> getAllVehicles() {
-        List<VehicleResponse> vehicles = vehicleService
-                .getAllVehicles()
-                .stream()
-                .map(VehicleResponse::from)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(vehicles);
+    public ResponseEntity<?> getAllVehicles(
+            @Parameter(description = "Zero-based page index (enables pagination)", example = "0")
+            @RequestParam(required = false) Integer page,
+            @Parameter(description = "Page size, 1-100 (enables pagination)", example = "20")
+            @RequestParam(required = false) Integer size,
+            @Parameter(description = "Sort as 'field' or 'field,desc' (enables pagination)", example = "status,asc")
+            @RequestParam(required = false) String sort,
+            @Parameter(description = "Filter: exact type (case-insensitive)", example = "LAND")
+            @RequestParam(required = false) String type,
+            @Parameter(description = "Filter: vehicle status", example = "AVAILABLE")
+            @RequestParam(required = false) String status) {
+        if (page == null && size == null && sort == null && type == null && status == null) {
+            List<VehicleResponse> vehicles = vehicleService
+                    .getAllVehicles()
+                    .stream()
+                    .map(VehicleResponse::from)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(vehicles);
+        }
+        Pageable pageable = PageQuery.toPageable(page, size, sort, SORTABLE_FIELDS, Sort.by("id"));
+        return ResponseEntity.ok(PageResponse.from(
+                vehicleService.searchVehicles(type, status, pageable), VehicleResponse::from));
     }
 
     /**

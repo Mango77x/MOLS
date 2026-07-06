@@ -62,6 +62,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                 // Registration is ADMIN-only (no public self-signup)
                 .requestMatchers(HttpMethod.POST, "/api/auth/register").hasRole("ADMIN")
+                // Logout only clears the HttpOnly auth cookie — safe to allow
+                .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
                 // Block any other auth endpoints by default
                 .requestMatchers("/api/auth/**").denyAll()
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**",
@@ -73,7 +75,23 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/**").hasRole("ADMIN")
                 // Read operations — any authenticated user (ADMIN/OPERATOR/AUDITOR)
                 .requestMatchers(HttpMethod.GET, "/api/**").authenticated()
-                // Write operations — ADMIN only
+                // Operational writes — parity with the UI role model: OPERATOR
+                // manages orders (incl. line items) and shipments. Deleting a
+                // whole order or shipment stays ADMIN-only (matches the UI's
+                // /ui/*/delete rules), but removing a line item is part of
+                // editing an order, so OPERATOR may do it.
+                .requestMatchers(HttpMethod.POST,
+                    "/api/orders/**", "/api/order-items/**", "/api/shipments/**")
+                    .hasAnyRole("ADMIN", "OPERATOR")
+                .requestMatchers(HttpMethod.PUT,
+                    "/api/orders/**", "/api/order-items/**", "/api/shipments/**")
+                    .hasAnyRole("ADMIN", "OPERATOR")
+                .requestMatchers(HttpMethod.PATCH,
+                    "/api/orders/**", "/api/order-items/**", "/api/shipments/**")
+                    .hasAnyRole("ADMIN", "OPERATOR")
+                .requestMatchers(HttpMethod.DELETE, "/api/order-items/**")
+                    .hasAnyRole("ADMIN", "OPERATOR")
+                // Remaining write operations — ADMIN only
                 .requestMatchers(HttpMethod.POST, "/api/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/api/**").hasRole("ADMIN")

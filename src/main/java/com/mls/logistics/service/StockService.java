@@ -12,11 +12,15 @@ import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.MovementRepository;
 import com.mls.logistics.repository.StockRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.LinkedHashMap;
@@ -66,6 +70,30 @@ public class StockService {
 
     public List<Stock> getAllStocks(Sort sort) {
         return stockRepository.findAll(sort);
+    }
+
+    /**
+     * Retrieves a page of stock records.
+     */
+    public Page<Stock> getAllStocks(Pageable pageable) {
+        return stockRepository.findAll(pageable);
+    }
+
+    /**
+     * Retrieves a page of stock records matching the optional filters.
+     *
+     * @param warehouseId restrict to one warehouse; ignored when null
+     * @param resourceId  restrict to one resource; ignored when null
+     */
+    public Page<Stock> searchStocks(Long warehouseId, Long resourceId, Pageable pageable) {
+        List<Specification<Stock>> filters = new ArrayList<>();
+        if (warehouseId != null) {
+            filters.add((root, query, cb) -> cb.equal(root.get("warehouse").get("id"), warehouseId));
+        }
+        if (resourceId != null) {
+            filters.add((root, query, cb) -> cb.equal(root.get("resource").get("id"), resourceId));
+        }
+        return stockRepository.findAll(Specification.allOf(filters), pageable);
     }
 
     /**

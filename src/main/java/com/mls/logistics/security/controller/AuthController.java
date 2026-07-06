@@ -1,6 +1,7 @@
 package com.mls.logistics.security.controller;
 
 import com.mls.logistics.exception.InvalidRequestException;
+import com.mls.logistics.security.config.JwtProperties;
 import com.mls.logistics.security.domain.AppUser;
 import com.mls.logistics.security.dto.AuthResponse;
 import com.mls.logistics.security.dto.LoginRequest;
@@ -12,8 +13,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+
+import java.time.Duration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -37,15 +42,18 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final JwtProperties jwtProperties;
 
     public AuthController(AppUserRepository appUserRepository,
                           PasswordEncoder passwordEncoder,
                           AuthenticationManager authenticationManager,
-                          JwtService jwtService) {
+                          JwtService jwtService,
+                          JwtProperties jwtProperties) {
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
+        this.jwtProperties = jwtProperties;
     }
 
     @Operation(summary = "Register a new user",
@@ -79,7 +87,9 @@ public class AuthController {
     }
 
     @Operation(summary = "Login",
-               description = "Authenticates user credentials and returns a JWT token")
+               description = "Authenticates user credentials and returns a JWT token. "
+                       + "The token is also set as an HttpOnly SameSite=Strict cookie "
+                       + "for browser clients, which never need to store it in script-accessible storage.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Login successful"),
         @ApiResponse(responseCode = "401", description = "Invalid credentials")
@@ -101,8 +111,10 @@ public class AuthController {
                     .findByUsername(userDetails.getUsername())
                     .orElseThrow();
 
-            return ResponseEntity.ok(
-                    new AuthResponse(token, user.getUsername(),
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.SET_COOKIE, authCookie(token,
+                            Duration.ofMillis(jwtProperties.getExpirationMs())).toString())
+                    .body(new AuthResponse(token, user.getUsername(),
                             user.getRole().name()));
 
         } catch (AuthenticationException e) {
@@ -110,5 +122,31 @@ public class AuthController {
             // lockouts. A single generic 401 avoids leaking which case it was.
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+    }
+
+    @Operation(summary = "Logout",
+               description = "Clears the HttpOnly auth cookie. Clients using the "
+                       + "Authorization header simply discard their token.")
+    @ApiResponse(responseCode = "204", description = "Auth cookie cleared")
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout() {
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.SET_COOKIE, authCookie("", Duration.ZERO).toString())
+                .build();
+    }
+
+    /**
+     * Builds the auth cookie: HttpOnly (no script access), SameSite=Strict
+     * (not sent on cross-site requests, the CSRF mitigation for the stateless
+     * API), scoped to /api, and Secure outside plain-HTTP local development.
+     */
+    private ResponseCookie authCookie(String token, Duration maxAge) {
+        return ResponseCookie.from(JwtProperties.AUTH_COOKIE, token)
+                .httpOnly(true)
+                .secure(jwtProperties.isCookieSecure())
+                .sameSite("Strict")
+                .path("/api")
+                .maxAge(maxAge)
+                .build();
     }
 }

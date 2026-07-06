@@ -6,10 +6,14 @@ import com.mls.logistics.dto.request.CreateVehicleRequest;
 import com.mls.logistics.dto.request.UpdateVehicleRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.VehicleRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,6 +46,32 @@ public class VehicleService {
 
     public List<Vehicle> getAllVehicles(Sort sort) {
         return vehicleRepository.findAll(sort);
+    }
+
+    /**
+     * Retrieves a page of vehicles.
+     */
+    public Page<Vehicle> getAllVehicles(Pageable pageable) {
+        return vehicleRepository.findAll(pageable);
+    }
+
+    /**
+     * Retrieves a page of vehicles matching the optional filters.
+     *
+     * @param type   exact type (case-insensitive); ignored when null/blank
+     * @param status vehicle status; ignored when null/blank
+     */
+    public Page<Vehicle> searchVehicles(String type, String status, Pageable pageable) {
+        List<Specification<Vehicle>> filters = new ArrayList<>();
+        if (type != null && !type.isBlank()) {
+            String value = type.trim().toLowerCase();
+            filters.add((root, query, cb) -> cb.equal(cb.lower(root.get("type")), value));
+        }
+        if (status != null && !status.isBlank()) {
+            VehicleStatus parsed = VehicleStatus.from(status);
+            filters.add((root, query, cb) -> cb.equal(root.get("status"), parsed));
+        }
+        return vehicleRepository.findAll(Specification.allOf(filters), pageable);
     }
 
     /**
