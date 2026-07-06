@@ -426,6 +426,12 @@ pagination, sort or enum filter values return HTTP 400.
 Additional stock operation:
 - `PATCH /api/stocks/{id}/adjust` — adjusts stock by delta and auto-creates movement audit record.
 
+Dashboard endpoint:
+- `GET /api/dashboard` — aggregated operational snapshot (KPIs, chart series,
+  low-stock/stale-order alerts, recent movements and the thresholds used),
+  assembled by `DashboardService` and readable by any authenticated role. This
+  is the API counterpart of the `/ui` dashboard for the React frontend.
+
 Authentication endpoints:
 - `POST /api/auth/register` — register user and return JWT
 - `POST /api/auth/login` — authenticate and return JWT
