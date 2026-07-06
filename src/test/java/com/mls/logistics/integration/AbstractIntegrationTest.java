@@ -14,8 +14,10 @@ import com.mls.logistics.security.domain.Role;
 import com.mls.logistics.security.repository.AppUserRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.resttestclient.TestRestTemplate;
@@ -56,6 +58,17 @@ public abstract class AbstractIntegrationTest {
         POSTGRES.start();
     }
 
+    /**
+     * Request factory without a client-side cookie store. The default
+     * HttpClient 5 client silently persists Set-Cookie responses (e.g. the
+     * auth cookie from /api/auth/login) and replays them on later requests,
+     * which leaks authentication across tests. Cookies in tests must always
+     * be sent explicitly via headers.
+     */
+    private static final HttpComponentsClientHttpRequestFactory NO_COOKIE_STORE_FACTORY =
+            new HttpComponentsClientHttpRequestFactory(
+                    HttpClients.custom().disableCookieManagement().build());
+
     @Autowired
     protected TestRestTemplate restTemplate;
 
@@ -91,6 +104,11 @@ public abstract class AbstractIntegrationTest {
      * starts from a known-empty state. (This is a test database — the
      * append-only audit rule applies to application behavior, not test setup.)
      */
+    @BeforeEach
+    void useCookieFreeHttpClient() {
+        restTemplate.getRestTemplate().setRequestFactory(NO_COOKIE_STORE_FACTORY);
+    }
+
     @BeforeEach
     void cleanDatabase() {
         movementRepository.deleteAll();

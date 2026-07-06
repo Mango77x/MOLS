@@ -48,10 +48,15 @@ UI:
 Public endpoints:
 
 - POST /api/auth/login
+- POST /api/auth/logout (clears the auth cookie)
 
 Admin-only:
 
 - POST /api/auth/register (no public self-signup)
+
+Browser clients: login also sets the JWT in an HttpOnly, SameSite=Strict
+cookie scoped to /api, and the API accepts the token from the Authorization
+header or that cookie. Set `SECURITY_JWT_COOKIE_SECURE=true` behind HTTPS.
 
 Protected endpoint policy (aligned with the UI role model):
 
@@ -65,6 +70,7 @@ JWT settings (read from the environment, see `.env.example`):
 
 - `SECURITY_JWT_SECRET_KEY` (required, no committed default)
 - `SECURITY_JWT_EXPIRATION_MS` (optional, default 24h)
+- `SECURITY_JWT_COOKIE_SECURE` (optional, default false; true behind HTTPS)
 
 ## UI Login (Session)
 

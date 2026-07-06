@@ -50,11 +50,11 @@ Estimates follow the plan's ~21-day budget, re-sequenced so backend prerequisite
 ### Sprint 0 — Backend prerequisites (4–5 days)
 > No React code yet. Everything here is independently valuable even if the migration stalls.
 
-- [ ] Align API role matrix with UI roles (orders/shipments writes for OPERATOR) + extend `SecurityRolesIntegrationTest`
-- [ ] Pagination + filtering on list endpoints (`Pageable`, spec-based filters; keep non-paged behavior for existing consumers or version the change)
-- [ ] `GET /api/dashboard` endpoint: extract aggregation logic out of `UiController` into a `DashboardService`, convert in-memory aggregations to SQL
-- [ ] Flyway `V3`: `latitude`/`longitude` (nullable `double precision`) on `warehouses` and `units`; entity + DTO + Bean Validation ranges; expose in existing Thymeleaf forms so data can be captured immediately
-- [ ] D1 implementation: cookie-capable `JwtAuthFilter` + login endpoint sets HttpOnly cookie
+- [x] Align API role matrix with UI roles (orders/shipments writes for OPERATOR) + extend `SecurityRolesIntegrationTest`
+- [x] Pagination + filtering on list endpoints (`Pageable`, spec-based filters; non-paged plain-array behavior kept for existing consumers)
+- [x] `GET /api/dashboard` endpoint: aggregation assembly extracted into a `DashboardService` (SQL-side aggregation of the remaining in-memory paths moves with the UiController refactor)
+- [x] Flyway `V3`: `latitude`/`longitude` (nullable `double precision`) on `warehouses` and `units`; entity + DTO + Bean Validation ranges; exposed in existing Thymeleaf forms so data can be captured immediately
+- [x] D1 implementation: cookie-capable `JwtAuthFilter` + login sets HttpOnly SameSite=Strict cookie, logout clears it
 - Exit criteria: all existing tests green, new integration tests for role matrix and pagination, JaCoCo floor holds
 
 ### Sprint 1 — Scaffold + auth + shell (2–3 days)

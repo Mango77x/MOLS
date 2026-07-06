@@ -62,6 +62,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                 // Registration is ADMIN-only (no public self-signup)
                 .requestMatchers(HttpMethod.POST, "/api/auth/register").hasRole("ADMIN")
+                // Logout only clears the HttpOnly auth cookie — safe to allow
+                .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
                 // Block any other auth endpoints by default
                 .requestMatchers("/api/auth/**").denyAll()
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**",

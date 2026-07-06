@@ -143,11 +143,19 @@ Implementation notes:
    - Master switch `SPRINGDOC_ENABLED` (default `true` for local dev;
      docker-compose sets it to `false` for a production-like posture)
 - **Security/JWT**:
-   - Public auth endpoint: `POST /api/auth/login`
+   - Public auth endpoints: `POST /api/auth/login`, `POST /api/auth/logout`
+     (logout only clears the auth cookie)
    - Admin-only: `POST /api/auth/register` (no public self-signup)
+   - Browser clients (the SPA): login also sets the JWT in an
+     `HttpOnly; SameSite=Strict; Path=/api` cookie, and `JwtAuthFilter`
+     accepts the token from the Authorization header or that cookie. The
+     token never needs to touch script-accessible storage (XSS hardening);
+     `SameSite=Strict` is the CSRF mitigation for the stateless API.
     - JWT configuration is provided via environment variables (see `.env.example`):
        - `SECURITY_JWT_SECRET_KEY` (required, no committed default)
        - `SECURITY_JWT_EXPIRATION_MS` (optional)
+       - `SECURITY_JWT_COOKIE_SECURE` (optional; set `true` behind HTTPS so
+         the auth cookie is `Secure`)
     - Authorization model (aligned with the UI role model):
        - `GET /api/**` requires authenticated token (ADMIN / OPERATOR / AUDITOR)
        - `POST/PUT/PATCH` on `/api/orders/**`, `/api/order-items/**`,

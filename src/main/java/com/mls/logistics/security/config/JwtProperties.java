@@ -6,6 +6,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class JwtProperties {
 
     /**
+     * Name of the HttpOnly cookie that can carry the JWT for browser
+     * clients (the SPA). API clients keep using the Authorization header.
+     */
+    public static final String AUTH_COOKIE = "MOLS_AUTH";
+
+    /**
      * Secret key used to sign JWT tokens.
      *
      * Note: JwtService currently expects this value to be Base64 encoded.
@@ -14,6 +20,12 @@ public class JwtProperties {
 
     /** Token expiration duration in milliseconds. */
     private long expirationMs;
+
+    /**
+     * Whether the auth cookie is flagged {@code Secure} (HTTPS-only).
+     * Keep {@code false} only for plain-HTTP local development.
+     */
+    private boolean cookieSecure;
 
     public String getSecretKey() {
         return secretKey;
@@ -29,5 +41,13 @@ public class JwtProperties {
 
     public void setExpirationMs(long expirationMs) {
         this.expirationMs = expirationMs;
+    }
+
+    public boolean isCookieSecure() {
+        return cookieSecure;
+    }
+
+    public void setCookieSecure(boolean cookieSecure) {
+        this.cookieSecure = cookieSecure;
     }
 }
