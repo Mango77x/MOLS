@@ -26,6 +26,7 @@ import java.util.Optional;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -83,7 +84,7 @@ class WarehouseControllerTest {
     @WithMockUser
     void getAllWarehouses_WithPagination_ShouldReturnPageEnvelope() throws Exception {
         // Given — 11 matching rows, page of 5
-        when(warehouseService.getAllWarehouses(any(Pageable.class)))
+        when(warehouseService.searchWarehouses(any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(testWarehouse),
                         PageRequest.of(0, 5, Sort.by("name")), 11));
 
@@ -100,7 +101,23 @@ class WarehouseControllerTest {
                 .andExpect(jsonPath("$.totalElements").value(11))
                 .andExpect(jsonPath("$.totalPages").value(3));
 
-        verify(warehouseService, times(1)).getAllWarehouses(any(Pageable.class));
+        verify(warehouseService, times(1)).searchWarehouses(any(), any(Pageable.class));
+        verify(warehouseService, never()).getAllWarehouses();
+    }
+
+    @Test
+    @WithMockUser
+    void getAllWarehouses_WithNameFilter_PassesItToTheService() throws Exception {
+        // Given
+        when(warehouseService.searchWarehouses(any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(testWarehouse)));
+
+        // When & Then — a filter alone also switches to the paginated envelope
+        mockMvc.perform(get("/api/warehouses").param("name", "central"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)));
+
+        verify(warehouseService, times(1)).searchWarehouses(eq("central"), any(Pageable.class));
         verify(warehouseService, never()).getAllWarehouses();
     }
 
@@ -111,7 +128,7 @@ class WarehouseControllerTest {
         mockMvc.perform(get("/api/warehouses").param("sort", "stockItems.quantity"))
                 .andExpect(status().isBadRequest());
 
-        verify(warehouseService, never()).getAllWarehouses(any(Pageable.class));
+        verify(warehouseService, never()).searchWarehouses(any(), any(Pageable.class));
     }
 
     @Test
@@ -120,7 +137,7 @@ class WarehouseControllerTest {
         mockMvc.perform(get("/api/warehouses").param("size", "1000"))
                 .andExpect(status().isBadRequest());
 
-        verify(warehouseService, never()).getAllWarehouses(any(Pageable.class));
+        verify(warehouseService, never()).searchWarehouses(any(), any(Pageable.class));
     }
 
     @Test

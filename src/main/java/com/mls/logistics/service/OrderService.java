@@ -12,11 +12,13 @@ import com.mls.logistics.repository.OrderRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -72,6 +74,24 @@ public class OrderService {
      */
     public Page<Order> getAllOrders(Pageable pageable) {
         return orderRepository.findAll(pageable);
+    }
+
+    /**
+     * Retrieves a page of orders matching the optional filters.
+     *
+     * @param status order status; ignored when null/blank
+     * @param unitId restrict to one requesting unit; ignored when null
+     */
+    public Page<Order> searchOrders(String status, Long unitId, Pageable pageable) {
+        List<Specification<Order>> filters = new ArrayList<>();
+        if (status != null && !status.isBlank()) {
+            OrderStatus parsed = OrderStatus.from(status);
+            filters.add((root, query, cb) -> cb.equal(root.get("status"), parsed));
+        }
+        if (unitId != null) {
+            filters.add((root, query, cb) -> cb.equal(root.get("unit").get("id"), unitId));
+        }
+        return orderRepository.findAll(Specification.allOf(filters), pageable);
     }
 
     /**

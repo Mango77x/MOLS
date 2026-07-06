@@ -2,6 +2,7 @@ package com.mls.logistics.repository;
 
 import com.mls.logistics.domain.Movement;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.EntityGraph;
 
@@ -11,7 +12,8 @@ import java.util.List;
 /**
  * Repository for accessing Movement data from the database.
  */
-public interface MovementRepository extends JpaRepository<Movement, Long> {
+public interface MovementRepository
+        extends JpaRepository<Movement, Long>, JpaSpecificationExecutor<Movement> {
     List<Movement> findByOrderId(Long orderId, Sort sort);
 
     List<Movement> findByShipmentId(Long shipmentId, Sort sort);

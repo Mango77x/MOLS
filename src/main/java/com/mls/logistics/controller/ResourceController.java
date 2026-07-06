@@ -55,7 +55,7 @@ public class ResourceController {
      * GET /api/resources
      *
      * Without query parameters the full list is returned (original contract).
-     * Passing any of page/size/sort switches the response to a
+     * Passing any of page/size/sort or a filter switches the response to a
      * {@link PageResponse} envelope.
      *
      * @return list of resources, or a page of resources when paginated
@@ -75,8 +75,12 @@ public class ResourceController {
             @Parameter(description = "Page size, 1-100 (enables pagination)", example = "20")
             @RequestParam(required = false) Integer size,
             @Parameter(description = "Sort as 'field' or 'field,desc' (enables pagination)", example = "name,asc")
-            @RequestParam(required = false) String sort) {
-        if (page == null && size == null && sort == null) {
+            @RequestParam(required = false) String sort,
+            @Parameter(description = "Filter: case-insensitive name fragment", example = "ration")
+            @RequestParam(required = false) String name,
+            @Parameter(description = "Filter: exact type (case-insensitive)", example = "SUPPLY")
+            @RequestParam(required = false) String type) {
+        if (page == null && size == null && sort == null && name == null && type == null) {
             List<ResourceResponse> resources = resourceService
                     .getAllResources()
                     .stream()
@@ -86,7 +90,7 @@ public class ResourceController {
         }
         Pageable pageable = PageQuery.toPageable(page, size, sort, SORTABLE_FIELDS, Sort.by("id"));
         return ResponseEntity.ok(PageResponse.from(
-                resourceService.getAllResources(pageable), ResourceResponse::from));
+                resourceService.searchResources(name, type, pageable), ResourceResponse::from));
     }
 
     /**

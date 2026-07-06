@@ -55,7 +55,7 @@ public class OrderItemController {
      * GET /api/order-items
      *
      * Without query parameters the full list is returned (original contract).
-     * Passing any of page/size/sort switches the response to a
+     * Passing any of page/size/sort or a filter switches the response to a
      * {@link PageResponse} envelope.
      *
      * @return list of order items, or a page of order items when paginated
@@ -75,8 +75,10 @@ public class OrderItemController {
             @Parameter(description = "Page size, 1-100 (enables pagination)", example = "20")
             @RequestParam(required = false) Integer size,
             @Parameter(description = "Sort as 'field' or 'field,desc' (enables pagination)", example = "quantity,desc")
-            @RequestParam(required = false) String sort) {
-        if (page == null && size == null && sort == null) {
+            @RequestParam(required = false) String sort,
+            @Parameter(description = "Filter: parent order identifier", example = "1")
+            @RequestParam(required = false) Long orderId) {
+        if (page == null && size == null && sort == null && orderId == null) {
             List<OrderItemResponse> orderItems = orderItemService
                     .getAllOrderItems()
                     .stream()
@@ -86,7 +88,7 @@ public class OrderItemController {
         }
         Pageable pageable = PageQuery.toPageable(page, size, sort, SORTABLE_FIELDS, Sort.by("id"));
         return ResponseEntity.ok(PageResponse.from(
-                orderItemService.getAllOrderItems(pageable), OrderItemResponse::from));
+                orderItemService.searchOrderItems(orderId, pageable), OrderItemResponse::from));
     }
 
     /**

@@ -92,7 +92,7 @@ class MovementControllerTest {
     @WithMockUser
     void getAllMovements_WithPagination_DefaultsToNewestFirst() throws Exception {
         // Given
-        when(movementService.getAllMovements(any(Pageable.class)))
+        when(movementService.searchMovements(any(), any(), any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(testMovement)));
 
         // When & Then — enabling pagination without a sort orders by dateTime desc
@@ -102,7 +102,7 @@ class MovementControllerTest {
                 .andExpect(jsonPath("$.content[0].type").value("ENTRY"));
 
         ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
-        verify(movementService).getAllMovements(pageable.capture());
+        verify(movementService).searchMovements(any(), any(), any(), pageable.capture());
         Sort.Order order = pageable.getValue().getSort().getOrderFor("dateTime");
         assertThat(order).isNotNull();
         assertThat(order.getDirection()).isEqualTo(Sort.Direction.DESC);

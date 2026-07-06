@@ -1,14 +1,17 @@
 package com.mls.logistics.service;
 
 import com.mls.logistics.domain.Movement;
+import com.mls.logistics.domain.MovementType;
 import com.mls.logistics.repository.MovementRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +60,29 @@ public class MovementService {
      */
     public Page<Movement> getAllMovements(Pageable pageable) {
         return movementRepository.findAll(pageable);
+    }
+
+    /**
+     * Retrieves a page of movements matching the optional filters.
+     *
+     * @param type       movement type (ENTRY/EXIT); ignored when null/blank
+     * @param orderId    restrict to one originating order; ignored when null
+     * @param shipmentId restrict to one originating shipment; ignored when null
+     */
+    public Page<Movement> searchMovements(String type, Long orderId, Long shipmentId,
+                                          Pageable pageable) {
+        List<Specification<Movement>> filters = new ArrayList<>();
+        if (type != null && !type.isBlank()) {
+            MovementType parsed = MovementType.from(type);
+            filters.add((root, query, cb) -> cb.equal(root.get("type"), parsed));
+        }
+        if (orderId != null) {
+            filters.add((root, query, cb) -> cb.equal(root.get("orderId"), orderId));
+        }
+        if (shipmentId != null) {
+            filters.add((root, query, cb) -> cb.equal(root.get("shipmentId"), shipmentId));
+        }
+        return movementRepository.findAll(Specification.allOf(filters), pageable);
     }
 
     /**

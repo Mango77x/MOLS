@@ -54,7 +54,7 @@ public class MovementController {
      * GET /api/movements
      *
      * Without query parameters the full list is returned (original contract).
-     * Passing any of page/size/sort switches the response to a
+     * Passing any of page/size/sort or a filter switches the response to a
      * {@link PageResponse} envelope; paginated results default to newest first.
      *
      * @return list of movement records, or a page of them when paginated
@@ -74,8 +74,15 @@ public class MovementController {
             @Parameter(description = "Page size, 1-100 (enables pagination)", example = "20")
             @RequestParam(required = false) Integer size,
             @Parameter(description = "Sort as 'field' or 'field,desc' (enables pagination)", example = "dateTime,desc")
-            @RequestParam(required = false) String sort) {
-        if (page == null && size == null && sort == null) {
+            @RequestParam(required = false) String sort,
+            @Parameter(description = "Filter: movement type", example = "ENTRY")
+            @RequestParam(required = false) String type,
+            @Parameter(description = "Filter: originating order identifier", example = "1")
+            @RequestParam(required = false) Long orderId,
+            @Parameter(description = "Filter: originating shipment identifier", example = "1")
+            @RequestParam(required = false) Long shipmentId) {
+        if (page == null && size == null && sort == null
+                && type == null && orderId == null && shipmentId == null) {
             List<MovementResponse> movements = movementService
                     .getAllMovements()
                     .stream()
@@ -86,7 +93,8 @@ public class MovementController {
         Pageable pageable = PageQuery.toPageable(page, size, sort, SORTABLE_FIELDS,
                 Sort.by(Sort.Direction.DESC, "dateTime"));
         return ResponseEntity.ok(PageResponse.from(
-                movementService.getAllMovements(pageable), MovementResponse::from));
+                movementService.searchMovements(type, orderId, shipmentId, pageable),
+                MovementResponse::from));
     }
 
     /**

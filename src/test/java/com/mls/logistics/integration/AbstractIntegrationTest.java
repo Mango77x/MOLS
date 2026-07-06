@@ -136,6 +136,27 @@ public abstract class AbstractIntegrationTest {
     }
 
     /**
+     * POSTs a JSON body, asserts 201 and returns the created entity's id.
+     */
+    protected long postForId(String path, String body, String token) {
+        var response = restTemplate.postForEntity(path, jsonEntity(body, token), String.class);
+        assertThat(response.getStatusCode().value())
+                .as("POST %s -> %s", path, response.getBody())
+                .isEqualTo(201);
+        return readJson(response.getBody()).get("id").asLong();
+    }
+
+    /**
+     * GETs a path, asserts 200 and returns the parsed JSON body.
+     */
+    protected JsonNode getJson(String path, String token) {
+        var response = restTemplate.exchange(path, org.springframework.http.HttpMethod.GET,
+                jsonEntity(null, token), String.class);
+        assertThat(response.getStatusCode().value()).as("GET %s", path).isEqualTo(200);
+        return readJson(response.getBody());
+    }
+
+    /**
      * Wraps a JSON body (may be null) with content-type and optional bearer token.
      */
     protected HttpEntity<String> jsonEntity(String body, String token) {

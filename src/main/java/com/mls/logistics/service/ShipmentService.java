@@ -16,9 +16,11 @@ import com.mls.logistics.repository.ShipmentRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -94,6 +96,24 @@ public class ShipmentService {
      */
     public Page<Shipment> getAllShipments(Pageable pageable) {
         return shipmentRepository.findAll(pageable);
+    }
+
+    /**
+     * Retrieves a page of shipments matching the optional filters.
+     *
+     * @param status  shipment status; ignored when null/blank
+     * @param orderId restrict to one order; ignored when null
+     */
+    public Page<Shipment> searchShipments(String status, Long orderId, Pageable pageable) {
+        List<Specification<Shipment>> filters = new ArrayList<>();
+        if (status != null && !status.isBlank()) {
+            ShipmentStatus parsed = ShipmentStatus.from(status);
+            filters.add((root, query, cb) -> cb.equal(root.get("status"), parsed));
+        }
+        if (orderId != null) {
+            filters.add((root, query, cb) -> cb.equal(root.get("order").get("id"), orderId));
+        }
+        return shipmentRepository.findAll(Specification.allOf(filters), pageable);
     }
 
     /**

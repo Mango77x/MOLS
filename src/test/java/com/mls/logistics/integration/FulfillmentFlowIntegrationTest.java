@@ -134,20 +134,6 @@ class FulfillmentFlowIntegrationTest extends AbstractIntegrationTest {
 
     // --- helpers ---
 
-    private long postForId(String path, String body, String token) {
-        var response = restTemplate.postForEntity(path, jsonEntity(body, token), String.class);
-        assertThat(response.getStatusCode().value())
-                .as("POST %s -> %s", path, response.getBody())
-                .isEqualTo(201);
-        return readJson(response.getBody()).get("id").asLong();
-    }
-
-    private JsonNode getJson(String path, String token) {
-        var response = restTemplate.exchange(path, HttpMethod.GET, jsonEntity(null, token), String.class);
-        assertThat(response.getStatusCode().value()).as("GET %s", path).isEqualTo(200);
-        return readJson(response.getBody());
-    }
-
     private JsonNode findByType(JsonNode movements, String type) {
         for (JsonNode movement : movements) {
             if (type.equals(movement.get("type").asText())) {

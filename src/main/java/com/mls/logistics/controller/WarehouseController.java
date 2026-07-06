@@ -56,7 +56,7 @@ public class WarehouseController {
      * GET /api/warehouses
      *
      * Without query parameters the full list is returned (original contract).
-     * Passing any of page/size/sort switches the response to a
+     * Passing any of page/size/sort or a filter switches the response to a
      * {@link PageResponse} envelope.
      *
      * @return list of warehouses, or a page of warehouses when paginated
@@ -76,8 +76,10 @@ public class WarehouseController {
             @Parameter(description = "Page size, 1-100 (enables pagination)", example = "20")
             @RequestParam(required = false) Integer size,
             @Parameter(description = "Sort as 'field' or 'field,desc' (enables pagination)", example = "name,asc")
-            @RequestParam(required = false) String sort) {
-        if (page == null && size == null && sort == null) {
+            @RequestParam(required = false) String sort,
+            @Parameter(description = "Filter: case-insensitive name fragment", example = "central")
+            @RequestParam(required = false) String name) {
+        if (page == null && size == null && sort == null && name == null) {
             List<WarehouseResponse> warehouses = warehouseService
                     .getAllWarehouses()
                     .stream()
@@ -87,7 +89,7 @@ public class WarehouseController {
         }
         Pageable pageable = PageQuery.toPageable(page, size, sort, SORTABLE_FIELDS, Sort.by("id"));
         return ResponseEntity.ok(PageResponse.from(
-                warehouseService.getAllWarehouses(pageable), WarehouseResponse::from));
+                warehouseService.searchWarehouses(name, pageable), WarehouseResponse::from));
     }
 
     /**

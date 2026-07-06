@@ -7,10 +7,12 @@ import com.mls.logistics.repository.WarehouseRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import com.mls.logistics.dto.request.CreateWarehouseRequest;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,6 +52,20 @@ public class WarehouseService {
      */
     public Page<Warehouse> getAllWarehouses(Pageable pageable) {
         return warehouseRepository.findAll(pageable);
+    }
+
+    /**
+     * Retrieves a page of warehouses matching the optional filters.
+     *
+     * @param name case-insensitive name fragment; ignored when null/blank
+     */
+    public Page<Warehouse> searchWarehouses(String name, Pageable pageable) {
+        List<Specification<Warehouse>> filters = new ArrayList<>();
+        if (name != null && !name.isBlank()) {
+            String pattern = "%" + name.trim().toLowerCase() + "%";
+            filters.add((root, query, cb) -> cb.like(cb.lower(root.get("name")), pattern));
+        }
+        return warehouseRepository.findAll(Specification.allOf(filters), pageable);
     }
 
     /**

@@ -55,7 +55,7 @@ public class ShipmentController {
      * GET /api/shipments
      *
      * Without query parameters the full list is returned (original contract).
-     * Passing any of page/size/sort switches the response to a
+     * Passing any of page/size/sort or a filter switches the response to a
      * {@link PageResponse} envelope.
      *
      * @return list of shipments, or a page of shipments when paginated
@@ -75,8 +75,13 @@ public class ShipmentController {
             @Parameter(description = "Page size, 1-100 (enables pagination)", example = "20")
             @RequestParam(required = false) Integer size,
             @Parameter(description = "Sort as 'field' or 'field,desc' (enables pagination)", example = "status,asc")
-            @RequestParam(required = false) String sort) {
-        if (page == null && size == null && sort == null) {
+            @RequestParam(required = false) String sort,
+            @Parameter(description = "Filter: shipment status", example = "IN_TRANSIT")
+            @RequestParam(required = false) String status,
+            @Parameter(description = "Filter: parent order identifier", example = "1")
+            @RequestParam(required = false) Long orderId) {
+        if (page == null && size == null && sort == null
+                && status == null && orderId == null) {
             List<ShipmentResponse> shipments = shipmentService
                     .getAllShipments()
                     .stream()
@@ -86,7 +91,7 @@ public class ShipmentController {
         }
         Pageable pageable = PageQuery.toPageable(page, size, sort, SORTABLE_FIELDS, Sort.by("id"));
         return ResponseEntity.ok(PageResponse.from(
-                shipmentService.getAllShipments(pageable), ShipmentResponse::from));
+                shipmentService.searchShipments(status, orderId, pageable), ShipmentResponse::from));
     }
 
     /**

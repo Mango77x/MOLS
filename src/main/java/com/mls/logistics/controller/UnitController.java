@@ -55,7 +55,7 @@ public class UnitController {
      * GET /api/units
      *
      * Without query parameters the full list is returned (original contract).
-     * Passing any of page/size/sort switches the response to a
+     * Passing any of page/size/sort or a filter switches the response to a
      * {@link PageResponse} envelope.
      *
      * @return list of units, or a page of units when paginated
@@ -75,8 +75,10 @@ public class UnitController {
             @Parameter(description = "Page size, 1-100 (enables pagination)", example = "20")
             @RequestParam(required = false) Integer size,
             @Parameter(description = "Sort as 'field' or 'field,desc' (enables pagination)", example = "name,asc")
-            @RequestParam(required = false) String sort) {
-        if (page == null && size == null && sort == null) {
+            @RequestParam(required = false) String sort,
+            @Parameter(description = "Filter: case-insensitive name fragment", example = "alpha")
+            @RequestParam(required = false) String name) {
+        if (page == null && size == null && sort == null && name == null) {
             List<UnitResponse> units = unitService
                     .getAllUnits()
                     .stream()
@@ -86,7 +88,7 @@ public class UnitController {
         }
         Pageable pageable = PageQuery.toPageable(page, size, sort, SORTABLE_FIELDS, Sort.by("id"));
         return ResponseEntity.ok(PageResponse.from(
-                unitService.getAllUnits(pageable), UnitResponse::from));
+                unitService.searchUnits(name, pageable), UnitResponse::from));
     }
 
     /**

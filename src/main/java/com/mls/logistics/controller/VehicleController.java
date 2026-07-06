@@ -55,7 +55,7 @@ public class VehicleController {
      * GET /api/vehicles
      *
      * Without query parameters the full list is returned (original contract).
-     * Passing any of page/size/sort switches the response to a
+     * Passing any of page/size/sort or a filter switches the response to a
      * {@link PageResponse} envelope.
      *
      * @return list of vehicles, or a page of vehicles when paginated
@@ -75,8 +75,12 @@ public class VehicleController {
             @Parameter(description = "Page size, 1-100 (enables pagination)", example = "20")
             @RequestParam(required = false) Integer size,
             @Parameter(description = "Sort as 'field' or 'field,desc' (enables pagination)", example = "status,asc")
-            @RequestParam(required = false) String sort) {
-        if (page == null && size == null && sort == null) {
+            @RequestParam(required = false) String sort,
+            @Parameter(description = "Filter: exact type (case-insensitive)", example = "LAND")
+            @RequestParam(required = false) String type,
+            @Parameter(description = "Filter: vehicle status", example = "AVAILABLE")
+            @RequestParam(required = false) String status) {
+        if (page == null && size == null && sort == null && type == null && status == null) {
             List<VehicleResponse> vehicles = vehicleService
                     .getAllVehicles()
                     .stream()
@@ -86,7 +90,7 @@ public class VehicleController {
         }
         Pageable pageable = PageQuery.toPageable(page, size, sort, SORTABLE_FIELDS, Sort.by("id"));
         return ResponseEntity.ok(PageResponse.from(
-                vehicleService.getAllVehicles(pageable), VehicleResponse::from));
+                vehicleService.searchVehicles(type, status, pageable), VehicleResponse::from));
     }
 
     /**

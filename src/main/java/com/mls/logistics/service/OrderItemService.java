@@ -56,6 +56,18 @@ public class OrderItemService {
     }
 
     /**
+     * Retrieves a page of order items matching the optional filters.
+     *
+     * @param orderId restrict to one order; ignored when null
+     */
+    public Page<OrderItem> searchOrderItems(Long orderId, Pageable pageable) {
+        if (orderId == null) {
+            return orderItemRepository.findAll(pageable);
+        }
+        return orderItemRepository.findByOrderId(orderId, pageable);
+    }
+
+    /**
      * Retrieves all items for a specific order.
      */
     public List<OrderItem> getOrderItemsByOrderId(Long orderId, Sort sort) {
