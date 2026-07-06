@@ -13,6 +13,8 @@ public class UnitResponse {
     private Long id;
     private String name;
     private String location;
+    private Double latitude;
+    private Double longitude;
 
     /**
      * Default constructor for serialization.
@@ -26,11 +28,16 @@ public class UnitResponse {
      * @param id unit identifier
      * @param name unit name
      * @param location unit location
+     * @param latitude optional geographic latitude
+     * @param longitude optional geographic longitude
      */
-    public UnitResponse(Long id, String name, String location) {
+    public UnitResponse(Long id, String name, String location,
+                        Double latitude, Double longitude) {
         this.id = id;
         this.name = name;
         this.location = location;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     /**
@@ -46,7 +53,9 @@ public class UnitResponse {
         return new UnitResponse(
                 unit.getId(),
                 unit.getName(),
-                unit.getLocation()
+                unit.getLocation(),
+                unit.getLatitude(),
+                unit.getLongitude()
         );
     }
 
@@ -74,5 +83,21 @@ public class UnitResponse {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
     }
 }

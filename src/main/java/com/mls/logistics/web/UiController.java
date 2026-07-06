@@ -707,6 +707,8 @@ public class UiController {
                 CreateWarehouseRequest form = new CreateWarehouseRequest();
                 form.setName(warehouse.getName());
                 form.setLocation(warehouse.getLocation());
+                form.setLatitude(warehouse.getLatitude());
+                form.setLongitude(warehouse.getLongitude());
                 model.addAttribute("warehouseForm", form);
             }
             model.addAttribute("warehouseId", id);
@@ -744,6 +746,8 @@ public class UiController {
             UpdateWarehouseRequest request = new UpdateWarehouseRequest();
             request.setName(form.getName());
             request.setLocation(form.getLocation());
+            request.setLatitude(form.getLatitude());
+            request.setLongitude(form.getLongitude());
 
             warehouseService.updateWarehouse(id, request);
             redirectAttributes.addFlashAttribute("successMessage", "Warehouse updated successfully.");
@@ -1817,6 +1821,8 @@ public class UiController {
                 CreateUnitRequest form = new CreateUnitRequest();
                 form.setName(unit.getName());
                 form.setLocation(unit.getLocation());
+                form.setLatitude(unit.getLatitude());
+                form.setLongitude(unit.getLongitude());
                 model.addAttribute("unitForm", form);
             }
             model.addAttribute("unitId", id);
@@ -1854,6 +1860,8 @@ public class UiController {
             UpdateUnitRequest request = new UpdateUnitRequest();
             request.setName(form.getName());
             request.setLocation(form.getLocation());
+            request.setLatitude(form.getLatitude());
+            request.setLongitude(form.getLongitude());
 
             unitService.updateUnit(id, request);
             redirectAttributes.addFlashAttribute("successMessage", "Unit updated successfully.");

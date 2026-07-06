@@ -21,6 +21,12 @@ public class Warehouse {
     /** Location of the warehouse */
     private String location;
 
+    /** Geographic latitude in decimal degrees (optional, for the logistics map) */
+    private Double latitude;
+
+    /** Geographic longitude in decimal degrees (optional, for the logistics map) */
+    private Double longitude;
+
     /** Stock items in this warehouse */
     @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL)
     private List<Stock> stockItems;
@@ -34,6 +40,12 @@ public class Warehouse {
 
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
+
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
 
     public List<Stock> getStockItems() { return stockItems; }
     public void setStockItems(List<Stock> stockItems) { this.stockItems = stockItems; }

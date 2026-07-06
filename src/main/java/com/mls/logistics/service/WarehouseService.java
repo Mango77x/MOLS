@@ -99,6 +99,8 @@ public class WarehouseService {
         Warehouse warehouse = new Warehouse();
         warehouse.setName(request.getName());
         warehouse.setLocation(request.getLocation());
+        warehouse.setLatitude(request.getLatitude());
+        warehouse.setLongitude(request.getLongitude());
         return warehouseRepository.save(warehouse);
     }
 
@@ -123,6 +125,12 @@ public class WarehouseService {
         }
         if (request.getLocation() != null) {
             warehouse.setLocation(request.getLocation());
+        }
+        if (request.getLatitude() != null) {
+            warehouse.setLatitude(request.getLatitude());
+        }
+        if (request.getLongitude() != null) {
+            warehouse.setLongitude(request.getLongitude());
         }
 
         return warehouseRepository.save(warehouse);

@@ -21,6 +21,12 @@ public class Unit {
     /** Physical location or description */
     private String location;
 
+    /** Geographic latitude in decimal degrees (optional, for the logistics map) */
+    private Double latitude;
+
+    /** Geographic longitude in decimal degrees (optional, for the logistics map) */
+    private Double longitude;
+
     /** Orders created by this unit */
     @OneToMany(mappedBy = "unit", cascade = CascadeType.ALL)
     private List<Order> orders;
@@ -34,6 +40,12 @@ public class Unit {
 
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
+
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
 
     public List<Order> getOrders() { return orders; }
     public void setOrders(List<Order> orders) { this.orders = orders; }

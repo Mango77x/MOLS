@@ -202,6 +202,35 @@ class WarehouseControllerTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
+    void createWarehouse_WithCoordinates_ReturnsThem() throws Exception {
+        // Given
+        testWarehouse.setLatitude(40.4168);
+        testWarehouse.setLongitude(-3.7038);
+        when(warehouseService.createWarehouse(any(CreateWarehouseRequest.class))).thenReturn(testWarehouse);
+
+        // When & Then
+        mockMvc.perform(post("/api/warehouses")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Geo Depot\",\"location\":\"Madrid\",\"latitude\":40.4168,\"longitude\":-3.7038}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.latitude").value(40.4168))
+                .andExpect(jsonPath("$.longitude").value(-3.7038));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void createWarehouse_WithOutOfRangeLatitude_ShouldReturn400() throws Exception {
+        // Latitude must stay within [-90, 90]
+        mockMvc.perform(post("/api/warehouses")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Geo Depot\",\"location\":\"Madrid\",\"latitude\":91.0}"))
+                .andExpect(status().isBadRequest());
+
+        verify(warehouseService, never()).createWarehouse(any(CreateWarehouseRequest.class));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteWarehouse_WhenExists_ShouldReturn204() throws Exception {
         // Given
         doNothing().when(warehouseService).deleteWarehouse(1L);

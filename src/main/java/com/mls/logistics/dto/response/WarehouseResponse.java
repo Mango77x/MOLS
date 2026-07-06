@@ -13,6 +13,8 @@ public class WarehouseResponse {
     private Long id;
     private String name;
     private String location;
+    private Double latitude;
+    private Double longitude;
 
     /**
      * Default constructor for serialization.
@@ -26,11 +28,16 @@ public class WarehouseResponse {
      * @param id warehouse identifier
      * @param name warehouse name
      * @param location warehouse location
+     * @param latitude optional geographic latitude
+     * @param longitude optional geographic longitude
      */
-    public WarehouseResponse(Long id, String name, String location) {
+    public WarehouseResponse(Long id, String name, String location,
+                             Double latitude, Double longitude) {
         this.id = id;
         this.name = name;
         this.location = location;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     /**
@@ -46,7 +53,9 @@ public class WarehouseResponse {
         return new WarehouseResponse(
                 warehouse.getId(),
                 warehouse.getName(),
-                warehouse.getLocation()
+                warehouse.getLocation(),
+                warehouse.getLatitude(),
+                warehouse.getLongitude()
         );
     }
 
@@ -74,5 +83,21 @@ public class WarehouseResponse {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
     }
 }

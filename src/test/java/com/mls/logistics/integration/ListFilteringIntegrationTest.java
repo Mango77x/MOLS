@@ -19,7 +19,7 @@ class ListFilteringIntegrationTest extends AbstractIntegrationTest {
 
         // --- Seed: two warehouses, one unit, two orders in different states ---
         long centralId = postForId("/api/warehouses",
-                "{\"name\":\"Central Depot\",\"location\":\"Madrid\"}", admin);
+                "{\"name\":\"Central Depot\",\"location\":\"Madrid\",\"latitude\":40.4168,\"longitude\":-3.7038}", admin);
         postForId("/api/warehouses",
                 "{\"name\":\"Forward Base\",\"location\":\"Burgos\"}", admin);
         long unitId = postForId("/api/units",
@@ -40,6 +40,11 @@ class ListFilteringIntegrationTest extends AbstractIntegrationTest {
                 jsonEntity(null, admin), String.class).getBody());
         assertThat(plain.isArray()).isTrue();
         assertThat(plain.size()).isEqualTo(2);
+
+        // --- Coordinates (V3) survive the roundtrip through the database ---
+        var central = getJson("/api/warehouses/" + centralId, admin);
+        assertThat(central.get("latitude").asDouble()).isEqualTo(40.4168);
+        assertThat(central.get("longitude").asDouble()).isEqualTo(-3.7038);
 
         // --- Pagination: envelope shape and page math ---
         var page = readJson(restTemplate.exchange("/api/warehouses?page=0&size=1&sort=name,asc",

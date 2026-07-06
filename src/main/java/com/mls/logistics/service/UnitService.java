@@ -99,6 +99,8 @@ public class UnitService {
         Unit unit = new Unit();
         unit.setName(request.getName());
         unit.setLocation(request.getLocation());
+        unit.setLatitude(request.getLatitude());
+        unit.setLongitude(request.getLongitude());
         return unitRepository.save(unit);
     }
 
@@ -123,6 +125,12 @@ public class UnitService {
         }
         if (request.getLocation() != null) {
             unit.setLocation(request.getLocation());
+        }
+        if (request.getLatitude() != null) {
+            unit.setLatitude(request.getLatitude());
+        }
+        if (request.getLongitude() != null) {
+            unit.setLongitude(request.getLongitude());
         }
 
         return unitRepository.save(unit);

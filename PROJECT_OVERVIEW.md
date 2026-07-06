@@ -132,6 +132,8 @@ Implementation notes:
   - `V2` — integrity hardening: status/quantity CHECKs, NOT NULLs,
     `UNIQUE (resource, warehouse)` on stocks, FK + audit-timeline indexes,
     `stocks.version` (optimistic locking) and `movements.created_by` (audit actor)
+  - `V3` — optional `latitude`/`longitude` on warehouses and units (range
+    CHECKs), groundwork for the logistics map in the React frontend
 - **SQL Logging**: off by default (`SPRING_JPA_SHOW_SQL=true` to enable locally)
 - **Port**: Application runs on `8080`
 - **OpenAPI/Swagger**:
@@ -260,8 +262,8 @@ WHERE username = 'admin';
 
 ## Key Domain Concepts
 
-- **`Unit`** — Organizational branch requesting resources (has location, name)
-- **`Warehouse`** — Physical storage location for resources (has location, name)
+- **`Unit`** — Organizational branch requesting resources (has location, name, optional coordinates)
+- **`Warehouse`** — Physical storage location for resources (has location, name, optional coordinates)
 - **`Resource`** — Item, part, or material (has type, criticality)
 - **`Stock`** — Quantity of a resource in a warehouse (links Resource ↔ Warehouse)
 - **`Order`** — Request placed by a Unit (has status, date)
