@@ -33,7 +33,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Cache Maven packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -41,7 +41,7 @@ jobs:
 
       # Cache the NVD database between runs so only deltas are downloaded
       - name: Cache Dependency-Check data
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.dependency-check-data
           key: ${{ runner.os }}-odc-${{ github.run_id }}
