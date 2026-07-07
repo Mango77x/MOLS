@@ -1,12 +1,16 @@
 package com.mls.logistics.security.controller;
 
+import com.mls.logistics.dto.response.UserResponse;
 import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.security.config.JwtProperties;
 import com.mls.logistics.security.domain.AppUser;
+import com.mls.logistics.security.domain.Role;
 import com.mls.logistics.security.dto.AuthResponse;
 import com.mls.logistics.security.dto.LoginRequest;
 import com.mls.logistics.security.dto.MeResponse;
 import com.mls.logistics.security.dto.RegisterRequest;
+import com.mls.logistics.security.dto.SetupRequest;
+import com.mls.logistics.security.dto.SetupStatusResponse;
 import com.mls.logistics.security.repository.AppUserRepository;
 import com.mls.logistics.security.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -56,6 +60,44 @@ public class AuthController {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.jwtProperties = jwtProperties;
+    }
+
+    @Operation(summary = "First-run setup status",
+               description = "Reports whether the application still needs its first-run setup "
+                       + "(no application users exist yet). Public — the SPA calls this before "
+                       + "showing the login page to decide whether to redirect to /setup instead.")
+    @ApiResponse(responseCode = "200", description = "Setup status returned")
+    @GetMapping("/setup-status")
+    public ResponseEntity<SetupStatusResponse> setupStatus() {
+        return ResponseEntity.ok(new SetupStatusResponse(appUserRepository.count() == 0));
+    }
+
+    @Operation(summary = "First-run setup",
+               description = "Creates the very first ADMIN user. Only works while the database "
+                       + "has zero application users — rejected once any user exists. Public, "
+                       + "since by definition no one can be authenticated yet at that point.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "First ADMIN user created successfully"),
+        @ApiResponse(responseCode = "400", description = "Setup already completed, or invalid data")
+    })
+    @PostMapping("/setup")
+    public ResponseEntity<UserResponse> setup(@Valid @RequestBody SetupRequest request) {
+        if (appUserRepository.count() > 0) {
+            throw new InvalidRequestException("Setup has already been completed.");
+        }
+
+        String normalizedUsername = request.getUsername().trim();
+        if (appUserRepository.existsByUsername(normalizedUsername)) {
+            throw new InvalidRequestException("Username already exists.");
+        }
+
+        AppUser user = new AppUser(
+                normalizedUsername,
+                passwordEncoder.encode(request.getPassword()),
+                Role.ADMIN);
+        appUserRepository.save(user);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.from(user));
     }
 
     @Operation(summary = "Register a new user",

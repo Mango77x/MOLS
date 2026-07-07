@@ -35,7 +35,7 @@ MOLS is a logistics app to manage warehouses, resources, stock, orders and shipm
 - Orders with items (create/edit, inline item management)
 - Shipments with fulfillment on delivery
 - Traceability views (Order/Shipment details show linked movements)
-- `/ui` dashboard with KPIs, charts (Chart.js), recent activity and alerts
+- Dashboard with KPIs, charts, a live logistics map, recent activity and alerts
 - First-run setup to create the initial admin user
 - Admin-only user management (roles, password reset, enable/disable)
 
@@ -58,9 +58,8 @@ Para detalles técnicos y arquitectura, consulta [PROJECT_OVERVIEW.md](PROJECT_O
 - Flyway (versioned database migrations)
 - Testcontainers (end-to-end integration tests on a real PostgreSQL)
 - CI: GitHub Actions with JaCoCo coverage gate, CodeQL, OWASP Dependency-Check, CycloneDX SBOM and Dependabot
-- Spring Security (JWT for API — header or HttpOnly cookie — + session login for UI)
-- React 19 + TypeScript + Vite + Tailwind 4 (new SPA at `/app`, incremental migration)
-- Thymeleaf + Bootstrap 5.3 (current admin UI at `/ui`)
+- Spring Security (JWT for API, delivered as an HttpOnly cookie for the browser SPA)
+- React 19 + TypeScript + Vite + Tailwind 4 (the SPA at `/app`)
 - OpenAPI/Swagger (springdoc)
 - Docker + Docker Compose
 
@@ -70,22 +69,22 @@ Para detalles técnicos y arquitectura, consulta [PROJECT_OVERVIEW.md](PROJECT_O
 
 With the application running:
 
-- UI dashboard: http://localhost:8080/ui
-- New React interface (incremental migration): http://localhost:8080/app
-- First-run setup: http://localhost:8080/ui/setup
+- App: http://localhost:8080/app
+- First-run setup (only shown until the first admin exists): http://localhost:8080/app/setup
 - Swagger UI: http://localhost:8080/swagger-ui.html
 
 ---
 
-## Dashboard (UI)
+## Dashboard
 
-The dashboard at `/ui` shows sensible empty states on a fresh database, and becomes more useful as you build history.
+The dashboard shows sensible empty states on a fresh database, and becomes more useful as you build history.
 
 Includes:
 
 - KPI cards: total orders (with pending), stock quantity across warehouses, active shipments, low-stock alerts, recent movements (24h), fulfillment rate
-- Charts: stock distribution by warehouse (bar), movements by type (doughnut), orders by status (pie)
-- Alerts: low stock items (action link to adjust), stale pending orders (link to order detail)
+- Charts: stock distribution by warehouse (bar), movements by type (donut), orders by status (donut)
+- A live logistics map (warehouse/unit pins, animated shipment routes)
+- Alerts: low stock items (link to adjust), stale pending orders (link to order detail)
 
 Dashboard thresholds live in `src/main/resources/application.properties`:
 

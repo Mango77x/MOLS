@@ -57,10 +57,6 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-thymeleaf</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
 		</dependency>
@@ -120,12 +116,6 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
-		</dependency>
-
-		<!-- Thymeleaf extras: Spring Security integration for templates (sec:authorize, sec:authentication, ...) -->
-		<dependency>
-			<groupId>org.thymeleaf.extras</groupId>
-			<artifactId>thymeleaf-extras-springsecurity6</artifactId>
 		</dependency>
 
 		<!-- Generates configuration metadata for application.properties/yaml (IDE help + property validation) -->
@@ -324,13 +314,20 @@
 								<rule>
 									<element>BUNDLE</element>
 									<limits>
-										<!-- Ratchet: current coverage is ~42% (the monolithic UI
-										     controller is untested). Raise this floor as the UI
-										     layer gets refactored and covered — never lower it. -->
+										<!-- Ratchet: Sprint 6 deleted the untested Thymeleaf `web`
+										     package (~2525 lines, ~0% covered) as part of the full
+										     cutover to the React SPA, which mechanically raises the
+										     overall ratio even without new tests. Estimated post-cutover
+										     coverage is ~50-55%; this floor is set conservatively below
+										     that estimate (measured locally without Testcontainers -
+										     see AbstractIntegrationTest - since this dev machine can't
+										     run the integration suite; confirm the real number against
+										     the CI-generated target/site/jacoco/jacoco.csv and tighten
+										     this floor closer to it in a follow-up). Never lower it. -->
 										<limit>
 											<counter>LINE</counter>
 											<value>COVEREDRATIO</value>
-											<minimum>0.40</minimum>
+											<minimum>0.45</minimum>
 										</limit>
 									</limits>
 								</rule>

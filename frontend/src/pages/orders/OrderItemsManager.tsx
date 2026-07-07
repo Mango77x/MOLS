@@ -162,6 +162,7 @@ export default function OrderItemsManager({ orderId }: { orderId: number }) {
                     <div className="flex items-center gap-2">
                       <input
                         type="number"
+                        aria-label={`Quantity for ${resources[item.resourceId]?.name ?? `resource #${item.resourceId}`}`}
                         min={1}
                         defaultValue={item.quantity}
                         onChange={(e) =>

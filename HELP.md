@@ -44,10 +44,11 @@ API and docs:
 
 UI:
 
-- UI entry: http://localhost:8080/ui
-- Login page: http://localhost:8080/ui/login
-- New React interface: http://localhost:8080/app (served from the jar;
-  requires a build without `-Dskip.frontend=true`)
+- App: http://localhost:8080/app (served from the jar; requires a build
+  without `-Dskip.frontend=true`)
+- Login page: http://localhost:8080/app/login
+- First-run setup (only shown until the first admin exists):
+  http://localhost:8080/app/setup
 
 Frontend dev loop (optional, needs local Node 22+):
 
@@ -86,11 +87,7 @@ JWT settings (read from the environment, see `.env.example`):
 - `SECURITY_JWT_EXPIRATION_MS` (optional, default 24h)
 - `SECURITY_JWT_COOKIE_SECURE` (optional, default false; true behind HTTPS)
 
-## UI Login (Session)
-
-The `/ui/**` area uses form login + session authentication.
-
-Roles:
+## Roles
 
 - ADMIN: full access + user management
 - OPERATOR: can create/edit Orders and Shipments (no deletes, no master data changes)
@@ -98,7 +95,7 @@ Roles:
 
 Admin UI:
 
-- Users management: http://localhost:8080/ui/users (ADMIN only)
+- Users management: http://localhost:8080/app/users (ADMIN only)
 
 Application users are stored in PostgreSQL table `app_users` (not PostgreSQL roles).
 

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Admin-only user management operations.
@@ -31,6 +32,10 @@ public class AppUserAdminService {
 
     public List<AppUser> getAllUsers(Sort sort) {
         return appUserRepository.findAll(sort);
+    }
+
+    public Optional<AppUser> getUserById(Long id) {
+        return appUserRepository.findById(id);
     }
 
     @Transactional

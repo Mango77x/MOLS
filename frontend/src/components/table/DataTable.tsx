@@ -48,6 +48,9 @@ export default function DataTable<T>({
     <div className="rounded-xl bg-white shadow-sm dark:bg-gray-900">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
+          <caption className="sr-only" aria-live="polite">
+            {loading ? 'Loading…' : error ? 'Could not load data.' : `${totalElements} results`}
+          </caption>
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr
@@ -80,13 +83,19 @@ export default function DataTable<T>({
             ))}
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {loading && (
-              <tr>
-                <td colSpan={columns.length} className="px-3 py-6 text-center text-gray-400 dark:text-gray-500">
-                  Loading…
-                </td>
-              </tr>
-            )}
+            {loading &&
+              Array.from({ length: 5 }, (_, rowIndex) => (
+                <tr key={`skeleton-${rowIndex}`} aria-hidden="true">
+                  {columns.map((_, colIndex) => (
+                    // Decorative skeleton placeholder; the parent row is already aria-hidden, so
+                    // there's nothing here for assistive tech to announce or need a label for.
+                    // oxlint-disable-next-line jsx-a11y/control-has-associated-label
+                    <td key={colIndex} className="px-3 py-2">
+                      <div className="h-4 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+                    </td>
+                  ))}
+                </tr>
+              ))}
             {!loading && error && (
               <tr>
                 <td colSpan={columns.length} className="px-3 py-6 text-center text-status-critical">
@@ -121,8 +130,9 @@ export default function DataTable<T>({
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 px-3 py-2 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
         <div className="flex items-center gap-2">
-          <span>Rows per page</span>
+          <span id="rows-per-page-label">Rows per page</span>
           <select
+            aria-labelledby="rows-per-page-label"
             value={size}
             onChange={(e) => onSizeChange(Number(e.target.value))}
             className="rounded border border-gray-300 bg-white px-1 py-0.5 dark:border-gray-700 dark:bg-gray-800"
