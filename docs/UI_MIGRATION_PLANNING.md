@@ -74,13 +74,22 @@ Estimates follow the plan's ~21-day budget, re-sequenced so backend prerequisite
 
 ### Sprint 3 — Logistics map ⭐ (3–4 days)
 
-- [ ] `react-leaflet` + OpenStreetMap tiles
-- [ ] Warehouse pins (color = stock status from dashboard data), Unit pins (distinct icon)
-- [ ] Shipment lines source → destination, styled by status (PLANNED/IN_TRANSIT/DELIVERED); animate IN_TRANSIT
-- [ ] Click pin → details sidebar; filters (active shipments, low stock); search/zoom
-- [ ] Seed realistic demo coordinates for the portfolio demo
+- [x] New `GET /api/map` backend endpoint (`MapService` + `MapController`): resolves warehouse/unit
+  pins with coordinates and shipment routes (origin warehouse → destination unit via the order),
+  omitting any entry missing coordinates; warehouse stock status (OK/WARNING/CRITICAL) reuses the
+  dashboard's low/critical thresholds so pin colors agree with the dashboard's alerts
+- [x] `react-leaflet` + OpenStreetMap tiles (added as new frontend dependencies)
+- [x] Warehouse pins (color = stock status), Unit pins (distinct diamond icon)
+- [x] Shipment routes source → destination, styled by status (PLANNED dashed / IN_TRANSIT dashed +
+  animated dash-offset / DELIVERED solid, faded)
+- [x] Click pin → details panel; "active shipments only" / "low stock only" filters; name search
+  with fly-to
+- [x] Coordinates captured through the existing Thymeleaf warehouse/unit forms (Sprint 0); no
+  migration-seeded demo data — the map's own empty state covers the zero-coordinate case
 - Deferred (as per plan): real routing, traffic/weather overlays
-- Exit criteria: map is the dashboard's hero section and works with zero-coordinate data (graceful empty state)
+- Exit criteria: map is the dashboard's hero section and works with zero-coordinate data (graceful
+  empty state) — verified against the running `docker compose` stack with real warehouse/unit/shipment
+  data
 
 ### Sprint 4 — Data tables (4–5 days)
 
