@@ -78,8 +78,13 @@ Tailwind 4) and is served at `/app/**`:
 - **Pages**: the dashboard (fed by `GET /api/dashboard`) ships KPI cards,
   Recharts charts (stock by warehouse, movements by type, orders by status —
   each with an empty-state fallback), a low-stock/stale-orders alerts panel
-  and a recent-activity table; other sections are placeholders linking to
-  their working `/ui` pages.
+  and a recent-activity table. Its hero section is the logistics map
+  (`react-leaflet` + OpenStreetMap tiles, fed by `GET /api/map`): warehouse
+  pins colored by stock status, unit pins, animated shipment routes, a
+  details panel on pin click, and "active shipments only"/"low stock only"
+  filters plus name search; renders a graceful empty state when no
+  warehouse/unit has coordinates yet. Other sections are placeholders
+  linking to their working `/ui` pages.
 - **Serving**: the production build is packaged into the jar at
   `static/app/` and served by `config/SpaWebConfig` with an `index.html`
   fallback for client-side routes.
@@ -467,6 +472,16 @@ Dashboard endpoint:
   low-stock/stale-order alerts, recent movements and the thresholds used),
   assembled by `DashboardService` and readable by any authenticated role. This
   is the API counterpart of the `/ui` dashboard for the React frontend.
+
+Map endpoint:
+- `GET /api/map` — geo snapshot for the logistics map: warehouse pins (with
+  an OK/WARNING/CRITICAL stock status derived from the same low/critical
+  stock thresholds as the dashboard) and unit pins, plus shipment routes
+  resolved from the shipment's origin warehouse to its order's destination
+  unit. Assembled by `MapService`, readable by any authenticated role.
+  Warehouses/units without coordinates, and shipment routes with either
+  endpoint missing coordinates, are omitted — the map can only plot what has
+  a location.
 
 Authentication endpoints:
 - `POST /api/auth/register` — register user and return JWT

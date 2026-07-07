@@ -149,6 +149,47 @@ class StockServiceTest {
     }
 
     @Test
+    void getMinQuantityByWarehouseId_ShouldReturnLowestQuantityPerWarehouse() {
+        // Given: warehouse 1 has two stock rows (5 and 20), warehouse 2 has one (0)
+        Warehouse warehouseOne = new Warehouse();
+        warehouseOne.setId(1L);
+        Warehouse warehouseTwo = new Warehouse();
+        warehouseTwo.setId(2L);
+
+        Stock stockA = new Stock();
+        stockA.setWarehouse(warehouseOne);
+        stockA.setQuantity(20);
+        Stock stockB = new Stock();
+        stockB.setWarehouse(warehouseOne);
+        stockB.setQuantity(5);
+        Stock stockC = new Stock();
+        stockC.setWarehouse(warehouseTwo);
+        stockC.setQuantity(0);
+
+        when(stockRepository.findAll()).thenReturn(List.of(stockA, stockB, stockC));
+
+        // When
+        var result = stockService.getMinQuantityByWarehouseId();
+
+        // Then
+        assertThat(result).containsEntry(1L, 5).containsEntry(2L, 0);
+    }
+
+    @Test
+    void getMinQuantityByWarehouseId_WithNoWarehouse_ShouldIgnoreStock() {
+        // Given: a stock row with no warehouse reference (should never happen, but must not crash)
+        Stock orphanStock = new Stock();
+        orphanStock.setQuantity(10);
+        when(stockRepository.findAll()).thenReturn(List.of(orphanStock));
+
+        // When
+        var result = stockService.getMinQuantityByWarehouseId();
+
+        // Then
+        assertThat(result).isEmpty();
+    }
+
+    @Test
     void deleteStock_WhenNotExists_ShouldThrowException() {
         // Given
         when(stockRepository.existsById(999L)).thenReturn(false);
