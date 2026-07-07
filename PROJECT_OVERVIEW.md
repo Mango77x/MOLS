@@ -75,8 +75,11 @@ Tailwind 4) and is served at `/app/**`:
 - **Shell**: sidebar/topbar layout, role-aware navigation (ADMIN-only entries
   hidden and route-guarded client-side; real enforcement is the API role
   matrix), light/dark theme, military-green design tokens in `src/index.css`.
-- **Pages**: Sprint 1 ships the KPI dashboard (fed by `GET /api/dashboard`);
-  other sections are placeholders linking to their working `/ui` pages.
+- **Pages**: the dashboard (fed by `GET /api/dashboard`) ships KPI cards,
+  Recharts charts (stock by warehouse, movements by type, orders by status —
+  each with an empty-state fallback), a low-stock/stale-orders alerts panel
+  and a recent-activity table; other sections are placeholders linking to
+  their working `/ui` pages.
 - **Serving**: the production build is packaged into the jar at
   `static/app/` and served by `config/SpaWebConfig` with an `index.html`
   fallback for client-side routes.
@@ -539,4 +542,4 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 - Decide whether shipments should support partial fulfillment (would require shipment line items)
 - Split the monolithic UI controller (API pagination/filtering is done)
 
-**Last updated**: 2026-07-01
+**Last updated**: 2026-07-07

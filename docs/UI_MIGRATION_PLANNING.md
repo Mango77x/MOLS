@@ -67,10 +67,10 @@ Estimates follow the plan's ~21-day budget, re-sequenced so backend prerequisite
 
 ### Sprint 2 — Dashboard (3 days)
 
-- [ ] KPI cards with state colors + trend indicators, fed by `GET /api/dashboard`
-- [ ] Charts (Recharts): stock by warehouse, movements by type, orders by status — with empty-state fallbacks like the current dashboard
-- [ ] Alerts panel: low stock / stale orders as actionable cards (deep-link to adjust/detail)
-- Exit criteria: React dashboard at parity with the Thymeleaf one + visibly better
+- [x] KPI cards with state colors + trend indicator (fulfillment rate vs. target), fed by `GET /api/dashboard`
+- [x] Charts (`recharts`, newly added dependency): stock by warehouse (bar), movements by type + orders by status (donut with center total) — each with a "No data to display" empty state, matching the Chart.js fallbacks on `/ui`
+- [x] Alerts panel: low-stock cards (critical vs. warn tone, deep-link to the existing `/ui/stocks/{id}/adjust` page) and stale-orders cards (tone scales with days pending); recent-activity table (last 15 movements) rounds out parity with the Thymeleaf dashboard
+- Exit criteria: React dashboard at parity with the Thymeleaf one + visibly better — verified against the running `docker compose` stack (KPIs, charts, empty states, alerts and activity table all render correctly in light/dark)
 
 ### Sprint 3 — Logistics map ⭐ (3–4 days)
 
