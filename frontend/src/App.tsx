@@ -6,6 +6,14 @@ import { useAuthStore } from './auth/store'
 import AppLayout from './layout/AppLayout'
 import ComingSoon from './pages/ComingSoon'
 import DashboardPage from './pages/DashboardPage'
+import MovementsPage from './pages/movements/MovementsPage'
+import OrdersPage from './pages/orders/OrdersPage'
+import ResourcesPage from './pages/resources/ResourcesPage'
+import ShipmentsPage from './pages/shipments/ShipmentsPage'
+import StocksPage from './pages/stocks/StocksPage'
+import UnitsPage from './pages/units/UnitsPage'
+import VehiclesPage from './pages/vehicles/VehiclesPage'
+import WarehousesPage from './pages/warehouses/WarehousesPage'
 
 /**
  * Application routes. The SPA is served under /app (see vite.config.ts);
@@ -31,29 +39,14 @@ export default function App() {
           }
         >
           <Route index element={<DashboardPage />} />
-          <Route
-            path="warehouses"
-            element={<ComingSoon title="Warehouses" uiPath="/ui/warehouses" />}
-          />
-          <Route
-            path="resources"
-            element={<ComingSoon title="Resources" uiPath="/ui/resources" />}
-          />
-          <Route
-            path="vehicles"
-            element={<ComingSoon title="Vehicles" uiPath="/ui/vehicles" />}
-          />
-          <Route path="stocks" element={<ComingSoon title="Stock" uiPath="/ui/stocks" />} />
-          <Route path="orders" element={<ComingSoon title="Orders" uiPath="/ui/orders" />} />
-          <Route
-            path="shipments"
-            element={<ComingSoon title="Shipments" uiPath="/ui/shipments" />}
-          />
-          <Route path="units" element={<ComingSoon title="Units" uiPath="/ui/units" />} />
-          <Route
-            path="movements"
-            element={<ComingSoon title="Audit log" uiPath="/ui/movements" />}
-          />
+          <Route path="warehouses" element={<WarehousesPage />} />
+          <Route path="resources" element={<ResourcesPage />} />
+          <Route path="vehicles" element={<VehiclesPage />} />
+          <Route path="stocks" element={<StocksPage />} />
+          <Route path="orders" element={<OrdersPage />} />
+          <Route path="shipments" element={<ShipmentsPage />} />
+          <Route path="units" element={<UnitsPage />} />
+          <Route path="movements" element={<MovementsPage />} />
           <Route
             path="users"
             element={
