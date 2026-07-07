@@ -110,9 +110,11 @@ Dashboard thresholds live in `src/main/resources/application.properties`:
 ./mvnw.cmd spring-boot:run
 ```
 
-Or with Docker:
+Or with Docker (first time only, `.env` is gitignored so you need your own):
 
 ```powershell
+cp .env.example .env
+# then edit .env and set SECURITY_JWT_SECRET_KEY (generate with: openssl rand -hex 32)
 docker compose up --build -d
 ```
 
