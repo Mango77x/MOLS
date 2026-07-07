@@ -3,6 +3,7 @@ import { api } from '../api/client'
 import AlertsPanel from './dashboard/AlertsPanel'
 import Charts from './dashboard/Charts'
 import KpiCards from './dashboard/KpiCards'
+import LogisticsMap from './dashboard/LogisticsMap'
 import RecentActivity from './dashboard/RecentActivity'
 import type { DashboardData } from './dashboard/types'
 
@@ -44,6 +45,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-bold">Dashboard</h1>
+      <LogisticsMap />
       <KpiCards kpis={data.kpis} />
       <Charts charts={data.charts} />
       <AlertsPanel alerts={data.alerts} thresholds={data.thresholds} />
