@@ -1,10 +1,11 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useCurrentRole } from '../../auth/roles'
 import { api } from '../../api/client'
 import type { UnitEntity } from '../../api/entities'
 import DataTable from '../../components/table/DataTable'
-import { ActionLink, DeleteAction } from '../../components/table/RowActions'
+import { DeleteAction, RouteActionLink } from '../../components/table/RowActions'
 import { useServerTable } from '../../components/table/useServerTable'
 
 export default function UnitsPage() {
@@ -30,7 +31,7 @@ export default function UnitsPage() {
       header: 'Actions',
       cell: ({ row }) => (
         <div className="flex gap-3">
-          <ActionLink href={`/ui/units/${row.original.id}/edit`}>Edit</ActionLink>
+          <RouteActionLink to={`/units/${row.original.id}/edit`}>Edit</RouteActionLink>
           <DeleteAction label="unit" onConfirm={() => handleDelete(row.original.id)} />
         </div>
       ),
@@ -42,12 +43,12 @@ export default function UnitsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold">Units</h1>
         {isAdmin && (
-          <a
-            href="/ui/units/new"
+          <Link
+            to="/units/new"
             className="rounded bg-army-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-army-800"
           >
             New unit
-          </a>
+          </Link>
         )}
       </div>
 

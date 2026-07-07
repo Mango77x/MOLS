@@ -1,12 +1,13 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { hasAnyRole, useCurrentRole } from '../../auth/roles'
 import { api } from '../../api/client'
 import { useLookup } from '../../api/lookups'
 import type { ShipmentEntity, ShipmentStatus, VehicleEntity, WarehouseEntity } from '../../api/entities'
 import Badge, { type BadgeTone } from '../../components/Badge'
 import DataTable from '../../components/table/DataTable'
-import { ActionLink, DeleteAction } from '../../components/table/RowActions'
+import { DeleteAction, RouteActionLink } from '../../components/table/RowActions'
 import { useServerTable } from '../../components/table/useServerTable'
 
 const STATUS_TONE: Record<ShipmentStatus, BadgeTone> = {
@@ -64,8 +65,8 @@ export default function ShipmentsPage() {
       header: 'Actions',
       cell: ({ row }) => (
         <div className="flex gap-3">
-          <ActionLink href={`/ui/shipments/${row.original.id}`}>View</ActionLink>
-          {canEdit && <ActionLink href={`/ui/shipments/${row.original.id}/edit`}>Edit</ActionLink>}
+          <RouteActionLink to={`/shipments/${row.original.id}`}>View</RouteActionLink>
+          {canEdit && <RouteActionLink to={`/shipments/${row.original.id}/edit`}>Edit</RouteActionLink>}
           {isAdmin && (
             <DeleteAction label="shipment" onConfirm={() => handleDelete(row.original.id)} />
           )}
@@ -79,12 +80,12 @@ export default function ShipmentsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold">Shipments</h1>
         {canEdit && (
-          <a
-            href="/ui/shipments/new"
+          <Link
+            to="/shipments/new"
             className="rounded bg-army-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-army-800"
           >
             New shipment
-          </a>
+          </Link>
         )}
       </div>
 

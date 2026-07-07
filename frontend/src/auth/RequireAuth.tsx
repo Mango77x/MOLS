@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
-import { useAuthStore } from './store'
+import { useAuthStore, type Role } from './store'
 
 /**
  * Route guard: renders children only for an authenticated session.
@@ -8,15 +8,16 @@ import { useAuthStore } from './store'
  * a login flash on reload). Anonymous users are sent to /login, remembering
  * where they were headed.
  *
- * With `adminOnly`, non-ADMIN users are bounced to the dashboard — this is a
- * UX guard only; the real enforcement lives in the API role matrix.
+ * With `roles`, users whose role isn't in the list are bounced to the
+ * dashboard — this is a UX guard only; the real enforcement lives in the API
+ * role matrix.
  */
 export default function RequireAuth({
   children,
-  adminOnly = false,
+  roles,
 }: {
   children: ReactNode
-  adminOnly?: boolean
+  roles?: Role[]
 }) {
   const status = useAuthStore((state) => state.status)
   const user = useAuthStore((state) => state.user)
@@ -30,7 +31,7 @@ export default function RequireAuth({
     return <Navigate to="/login" replace state={{ from: location.pathname }} />
   }
 
-  if (adminOnly && user?.role !== 'ADMIN') {
+  if (roles && (!user?.role || !roles.includes(user.role))) {
     return <Navigate to="/" replace />
   }
 

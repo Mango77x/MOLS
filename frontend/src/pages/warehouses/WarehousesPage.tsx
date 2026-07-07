@@ -1,10 +1,11 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useCurrentRole } from '../../auth/roles'
 import { api } from '../../api/client'
 import type { WarehouseEntity } from '../../api/entities'
 import DataTable from '../../components/table/DataTable'
-import { ActionLink, DeleteAction } from '../../components/table/RowActions'
+import { DeleteAction, RouteActionLink } from '../../components/table/RowActions'
 import { useServerTable } from '../../components/table/useServerTable'
 
 export default function WarehousesPage() {
@@ -30,7 +31,7 @@ export default function WarehousesPage() {
       header: 'Actions',
       cell: ({ row }) => (
         <div className="flex gap-3">
-          <ActionLink href={`/ui/warehouses/${row.original.id}/edit`}>Edit</ActionLink>
+          <RouteActionLink to={`/warehouses/${row.original.id}/edit`}>Edit</RouteActionLink>
           <DeleteAction label="warehouse" onConfirm={() => handleDelete(row.original.id)} />
         </div>
       ),
@@ -42,12 +43,12 @@ export default function WarehousesPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold">Warehouses</h1>
         {isAdmin && (
-          <a
-            href="/ui/warehouses/new"
+          <Link
+            to="/warehouses/new"
             className="rounded bg-army-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-army-800"
           >
             New warehouse
-          </a>
+          </Link>
         )}
       </div>
 
