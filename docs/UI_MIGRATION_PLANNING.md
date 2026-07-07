@@ -140,11 +140,41 @@ Estimates follow the plan's ~21-day budget, re-sequenced so backend prerequisite
 
 ### Sprint 5 — Forms & detail pages (4–5 days)
 
-- [ ] `react-hook-form` + zod resolver; shared field components with real-time validation
-- [ ] CRUD forms: warehouse (with map picker for lat/long), resource, vehicle, unit, stock create/adjust
-- [ ] Order wizard (order → items → optional shipment) with stock-availability feedback
-- [ ] Detail pages: order + shipment with linked movements (traceability views)
-- Exit criteria: full create/edit flows in React, HTTP 409 business errors surfaced as friendly messages
+- [x] `react-hook-form` + `@hookform/resolvers/zod`; shared field components
+  (`TextField`/`SelectField`/`FormBanner`/buttons in
+  `frontend/src/components/form/`) with real-time (on-blur/on-change)
+  validation. `zodHelpers.ts` provides numeric id/quantity/coordinate schema
+  builders using `z.custom` — deliberately not `z.number()`/`z.preprocess`,
+  which either reject `NaN` before a custom message can apply or widen the
+  resolver's input type and break `tsc -b`'s project-reference build.
+- [x] CRUD forms: warehouse + unit (with a click-to-place `LocationPicker`
+  map for lat/long, `frontend/src/components/map/`, reusing the dashboard
+  map's tile layer), resource, vehicle, stock create + delta-based adjust —
+  all ADMIN-only, matching the API/UI role matrix.
+- [x] Order wizard (`OrderWizardPage.tsx`, ADMIN/OPERATOR): header → items →
+  optional shipment. Items get a best-effort client-side stock-availability
+  check (non-blocking warning); the atomic `POST /api/orders/with-items`
+  (new endpoint, Sprint 5 backend addition wrapping the existing
+  transactional `OrderService.createOrderWithItems`) is the authoritative
+  check — an insufficient-stock conflict leaves nothing persisted. The
+  optional shipment is a follow-up `POST /api/shipments` call; a failure
+  there still lands the user on the order detail page (order already
+  created) with a banner instead of losing their work.
+- [x] Order edit (header + inline, immediately-persisted items manager) and
+  Shipment create/edit (single form covering the
+  PLANNED→IN_TRANSIT→DELIVERED transition, which deducts stock and can 409)
+  round out the write side.
+- [x] Detail pages: order (items/shipments/linked movements) and shipment
+  (context/order items/linked movements), cross-linked for traceability —
+  mirrors the Thymeleaf `order-detail`/`shipment-detail` layouts.
+- Exit criteria: full create/edit flows in React, HTTP 409/400 business
+  errors surfaced as friendly messages (field-level for validation, banner
+  for conflicts) — verified against the running `docker compose` stack
+  (production jar) and, for faster iteration, a standalone Vite dev server
+  against the same backend. Two real bugs were caught only by that manual
+  pass (not by `tsc`/lint/tests): a Leaflet crash on `NaN` coordinates, and
+  shipment/order edit forms silently mis-selecting the Order/Unit dropdown
+  because `reset()` raced an async lookup fetch — both fixed.
 
 ### Sprint 6 — Parity, polish & cutover (3 days)
 
