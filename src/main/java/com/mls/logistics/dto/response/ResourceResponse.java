@@ -14,6 +14,7 @@ public class ResourceResponse {
     private String name;
     private String type;
     private String criticality;
+    private int reservedQuantity;
 
     /**
      * Default constructor for serialization.
@@ -28,17 +29,19 @@ public class ResourceResponse {
      * @param name resource name
      * @param type resource type
      * @param criticality criticality level
+     * @param reservedQuantity quantity currently committed to open order items, across all warehouses
      */
-    public ResourceResponse(Long id, String name, String type, String criticality) {
+    public ResourceResponse(Long id, String name, String type, String criticality, int reservedQuantity) {
         this.id = id;
         this.name = name;
         this.type = type;
         this.criticality = criticality;
+        this.reservedQuantity = reservedQuantity;
     }
 
     /**
      * Creates a ResourceResponse from a Resource entity.
-     * 
+     *
      * This static factory method converts domain entities to DTOs,
      * decoupling the API from the persistence layer.
      *
@@ -50,7 +53,8 @@ public class ResourceResponse {
                 resource.getId(),
                 resource.getName(),
                 resource.getType(),
-                resource.getCriticality()
+                resource.getCriticality(),
+                resource.getReservedQuantity()
         );
     }
 
@@ -86,5 +90,13 @@ public class ResourceResponse {
 
     public void setCriticality(String criticality) {
         this.criticality = criticality;
+    }
+
+    public int getReservedQuantity() {
+        return reservedQuantity;
+    }
+
+    public void setReservedQuantity(int reservedQuantity) {
+        this.reservedQuantity = reservedQuantity;
     }
 }

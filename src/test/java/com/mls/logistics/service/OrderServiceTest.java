@@ -159,6 +159,20 @@ class OrderServiceTest {
     }
 
     @Test
+    void deleteOrder_WhenExists_ShouldReleaseItemReservationsBeforeCascadeDelete() {
+        // Given: deleteById cascades via JPA and bypasses OrderItemService,
+        // so deleteOrder must release reservations itself first.
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
+        doNothing().when(orderRepository).deleteById(1L);
+
+        // When
+        orderService.deleteOrder(1L);
+
+        // Then
+        verify(orderItemService, times(1)).releaseReservationsForOrder(1L);
+    }
+
+    @Test
     void deleteOrder_WhenNotExists_ShouldThrowException() {
         // Given
         when(orderRepository.findById(999L)).thenReturn(Optional.empty());
@@ -216,6 +230,39 @@ class OrderServiceTest {
                 .hasMessageContaining("Invalid order status transition");
 
         verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    void updateOrder_WhenCancelled_ShouldReleaseItemReservations() {
+        // Given: CREATED -> CANCELLED is a legal transition into a terminal state
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        UpdateOrderRequest request = new UpdateOrderRequest();
+        request.setStatus("CANCELLED");
+
+        // When
+        Order result = orderService.updateOrder(1L, request);
+
+        // Then
+        assertThat(result.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        verify(orderItemService, times(1)).releaseReservationsForOrder(1L);
+    }
+
+    @Test
+    void updateOrder_WithNonTerminalTransition_ShouldNotReleaseItemReservations() {
+        // Given: CREATED -> VALIDATED stays open, nothing to release yet
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        UpdateOrderRequest request = new UpdateOrderRequest();
+        request.setStatus("VALIDATED");
+
+        // When
+        orderService.updateOrder(1L, request);
+
+        // Then
+        verify(orderItemService, never()).releaseReservationsForOrder(any());
     }
 
     @Test

@@ -26,6 +26,15 @@ public class OrderItem {
     /** Quantity requested */
     private int quantity;
 
+    /**
+     * Whether {@code quantity} is still counted against the resource's
+     * {@link Resource#getReservedQuantity()}. Set to {@code false} exactly
+     * once the reservation is released — order cancellation, completion, or
+     * item/order deletion — so a release is never applied twice.
+     */
+    @Column(name = "reservation_active", nullable = false)
+    private boolean reservationActive = true;
+
     // Getters & Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -38,4 +47,7 @@ public class OrderItem {
 
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
+
+    public boolean isReservationActive() { return reservationActive; }
+    public void setReservationActive(boolean reservationActive) { this.reservationActive = reservationActive; }
 }

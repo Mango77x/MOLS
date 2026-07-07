@@ -218,6 +218,12 @@ public class OrderService {
                 "Cannot delete a COMPLETED order: its stock movements are part of the audit trail. Order id: " + id);
         }
 
+        // Release any still-outstanding item reservations before the cascade
+        // delete removes the rows — deleteById cascades via JPA, bypassing
+        // OrderItemService, so this is the only chance to do it. A no-op for
+        // orders that were already CANCELLED (already released then).
+        orderItemService.releaseReservationsForOrder(id);
+
         orderRepository.deleteById(id);
     }
 
@@ -288,6 +294,13 @@ public class OrderService {
      *
      * A null current status (legacy rows) is treated as CREATED.
      *
+     * <p>Moving from an open status into a terminal one (COMPLETED or
+     * CANCELLED) releases every item's stock reservation — whether that
+     * happens here (manual completion, or cancellation) or via
+     * {@link #markOrderCompleted} (fulfillment-driven completion), it's the
+     * same idempotent release, so calling it from both places never
+     * double-releases.</p>
+     *
      * @throws InvalidRequestException if the transition is not allowed
      */
     private void applyStatusTransition(Order order, OrderStatus next) {
@@ -298,5 +311,8 @@ public class OrderService {
                 ". Order id: " + order.getId());
         }
         order.setStatus(next);
+        if (next.isTerminal() && !current.isTerminal()) {
+            orderItemService.releaseReservationsForOrder(order.getId());
+        }
     }
 }
