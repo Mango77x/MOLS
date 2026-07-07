@@ -6,6 +6,36 @@
 
 ---
 
+## Workflow Conventions (every sprint follows these)
+
+Established across Sprints 0–4 and expected to continue through Sprint 6:
+
+- **Branch per sprint**: work happens on a `sprint-N` branch cut from `main` (after confirming
+  the previous sprint's PR is merged), pushed and opened as a PR against `main`. The PR is merged
+  by the repo owner via GitHub, not by the agent doing the work.
+- **Commit style**: one commit per sprint (imperative summary line), with a body explaining what
+  changed and why, plus a closing note on how it was verified. **No `Co-Authored-By: Claude`
+  trailer** — omit it entirely in this repo.
+- **Docs updated alongside code, every sprint**:
+  - `PROJECT_OVERVIEW.md` — update the relevant section(s) with concrete detail of what was
+    actually built (new endpoints, components, config), not left as generic pre-sprint wording.
+  - This file (`docs/UI_MIGRATION_PLANNING.md`) — check off the sprint's checklist items,
+    rewriting the bullets to describe what was actually implemented.
+  - `README.md` / `HELP.md` — only touched when something user-facing changed (new URL, new tech
+    in the stack list, new run instructions).
+- **Tests**: backend changes get unit + integration tests per change. Frontend changes only add
+  tests for pure-logic modules (hooks/helpers with no JSX); page/component code is verified
+  manually instead of unit-tested, matching the pattern so far.
+- **Verification**: every sprint is checked against the actual running app — rebuild and restart
+  the `docker compose` stack (`docker compose up --build -d`), log in, and exercise the real
+  feature in a browser — not just build/lint/test passing. Manual checks have caught real bugs
+  that automated checks alone missed (e.g. Sprint 4's pagination-envelope and missing-key bugs).
+- **`gh` CLI is not installed** on the machine these sprints are built on — after pushing, hand
+  back the PR creation URL GitHub prints (`https://github.com/Mango77x/MOLS/pull/new/sprint-N`)
+  instead of trying to open the PR programmatically.
+
+---
+
 ## Codebase Audit — Gaps Blocking the Migration
 
 These were found by reading the current code and must be addressed **before or during Sprint 0**, otherwise the React app has nothing correct to consume:
