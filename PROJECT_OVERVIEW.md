@@ -83,8 +83,16 @@ Tailwind 4) and is served at `/app/**`:
   pins colored by stock status, unit pins, animated shipment routes, a
   details panel on pin click, and "active shipments only"/"low stock only"
   filters plus name search; renders a graceful empty state when no
-  warehouse/unit has coordinates yet. Other sections are placeholders
-  linking to their working `/ui` pages.
+  warehouse/unit has coordinates yet. Warehouses, Resources, Vehicles,
+  Units, Stock, Orders, Shipments and the Audit log are server-paginated
+  tables (`@tanstack/react-table` via a shared `DataTable`/`useServerTable`
+  pair in `src/components/table/`) wired to the Sprint 0 pagination/sort/
+  filter query params, with role-aware inline actions (edit links to the
+  existing `/ui/**` forms, real delete calls with a confirm dialog) and,
+  for Stock/Movements/Orders/Shipments, client-side lookups against the
+  plain-array reference endpoints to resolve foreign ids to names. Orders
+  rows expand inline to their line items (`GET /api/order-items?orderId=`).
+  Users remains a placeholder linking to `/ui/users`.
 - **Serving**: the production build is packaged into the jar at
   `static/app/` and served by `config/SpaWebConfig` with an `index.html`
   fallback for client-side routes.
