@@ -21,6 +21,11 @@ read from the environment — see `.env.example`. The database schema is managed
 by Flyway migrations (`src/main/resources/db/migration`); Hibernate runs in
 `validate` mode and never modifies the schema.
 
+`docker compose` reads `.env` automatically and fails fast if it's missing
+`SECURITY_JWT_SECRET_KEY` (`.env` is gitignored, so each clone needs its own —
+run `cp .env.example .env` and fill in the key with `openssl rand -hex 32`
+before your first `docker compose up`).
+
 ## Run Locally
 
 The JWT signing key is required and has no committed default. Set it once
