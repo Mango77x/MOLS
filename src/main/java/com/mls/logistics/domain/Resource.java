@@ -25,17 +25,6 @@ public class Resource {
     /** Criticality level (e.g., LOW, MEDIUM, HIGH) */
     private String criticality;
 
-    /**
-     * Quantity of this resource currently committed to open (non-terminal)
-     * order items, across all warehouses. Tracked separately from physical
-     * {@link Stock} quantity so order-item creation can enforce
-     * "physical stock minus what's already promised" instead of only
-     * checking against raw physical stock (which two orders could each
-     * pass independently, over-committing supply). See {@code OrderItemService}.
-     */
-    @Column(name = "reserved_quantity", nullable = false)
-    private int reservedQuantity;
-
     /** Stocks where this resource exists */
     @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL)
     private List<Stock> stocks;
@@ -52,9 +41,6 @@ public class Resource {
 
     public String getCriticality() { return criticality; }
     public void setCriticality(String criticality) { this.criticality = criticality; }
-
-    public int getReservedQuantity() { return reservedQuantity; }
-    public void setReservedQuantity(int reservedQuantity) { this.reservedQuantity = reservedQuantity; }
 
     public List<Stock> getStocks() { return stocks; }
     public void setStocks(List<Stock> stocks) { this.stocks = stocks; }

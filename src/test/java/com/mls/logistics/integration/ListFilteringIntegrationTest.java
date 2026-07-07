@@ -29,9 +29,11 @@ class ListFilteringIntegrationTest extends AbstractIntegrationTest {
         postForId("/api/stocks",
                 "{\"resourceId\":" + resourceId + ",\"warehouseId\":" + centralId + ",\"quantity\":50}", admin);
         long createdOrderId = postForId("/api/orders",
-                "{\"unitId\":" + unitId + ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", admin);
+                "{\"unitId\":" + unitId + ",\"warehouseId\":" + centralId +
+                        ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", admin);
         long cancelledOrderId = postForId("/api/orders",
-                "{\"unitId\":" + unitId + ",\"dateCreated\":\"2026-07-02\",\"status\":\"CREATED\"}", admin);
+                "{\"unitId\":" + unitId + ",\"warehouseId\":" + centralId +
+                        ",\"dateCreated\":\"2026-07-02\",\"status\":\"CREATED\"}", admin);
         restTemplate.exchange("/api/orders/" + cancelledOrderId, HttpMethod.PUT,
                 jsonEntity("{\"status\":\"CANCELLED\"}", admin), String.class);
 

@@ -20,22 +20,32 @@ type AddItemValues = z.infer<typeof schema>
 interface StockRecord {
   resourceId: number
   quantity: number
+  reservedQuantity: number
 }
 
-/** Sums a resource's stock across every warehouse (best-effort client-side check). */
-async function fetchAvailableQuantity(resourceId: number): Promise<number> {
+/**
+ * Best-effort client-side check: physical stock minus what's already
+ * reserved, for this resource in the order's warehouse specifically — the
+ * same (resource, warehouse) pair the server will actually check against
+ * (see OrderItemService.reserve). At most one row can match, since stocks
+ * are unique per (resource, warehouse).
+ */
+async function fetchTrulyAvailableQuantity(resourceId: number, warehouseId: number): Promise<number> {
   const response = await api.get<PageResponse<StockRecord>>('/stocks', {
-    params: { resourceId, page: 0, size: 100 },
+    params: { resourceId, warehouseId, page: 0, size: 1 },
   })
-  return response.data.content.reduce((sum, stock) => sum + stock.quantity, 0)
+  const stock = response.data.content[0]
+  return stock ? stock.quantity - stock.reservedQuantity : 0
 }
 
 export default function ItemsStep({
+  warehouseId,
   items,
   onChange,
   onNext,
   onBack,
 }: {
+  warehouseId: number
   items: DraftItem[]
   onChange: (items: DraftItem[]) => void
   onNext: () => void
@@ -59,11 +69,11 @@ export default function ItemsStep({
     setAvailabilityNote(null)
     setChecking(true)
     try {
-      const available = await fetchAvailableQuantity(values.resourceId)
+      const available = await fetchTrulyAvailableQuantity(values.resourceId, warehouseId)
       const resource = resources[values.resourceId]
       if (available < values.quantity) {
         setAvailabilityNote(
-          `Warning: only ${available} unit(s) of ${resource?.name ?? `resource #${values.resourceId}`} are currently in stock across all warehouses. You can still add this item, but creating the order may fail.`,
+          `Warning: only ${available} unit(s) of ${resource?.name ?? `resource #${values.resourceId}`} are still unreserved in this order's warehouse. You can still add this item, but creating the order may fail.`,
         )
       }
       onChange([

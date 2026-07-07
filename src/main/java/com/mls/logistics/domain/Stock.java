@@ -28,6 +28,18 @@ public class Stock {
     private int quantity;
 
     /**
+     * Quantity of this (resource, warehouse) pair currently committed to
+     * open (non-terminal) order items belonging to orders sourced from this
+     * warehouse. Tracked separately from physical {@code quantity} so
+     * order-item creation can enforce "physical stock minus what's already
+     * promised" instead of only checking raw physical stock, which two
+     * orders could each pass independently and over-commit. See
+     * {@code OrderItemService}.
+     */
+    @Column(name = "reserved_quantity", nullable = false)
+    private int reservedQuantity;
+
+    /**
      * Optimistic-lock version. Detects concurrent modifications of the same
      * stock row (two simultaneous adjustments) and fails one of them instead
      * of silently losing an update.
@@ -56,6 +68,9 @@ public class Stock {
 
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
+
+    public int getReservedQuantity() { return reservedQuantity; }
+    public void setReservedQuantity(int reservedQuantity) { this.reservedQuantity = reservedQuantity; }
 
     public long getVersion() { return version; }
 

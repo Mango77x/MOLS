@@ -52,10 +52,11 @@ class SecurityRolesIntegrationTest extends AbstractIntegrationTest {
         String admin = createUserAndLogin("admin-ops-seed", Role.ADMIN);
         String operator = createUserAndLogin("operator-ops", Role.OPERATOR);
         long unitId = seedUnit(admin);
+        long warehouseId = seedWarehouse(admin);
 
         // OPERATOR creates and edits orders (parity with the UI role model)
         var created = restTemplate.postForEntity("/api/orders",
-                jsonEntity(orderBody(unitId, "CREATED"), operator), String.class);
+                jsonEntity(orderBody(unitId, warehouseId, "CREATED"), operator), String.class);
         assertThat(created.getStatusCode().value()).isEqualTo(201);
         long orderId = readJson(created.getBody()).get("id").asLong();
 
@@ -77,9 +78,10 @@ class SecurityRolesIntegrationTest extends AbstractIntegrationTest {
         String admin = createUserAndLogin("admin-auditor-seed", Role.ADMIN);
         String auditor = createUserAndLogin("auditor-ops", Role.AUDITOR);
         long unitId = seedUnit(admin);
+        long warehouseId = seedWarehouse(admin);
 
         assertThat(restTemplate.postForEntity("/api/orders",
-                jsonEntity(orderBody(unitId, "CREATED"), auditor), String.class)
+                jsonEntity(orderBody(unitId, warehouseId, "CREATED"), auditor), String.class)
                 .getStatusCode().value()).isEqualTo(403);
         assertThat(restTemplate.postForEntity("/api/shipments",
                 jsonEntity("{}", auditor), String.class).getStatusCode().value()).isEqualTo(403);
@@ -93,8 +95,17 @@ class SecurityRolesIntegrationTest extends AbstractIntegrationTest {
         return readJson(response.getBody()).get("id").asLong();
     }
 
-    private static String orderBody(long unitId, String status) {
-        return "{\"unitId\":" + unitId + ",\"dateCreated\":\"2026-07-06\",\"status\":\"" + status + "\"}";
+    /** Seeds a warehouse through the API (as ADMIN) and returns its id. */
+    private long seedWarehouse(String adminToken) {
+        var response = restTemplate.postForEntity("/api/warehouses",
+                jsonEntity(WAREHOUSE_BODY, adminToken), String.class);
+        assertThat(response.getStatusCode().value()).isEqualTo(201);
+        return readJson(response.getBody()).get("id").asLong();
+    }
+
+    private static String orderBody(long unitId, long warehouseId, String status) {
+        return "{\"unitId\":" + unitId + ",\"warehouseId\":" + warehouseId +
+                ",\"dateCreated\":\"2026-07-06\",\"status\":\"" + status + "\"}";
     }
 
     @Test

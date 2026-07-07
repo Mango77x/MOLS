@@ -40,17 +40,17 @@ class MapIntegrationTest extends AbstractIntegrationTest {
                 "{\"type\":\"TRUCK\",\"capacity\":100,\"status\":\"AVAILABLE\"}", admin);
 
         long orderToSevilla = postForId("/api/orders",
-                "{\"unitId\":" + sevillaUnitId + ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", admin);
+                "{\"unitId\":" + sevillaUnitId + ",\"warehouseId\":" + madridWarehouseId +
+                        ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", admin);
         postForId("/api/shipments",
-                "{\"orderId\":" + orderToSevilla + ",\"vehicleId\":" + vehicleId
-                        + ",\"warehouseId\":" + madridWarehouseId + ",\"status\":\"IN_TRANSIT\"}", admin);
+                "{\"orderId\":" + orderToSevilla + ",\"vehicleId\":" + vehicleId + ",\"status\":\"IN_TRANSIT\"}", admin);
 
         // A shipment to the uncoordinated unit — its route must be omitted
         long orderToUncoordinated = postForId("/api/orders",
-                "{\"unitId\":" + uncoordinatedUnitId + ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", admin);
+                "{\"unitId\":" + uncoordinatedUnitId + ",\"warehouseId\":" + madridWarehouseId +
+                        ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", admin);
         postForId("/api/shipments",
-                "{\"orderId\":" + orderToUncoordinated + ",\"vehicleId\":" + vehicleId
-                        + ",\"warehouseId\":" + madridWarehouseId + ",\"status\":\"PLANNED\"}", admin);
+                "{\"orderId\":" + orderToUncoordinated + ",\"vehicleId\":" + vehicleId + ",\"status\":\"PLANNED\"}", admin);
 
         String auditor = createUserAndLogin("auditor-map", Role.AUDITOR);
         var map = getJson("/api/map", auditor);

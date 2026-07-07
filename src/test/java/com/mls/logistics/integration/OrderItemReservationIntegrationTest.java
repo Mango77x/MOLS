@@ -18,6 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * it, closing the gap where two orders (sequential or concurrent) could
  * each independently pass an availability check and together commit more
  * demand than physically exists — see {@code OrderItemService.reserve}.
+ *
+ * <p>Every order has a fixed origin warehouse, so all reservations in these
+ * tests are scoped to a single {@code (resource, warehouse)} stock row.</p>
  */
 class OrderItemReservationIntegrationTest extends AbstractIntegrationTest {
 
@@ -37,21 +40,23 @@ class OrderItemReservationIntegrationTest extends AbstractIntegrationTest {
         // First order claims 40 of the 50 physical units — still just CREATED,
         // nothing physically deducted yet.
         long orderA = postForId("/api/orders",
-                "{\"unitId\":" + unitId + ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", token);
+                "{\"unitId\":" + unitId + ",\"warehouseId\":" + warehouseId +
+                        ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", token);
         postForId("/api/order-items",
                 "{\"orderId\":" + orderA + ",\"resourceId\":" + resourceId + ",\"quantity\":40}", token);
 
-        // A second, independent order asking for 40 more would have passed
-        // under the old "check physical stock only" rule (40 <= 50) even
-        // though only 10 units are actually still unclaimed.
+        // A second, independent order from the same warehouse asking for 40
+        // more would have passed under the old "check physical stock only"
+        // rule (40 <= 50) even though only 10 units are actually unclaimed.
         long orderB = postForId("/api/orders",
-                "{\"unitId\":" + unitId + ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", token);
+                "{\"unitId\":" + unitId + ",\"warehouseId\":" + warehouseId +
+                        ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", token);
         var response = restTemplate.postForEntity("/api/order-items",
                 jsonEntity("{\"orderId\":" + orderB + ",\"resourceId\":" + resourceId + ",\"quantity\":40}", token),
                 String.class);
 
         assertThat(response.getStatusCode().value()).isEqualTo(409);
-        assertThat(response.getBody()).contains("available (physical stock minus existing reservations): 10");
+        assertThat(response.getBody()).contains("available in this warehouse (physical stock minus existing reservations): 10");
 
         // The 10 units still genuinely free remain claimable.
         var freeRoom = restTemplate.postForEntity("/api/order-items",
@@ -74,13 +79,15 @@ class OrderItemReservationIntegrationTest extends AbstractIntegrationTest {
                 "{\"resourceId\":" + resourceId + ",\"warehouseId\":" + warehouseId + ",\"quantity\":20}", token);
 
         long orderA = postForId("/api/orders",
-                "{\"unitId\":" + unitId + ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", token);
+                "{\"unitId\":" + unitId + ",\"warehouseId\":" + warehouseId +
+                        ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", token);
         postForId("/api/order-items",
                 "{\"orderId\":" + orderA + ",\"resourceId\":" + resourceId + ",\"quantity\":20}", token);
 
         // With all 20 units reserved by order A, a second order can't claim any.
         long orderB = postForId("/api/orders",
-                "{\"unitId\":" + unitId + ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", token);
+                "{\"unitId\":" + unitId + ",\"warehouseId\":" + warehouseId +
+                        ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", token);
         var blocked = restTemplate.postForEntity("/api/order-items",
                 jsonEntity("{\"orderId\":" + orderB + ",\"resourceId\":" + resourceId + ",\"quantity\":1}", token),
                 String.class);
@@ -112,11 +119,12 @@ class OrderItemReservationIntegrationTest extends AbstractIntegrationTest {
                 "{\"name\":\"Delta Unit\",\"location\":\"Valladolid\"}", token);
         long resourceId = postForId("/api/resources",
                 "{\"name\":\"Ammo crate\",\"type\":\"SUPPLY\",\"criticality\":\"HIGH\"}", token);
-        postForId("/api/stocks",
+        long stockId = postForId("/api/stocks",
                 "{\"resourceId\":" + resourceId + ",\"warehouseId\":" + warehouseId + ",\"quantity\":" + initialStock + "}", token);
 
         long orderId = postForId("/api/orders",
-                "{\"unitId\":" + unitId + ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", token);
+                "{\"unitId\":" + unitId + ",\"warehouseId\":" + warehouseId +
+                        ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", token);
 
         ExecutorService pool = Executors.newFixedThreadPool(threads);
         try {
@@ -142,10 +150,10 @@ class OrderItemReservationIntegrationTest extends AbstractIntegrationTest {
             assertThat(succeeded).isGreaterThan(0);
             assertThat(succeeded * quantityEach).isLessThanOrEqualTo(initialStock);
 
-            // The resource's committed total must exactly match what was actually
-            // accepted — no lost updates, no phantom over-reservation.
-            var resource = getJson("/api/resources/" + resourceId, token);
-            assertThat(resource.get("reservedQuantity").asInt()).isEqualTo(succeeded * quantityEach);
+            // The stock row's committed total must exactly match what was
+            // actually accepted — no lost updates, no phantom over-reservation.
+            var stock = getJson("/api/stocks/" + stockId, token);
+            assertThat(stock.get("reservedQuantity").asInt()).isEqualTo(succeeded * quantityEach);
         } finally {
             pool.shutdownNow();
         }

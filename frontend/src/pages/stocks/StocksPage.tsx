@@ -52,6 +52,19 @@ export default function StocksPage() {
         return <Badge tone={value === 0 ? 'neutral' : 'ok'}>{value}</Badge>
       },
     },
+    {
+      id: 'reservedQuantity',
+      header: 'Reserved',
+      cell: ({ row }) => row.original.reservedQuantity,
+    },
+    {
+      id: 'available',
+      header: 'Available',
+      cell: ({ row }) => {
+        const available = row.original.quantity - row.original.reservedQuantity
+        return <Badge tone={available === 0 ? 'critical' : 'ok'}>{available}</Badge>
+      },
+    },
   ]
   if (isAdmin) {
     columns.push({

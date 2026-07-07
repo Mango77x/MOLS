@@ -5,7 +5,6 @@ import com.mls.logistics.domain.OrderItem;
 import com.mls.logistics.domain.Shipment;
 import com.mls.logistics.domain.ShipmentStatus;
 import com.mls.logistics.domain.Vehicle;
-import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.AdjustStockRequest;
 import com.mls.logistics.dto.request.CreateShipmentRequest;
 import com.mls.logistics.dto.request.UpdateShipmentRequest;
@@ -41,6 +40,9 @@ import java.util.Optional;
  *   shipment's origin warehouse for each item in the associated order.</li>
  *   <li>Stock deduction is performed via {@link StockService#adjustStock(Long, com.mls.logistics.dto.request.AdjustStockRequest)}
  *   to guarantee that each deduction produces a {@code Movement} audit record (EXIT).</li>
+ *   <li>The origin warehouse is never chosen independently — it is always inherited from the
+ *   order ({@code Order.warehouse}), the same warehouse {@code OrderItemService} reserved stock
+ *   against, so this deduction can never target a different, unreserved warehouse.</li>
  * </ul>
  */
 @Service
@@ -159,8 +161,9 @@ public class ShipmentService {
      * Creates a new shipment from a DTO request.
      *
      * <p>This keeps API contracts (DTOs) separate from domain entities. The request is mapped to a
-     * {@link Shipment} with references to {@link Order}, {@link Vehicle} and {@link Warehouse} using IDs.
-     * The status string is validated and converted to {@link ShipmentStatus}.</p>
+     * {@link Shipment} with references to {@link Order} and {@link Vehicle} by id; the warehouse is
+     * inherited from the order, not part of the request. The status string is validated and converted
+     * to {@link ShipmentStatus}.</p>
      *
      * <p>If the shipment is created with status {@code DELIVERED}, fulfillment is executed immediately.</p>
      *
@@ -169,23 +172,24 @@ public class ShipmentService {
      */
     @Transactional
     public Shipment createShipment(CreateShipmentRequest request) {
-        Shipment shipment = new Shipment();
+        Order order = orderService
+                .getOrderById(request.getOrderId())
+                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", request.getOrderId()));
+        assertOrderIsOpen(order);
 
-        Order order = new Order();
-        order.setId(request.getOrderId());
+        Shipment shipment = new Shipment();
 
         Vehicle vehicle = new Vehicle();
         vehicle.setId(request.getVehicleId());
 
-        Warehouse warehouse = new Warehouse();
-        warehouse.setId(request.getWarehouseId());
-
         shipment.setOrder(order);
         shipment.setVehicle(vehicle);
-        shipment.setWarehouse(warehouse);
+        // Inherited from the order, never chosen independently: the order's
+        // items already reserved stock against this specific warehouse, so
+        // delivery must deduct from that same warehouse — never a different
+        // one the caller might otherwise have picked.
+        shipment.setWarehouse(order.getWarehouse());
         shipment.setStatus(ShipmentStatus.from(request.getStatus()));
-
-        assertOrderIsOpen(request.getOrderId());
 
         Shipment saved = shipmentRepository.save(shipment);
 
@@ -229,20 +233,19 @@ public class ShipmentService {
         }
 
         if (request.getOrderId() != null) {
-            assertOrderIsOpen(request.getOrderId());
-            Order order = new Order();
-            order.setId(request.getOrderId());
+            Order order = orderService
+                    .getOrderById(request.getOrderId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Order", "id", request.getOrderId()));
+            assertOrderIsOpen(order);
             shipment.setOrder(order);
+            // Follows the new order's warehouse — see createShipment for why
+            // a shipment never chooses its own independently of its order.
+            shipment.setWarehouse(order.getWarehouse());
         }
         if (request.getVehicleId() != null) {
             Vehicle vehicle = new Vehicle();
             vehicle.setId(request.getVehicleId());
             shipment.setVehicle(vehicle);
-        }
-        if (request.getWarehouseId() != null) {
-            Warehouse warehouse = new Warehouse();
-            warehouse.setId(request.getWarehouseId());
-            shipment.setWarehouse(warehouse);
         }
         if (request.getStatus() != null) {
             ShipmentStatus nextStatus = ShipmentStatus.from(request.getStatus());
@@ -391,6 +394,14 @@ public class ShipmentService {
         if (isOrderClosed(orderId)) {
             throw new InvalidRequestException(
                 "Cannot create or update shipments for a COMPLETED or CANCELLED order. Order id: " + orderId);
+        }
+    }
+
+    /** Same as {@link #assertOrderIsOpen(Long)}, for a caller that already has the entity loaded. */
+    private void assertOrderIsOpen(Order order) {
+        if (order != null && order.getStatus() != null && order.getStatus().isTerminal()) {
+            throw new InvalidRequestException(
+                "Cannot create or update shipments for a COMPLETED or CANCELLED order. Order id: " + order.getId());
         }
     }
 

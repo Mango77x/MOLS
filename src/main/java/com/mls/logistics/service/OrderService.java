@@ -3,6 +3,7 @@ package com.mls.logistics.service;
 import com.mls.logistics.domain.Order;
 import com.mls.logistics.domain.OrderStatus;
 import com.mls.logistics.domain.Unit;
+import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.CreateOrderRequest;
 import com.mls.logistics.dto.request.CreateOrderItemRequest;
 import com.mls.logistics.dto.request.UpdateOrderRequest;
@@ -135,7 +136,11 @@ public class OrderService {
         Unit unit = new Unit();
         unit.setId(request.getUnitId());
 
+        Warehouse warehouse = new Warehouse();
+        warehouse.setId(request.getWarehouseId());
+
         order.setUnit(unit);
+        order.setWarehouse(warehouse);
         order.setDateCreated(request.getDateCreated());
         order.setStatus(OrderStatus.from(request.getStatus()));
 

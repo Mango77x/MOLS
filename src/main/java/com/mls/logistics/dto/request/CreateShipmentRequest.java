@@ -7,10 +7,15 @@ import jakarta.validation.constraints.Size;
 
 /**
  * Data Transfer Object for creating a new Shipment.
- * 
+ *
  * This class defines the structure of data accepted by the API
  * when creating a shipment, separating API contracts from
  * domain entities.
+ *
+ * <p>No warehouse field: a shipment always ships from its order's fixed
+ * origin warehouse (see {@code Order.warehouse}), set automatically by
+ * {@code ShipmentService} — asking for it again here would let a shipment
+ * disagree with the warehouse its order's items reserved stock against.</p>
  */
 public class CreateShipmentRequest {
 
@@ -21,10 +26,6 @@ public class CreateShipmentRequest {
     @NotNull(message = "Vehicle ID is required")
     @Positive(message = "Vehicle ID must be a positive number")
     private Long vehicleId;
-
-    @NotNull(message = "Warehouse ID is required")
-    @Positive(message = "Warehouse ID must be a positive number")
-    private Long warehouseId;
 
     @NotBlank(message = "Shipment status is required")
     @Size(min = 2, max = 50, message = "Shipment status must be between 2 and 50 characters")
@@ -41,13 +42,11 @@ public class CreateShipmentRequest {
      *
      * @param orderId order identifier
      * @param vehicleId vehicle identifier
-     * @param warehouseId warehouse identifier
      * @param status shipment status
      */
-    public CreateShipmentRequest(Long orderId, Long vehicleId, Long warehouseId, String status) {
+    public CreateShipmentRequest(Long orderId, Long vehicleId, String status) {
         this.orderId = orderId;
         this.vehicleId = vehicleId;
-        this.warehouseId = warehouseId;
         this.status = status;
     }
 
@@ -67,14 +66,6 @@ public class CreateShipmentRequest {
 
     public void setVehicleId(Long vehicleId) {
         this.vehicleId = vehicleId;
-    }
-
-    public Long getWarehouseId() {
-        return warehouseId;
-    }
-
-    public void setWarehouseId(Long warehouseId) {
-        this.warehouseId = warehouseId;
     }
 
     public String getStatus() {

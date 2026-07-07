@@ -37,6 +37,7 @@ export interface StockEntity {
   resourceId: number
   warehouseId: number
   quantity: number
+  reservedQuantity: number
 }
 
 export type MovementType = 'ENTRY' | 'EXIT'
@@ -58,6 +59,7 @@ export type OrderStatus = 'CREATED' | 'VALIDATED' | 'COMPLETED' | 'CANCELLED'
 export interface OrderEntity {
   id: number
   unitId: number
+  warehouseId: number
   dateCreated: string
   status: OrderStatus
 }

@@ -10,7 +10,6 @@ const schema = z
   .object({
     enabled: z.boolean(),
     vehicleId: positiveId('Select a vehicle').optional(),
-    warehouseId: positiveId('Select a warehouse').optional(),
     status: z.enum(['PLANNED', 'IN_TRANSIT', 'DELIVERED']),
   })
   .superRefine((values, ctx) => {
@@ -18,17 +17,16 @@ const schema = z
     if (!values.vehicleId) {
       ctx.addIssue({ code: 'custom', message: 'Select a vehicle', path: ['vehicleId'] })
     }
-    if (!values.warehouseId) {
-      ctx.addIssue({ code: 'custom', message: 'Select a warehouse', path: ['warehouseId'] })
-    }
   })
 
 export default function ShipmentStep({
+  warehouseId,
   initial,
   submitting,
   onSubmit,
   onBack,
 }: {
+  warehouseId: number
   initial: WizardShipment
   submitting: boolean
   onSubmit: (shipment: WizardShipment) => void
@@ -36,6 +34,7 @@ export default function ShipmentStep({
 }) {
   const { byId: vehicles } = useLookup<VehicleEntity>('/vehicles')
   const { byId: warehouses } = useLookup<WarehouseEntity>('/warehouses')
+  const warehouse = warehouses[warehouseId]
 
   const {
     register,
@@ -74,22 +73,13 @@ export default function ShipmentStep({
               </option>
             ))}
           </SelectField>
-          <SelectField
-            label="Origin warehouse"
-            id="warehouseId"
-            defaultValue=""
-            registration={register('warehouseId', { valueAsNumber: true })}
-            error={errors.warehouseId?.message}
-          >
-            <option value="" disabled>
-              Select a warehouse
-            </option>
-            {Object.values(warehouses).map((w) => (
-              <option key={w.id} value={w.id}>
-                {w.name} — {w.location}
-              </option>
-            ))}
-          </SelectField>
+          <div>
+            <span className="block text-sm font-medium text-gray-700 dark:text-gray-300">Origin warehouse</span>
+            <p className="mt-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-300">
+              {warehouse ? `${warehouse.name}${warehouse.location ? ` — ${warehouse.location}` : ''}` : '…'}
+            </p>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Fixed to the order's warehouse.</p>
+          </div>
           <SelectField label="Status" id="shipmentStatus" registration={register('status')} error={undefined}>
             <option value="PLANNED">Planned</option>
             <option value="IN_TRANSIT">In transit</option>

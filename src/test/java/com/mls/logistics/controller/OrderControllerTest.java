@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mls.logistics.domain.Order;
 import com.mls.logistics.domain.OrderStatus;
 import com.mls.logistics.domain.Unit;
+import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.CreateOrderRequest;
 import com.mls.logistics.dto.request.CreateOrderWithItemsRequest;
 import com.mls.logistics.dto.request.OrderItemLineRequest;
@@ -63,9 +64,13 @@ class OrderControllerTest {
         Unit unit = new Unit();
         unit.setId(1L);
 
+        Warehouse warehouse = new Warehouse();
+        warehouse.setId(1L);
+
         testOrder = new Order();
         testOrder.setId(1L);
         testOrder.setUnit(unit);
+        testOrder.setWarehouse(warehouse);
         testOrder.setDateCreated(LocalDate.of(2024, 1, 1));
         testOrder.setStatus(OrderStatus.CREATED);
     }
@@ -116,7 +121,7 @@ class OrderControllerTest {
     @WithMockUser(roles = "ADMIN")
     void createOrder_WithValidRequest_ShouldReturn201() throws Exception {
         // Given
-        CreateOrderRequest request = new CreateOrderRequest(1L, LocalDate.now(), "CREATED");
+        CreateOrderRequest request = new CreateOrderRequest(1L, 1L, LocalDate.now(), "CREATED");
         when(orderService.createOrder(any(CreateOrderRequest.class))).thenReturn(testOrder);
 
         // When & Then
@@ -133,7 +138,7 @@ class OrderControllerTest {
     @WithMockUser(roles = "ADMIN")
     void createOrder_WithInvalidRequest_ShouldReturn400() throws Exception {
         // Given
-        CreateOrderRequest request = new CreateOrderRequest(null, null, "");
+        CreateOrderRequest request = new CreateOrderRequest(null, null, null, "");
 
         // When & Then
         mockMvc.perform(post("/api/orders")
@@ -149,7 +154,7 @@ class OrderControllerTest {
     void createOrderWithItems_WithValidRequest_ShouldReturn201() throws Exception {
         // Given
         CreateOrderWithItemsRequest request = new CreateOrderWithItemsRequest(
-                new CreateOrderRequest(1L, LocalDate.now(), "CREATED"),
+                new CreateOrderRequest(1L, 1L, LocalDate.now(), "CREATED"),
                 Arrays.asList(new OrderItemLineRequest(2L, 5)));
         when(orderService.createOrderWithItems(any(CreateOrderRequest.class), anyList()))
                 .thenReturn(testOrder);
@@ -184,7 +189,7 @@ class OrderControllerTest {
     void createOrderWithItems_WhenStockInsufficient_ShouldReturn409() throws Exception {
         // Given
         CreateOrderWithItemsRequest request = new CreateOrderWithItemsRequest(
-                new CreateOrderRequest(1L, LocalDate.now(), "CREATED"),
+                new CreateOrderRequest(1L, 1L, LocalDate.now(), "CREATED"),
                 Arrays.asList(new OrderItemLineRequest(2L, 999)));
         when(orderService.createOrderWithItems(any(CreateOrderRequest.class), anyList()))
                 .thenThrow(new InsufficientStockException("Not enough stock available for resource 2"));

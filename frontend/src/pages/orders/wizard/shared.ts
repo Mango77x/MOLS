@@ -8,6 +8,7 @@ export interface DraftItem {
 
 export interface WizardHeader {
   unitId: number | undefined
+  warehouseId: number | undefined
   dateCreated: string
   status: 'CREATED' | 'VALIDATED' | 'COMPLETED' | 'CANCELLED'
 }
@@ -15,6 +16,5 @@ export interface WizardHeader {
 export interface WizardShipment {
   enabled: boolean
   vehicleId?: number
-  warehouseId?: number
   status: 'PLANNED' | 'IN_TRANSIT' | 'DELIVERED'
 }

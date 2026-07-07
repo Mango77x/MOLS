@@ -4,7 +4,7 @@ import com.mls.logistics.domain.Resource;
 
 /**
  * Data Transfer Object for Resource responses.
- * 
+ *
  * This class defines the structure of resource data returned by the API,
  * allowing control over exactly what fields are exposed to clients.
  */
@@ -14,7 +14,6 @@ public class ResourceResponse {
     private String name;
     private String type;
     private String criticality;
-    private int reservedQuantity;
 
     /**
      * Default constructor for serialization.
@@ -29,14 +28,12 @@ public class ResourceResponse {
      * @param name resource name
      * @param type resource type
      * @param criticality criticality level
-     * @param reservedQuantity quantity currently committed to open order items, across all warehouses
      */
-    public ResourceResponse(Long id, String name, String type, String criticality, int reservedQuantity) {
+    public ResourceResponse(Long id, String name, String type, String criticality) {
         this.id = id;
         this.name = name;
         this.type = type;
         this.criticality = criticality;
-        this.reservedQuantity = reservedQuantity;
     }
 
     /**
@@ -53,8 +50,7 @@ public class ResourceResponse {
                 resource.getId(),
                 resource.getName(),
                 resource.getType(),
-                resource.getCriticality(),
-                resource.getReservedQuantity()
+                resource.getCriticality()
         );
     }
 
@@ -90,13 +86,5 @@ public class ResourceResponse {
 
     public void setCriticality(String criticality) {
         this.criticality = criticality;
-    }
-
-    public int getReservedQuantity() {
-        return reservedQuantity;
-    }
-
-    public void setReservedQuantity(int reservedQuantity) {
-        this.reservedQuantity = reservedQuantity;
     }
 }

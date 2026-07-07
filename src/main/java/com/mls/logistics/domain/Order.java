@@ -20,6 +20,18 @@ public class Order {
     @JoinColumn(name = "unit_id")
     private Unit unit;
 
+    /**
+     * Origin warehouse this order is fulfilled from. Fixed at creation and
+     * immutable afterwards: every item's stock reservation is made against
+     * this warehouse (see {@code OrderItemService}), and shipments inherit
+     * it automatically instead of choosing their own — the whole point is
+     * that a validated order can no longer fail at delivery for a warehouse
+     * mismatch.
+     */
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "warehouse_id", nullable = false)
+    private Warehouse warehouse;
+
     /** Date of creation */
     private LocalDate dateCreated;
 
@@ -42,6 +54,9 @@ public class Order {
 
     public Unit getUnit() { return unit; }
     public void setUnit(Unit unit) { this.unit = unit; }
+
+    public Warehouse getWarehouse() { return warehouse; }
+    public void setWarehouse(Warehouse warehouse) { this.warehouse = warehouse; }
 
     public LocalDate getDateCreated() { return dateCreated; }
     public void setDateCreated(LocalDate dateCreated) { this.dateCreated = dateCreated; }

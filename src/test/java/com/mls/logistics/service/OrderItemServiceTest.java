@@ -4,6 +4,8 @@ import com.mls.logistics.domain.Order;
 import com.mls.logistics.domain.OrderItem;
 import com.mls.logistics.domain.OrderStatus;
 import com.mls.logistics.domain.Resource;
+import com.mls.logistics.domain.Stock;
+import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.CreateOrderItemRequest;
 import com.mls.logistics.dto.request.UpdateOrderItemRequest;
 import com.mls.logistics.exception.InsufficientStockException;
@@ -11,7 +13,7 @@ import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.OrderItemRepository;
 import com.mls.logistics.repository.OrderRepository;
-import com.mls.logistics.repository.ResourceRepository;
+import com.mls.logistics.repository.StockRepository;
 import org.springframework.data.domain.Sort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,10 +48,7 @@ class OrderItemServiceTest {
     private OrderRepository orderRepository;
 
     @Mock
-    private ResourceRepository resourceRepository;
-
-    @Mock
-    private StockService stockService;
+    private StockRepository stockRepository;
 
     @InjectMocks
     private OrderItemService orderItemService;
@@ -57,16 +56,28 @@ class OrderItemServiceTest {
     private OrderItem testOrderItem;
     private Order openOrder;
     private Resource testResource;
+    private Warehouse orderWarehouse;
+    private Stock testStock;
 
     @BeforeEach
     void setUp() {
+        orderWarehouse = new Warehouse();
+        orderWarehouse.setId(1L);
+
         openOrder = new Order();
         openOrder.setId(1L);
         openOrder.setStatus(OrderStatus.CREATED);
+        openOrder.setWarehouse(orderWarehouse);
 
         testResource = new Resource();
         testResource.setId(1L);
-        testResource.setReservedQuantity(0);
+
+        testStock = new Stock();
+        testStock.setId(1L);
+        testStock.setResource(testResource);
+        testStock.setWarehouse(orderWarehouse);
+        testStock.setQuantity(100);
+        testStock.setReservedQuantity(0);
 
         testOrderItem = new OrderItem();
         testOrderItem.setId(1L);
@@ -123,8 +134,7 @@ class OrderItemServiceTest {
         // Given
         CreateOrderItemRequest request = new CreateOrderItemRequest(1L, 1L, 10);
         when(orderRepository.findById(1L)).thenReturn(Optional.of(openOrder));
-        when(resourceRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(testResource));
-        when(stockService.getTotalAvailableQuantity(1L)).thenReturn(100);
+        when(stockRepository.findByResourceIdAndWarehouseIdForUpdate(1L, 1L)).thenReturn(Optional.of(testStock));
         when(orderItemRepository.save(any(OrderItem.class))).thenReturn(testOrderItem);
 
         // When
@@ -133,28 +143,42 @@ class OrderItemServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getQuantity()).isEqualTo(10);
-        // The reservation was recorded on the resource before saving the item
-        assertThat(testResource.getReservedQuantity()).isEqualTo(10);
-        verify(resourceRepository, times(1)).save(testResource);
+        // The reservation was recorded on the order's warehouse stock row before saving the item
+        assertThat(testStock.getReservedQuantity()).isEqualTo(10);
+        verify(stockRepository, times(1)).save(testStock);
         verify(orderItemRepository, times(1)).save(any(OrderItem.class));
     }
 
     @Test
     void createOrderItem_WhenRequestedExceedsUnreservedStock_ShouldThrowException() {
-        // Given: 100 physical, but 95 already reserved by other order items -> only 5 truly free
-        testResource.setReservedQuantity(95);
+        // Given: 100 physical in the order's warehouse, but 95 already reserved -> only 5 truly free
+        testStock.setReservedQuantity(95);
         CreateOrderItemRequest request = new CreateOrderItemRequest(1L, 1L, 10);
         when(orderRepository.findById(1L)).thenReturn(Optional.of(openOrder));
-        when(resourceRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(testResource));
-        when(stockService.getTotalAvailableQuantity(1L)).thenReturn(100);
+        when(stockRepository.findByResourceIdAndWarehouseIdForUpdate(1L, 1L)).thenReturn(Optional.of(testStock));
 
         // When & Then
         assertThatThrownBy(() -> orderItemService.createOrderItem(request))
                 .isInstanceOf(InsufficientStockException.class)
-                .hasMessageContaining("available (physical stock minus existing reservations): 5");
+                .hasMessageContaining("available in this warehouse (physical stock minus existing reservations): 5");
 
         verify(orderItemRepository, never()).save(any());
-        verify(resourceRepository, never()).save(any());
+        verify(stockRepository, never()).save(any());
+    }
+
+    @Test
+    void createOrderItem_WhenResourceHasNoStockInOrdersWarehouse_ShouldThrowException() {
+        // Given: no stock row at all for this resource in the order's warehouse
+        CreateOrderItemRequest request = new CreateOrderItemRequest(1L, 1L, 10);
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(openOrder));
+        when(stockRepository.findByResourceIdAndWarehouseIdForUpdate(1L, 1L)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> orderItemService.createOrderItem(request))
+                .isInstanceOf(InsufficientStockException.class)
+                .hasMessageContaining("no stock record");
+
+        verify(orderItemRepository, never()).save(any());
     }
 
     @Test
@@ -169,7 +193,7 @@ class OrderItemServiceTest {
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("COMPLETED or CANCELLED");
 
-        verifyNoInteractions(resourceRepository);
+        verifyNoInteractions(stockRepository);
         verify(orderItemRepository, never()).save(any());
     }
 
@@ -187,48 +211,50 @@ class OrderItemServiceTest {
 
     @Test
     void updateOrderItem_WhenQuantityIncreases_ShouldReleaseOldAndReserveNewAmount() {
-        // Given: item currently reserves 10; resource has 10 reserved (just this item) and 30 physical
-        testResource.setReservedQuantity(10);
+        // Given: item currently reserves 10; this warehouse's stock has 10 reserved (just this item) and 30 physical
+        testStock.setQuantity(30);
+        testStock.setReservedQuantity(10);
         UpdateOrderItemRequest request = new UpdateOrderItemRequest();
         request.setQuantity(20);
         when(orderItemRepository.findById(1L)).thenReturn(Optional.of(testOrderItem));
-        when(resourceRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(testResource));
-        when(stockService.getTotalAvailableQuantity(1L)).thenReturn(30);
+        when(stockRepository.findByResourceIdAndWarehouseIdForUpdate(1L, 1L)).thenReturn(Optional.of(testStock));
         when(orderItemRepository.save(any(OrderItem.class))).thenAnswer(inv -> inv.getArgument(0));
 
         // When
         OrderItem result = orderItemService.updateOrderItem(1L, request);
 
         // Then: released 10 then reserved 20 -> net reserved is 20 (10 - 10 + 20)
-        assertThat(testResource.getReservedQuantity()).isEqualTo(20);
+        assertThat(testStock.getReservedQuantity()).isEqualTo(20);
         assertThat(result.getQuantity()).isEqualTo(20);
     }
 
     @Test
     void updateOrderItem_WhenNewQuantityExceedsAvailability_ShouldThrowAndRestoreOriginalReservation() {
         // Given: item reserves 10 out of 10 physical (nothing else free)
-        testResource.setReservedQuantity(10);
+        testStock.setQuantity(10);
+        testStock.setReservedQuantity(10);
         UpdateOrderItemRequest request = new UpdateOrderItemRequest();
         request.setQuantity(50);
         when(orderItemRepository.findById(1L)).thenReturn(Optional.of(testOrderItem));
-        when(resourceRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(testResource));
-        when(stockService.getTotalAvailableQuantity(1L)).thenReturn(10);
+        when(stockRepository.findByResourceIdAndWarehouseIdForUpdate(1L, 1L)).thenReturn(Optional.of(testStock));
 
         // When & Then
         assertThatThrownBy(() -> orderItemService.updateOrderItem(1L, request))
                 .isInstanceOf(InsufficientStockException.class);
 
         // The original 10-unit reservation must still be intact (released, then restored)
-        assertThat(testResource.getReservedQuantity()).isEqualTo(10);
+        assertThat(testStock.getReservedQuantity()).isEqualTo(10);
         verify(orderItemRepository, never()).save(any());
     }
 
     @Test
     void updateOrderItem_WhenNothingReservationAffectingChanges_ShouldNotTouchReservation() {
-        // Given: only moving the item to a different (open) order, same resource/quantity
+        // Given: only moving the item to a different order sourced from the SAME warehouse,
+        // same resource/quantity — nothing about the reservation actually changes.
         Order otherOrder = new Order();
         otherOrder.setId(2L);
         otherOrder.setStatus(OrderStatus.CREATED);
+        otherOrder.setWarehouse(orderWarehouse);
 
         UpdateOrderItemRequest request = new UpdateOrderItemRequest();
         request.setOrderId(2L);
@@ -241,22 +267,59 @@ class OrderItemServiceTest {
 
         // Then
         assertThat(result.getOrder().getId()).isEqualTo(2L);
-        verifyNoInteractions(resourceRepository);
+        verifyNoInteractions(stockRepository);
+    }
+
+    @Test
+    void updateOrderItem_WhenMovedToOrderInADifferentWarehouse_ShouldReReserveAgainstNewWarehouse() {
+        // Given: moving the item to an order sourced from a different warehouse
+        // must release from the old warehouse's stock and reserve in the new one.
+        testStock.setReservedQuantity(10);
+
+        Warehouse otherWarehouse = new Warehouse();
+        otherWarehouse.setId(2L);
+        Order otherOrder = new Order();
+        otherOrder.setId(2L);
+        otherOrder.setStatus(OrderStatus.CREATED);
+        otherOrder.setWarehouse(otherWarehouse);
+
+        Stock otherStock = new Stock();
+        otherStock.setId(2L);
+        otherStock.setResource(testResource);
+        otherStock.setWarehouse(otherWarehouse);
+        otherStock.setQuantity(50);
+        otherStock.setReservedQuantity(0);
+
+        UpdateOrderItemRequest request = new UpdateOrderItemRequest();
+        request.setOrderId(2L);
+        when(orderItemRepository.findById(1L)).thenReturn(Optional.of(testOrderItem));
+        when(orderRepository.findById(2L)).thenReturn(Optional.of(otherOrder));
+        when(stockRepository.findByResourceIdAndWarehouseIdForUpdate(1L, 1L)).thenReturn(Optional.of(testStock));
+        when(stockRepository.findByResourceIdAndWarehouseIdForUpdate(1L, 2L)).thenReturn(Optional.of(otherStock));
+        when(orderItemRepository.save(any(OrderItem.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // When
+        OrderItem result = orderItemService.updateOrderItem(1L, request);
+
+        // Then
+        assertThat(result.getOrder().getId()).isEqualTo(2L);
+        assertThat(testStock.getReservedQuantity()).isEqualTo(0);
+        assertThat(otherStock.getReservedQuantity()).isEqualTo(10);
     }
 
     @Test
     void deleteOrderItem_WhenExists_ShouldReleaseReservationAndDelete() {
         // Given
-        testResource.setReservedQuantity(10);
+        testStock.setReservedQuantity(10);
         when(orderItemRepository.findById(1L)).thenReturn(Optional.of(testOrderItem));
-        when(resourceRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(testResource));
+        when(stockRepository.findByResourceIdAndWarehouseIdForUpdate(1L, 1L)).thenReturn(Optional.of(testStock));
         doNothing().when(orderItemRepository).deleteById(1L);
 
         // When
         orderItemService.deleteOrderItem(1L);
 
         // Then
-        assertThat(testResource.getReservedQuantity()).isEqualTo(0);
+        assertThat(testStock.getReservedQuantity()).isEqualTo(0);
         assertThat(testOrderItem.isReservationActive()).isFalse();
         verify(orderItemRepository, times(1)).deleteById(1L);
     }
@@ -283,7 +346,7 @@ class OrderItemServiceTest {
         orderItemService.releaseReservation(testOrderItem);
 
         // Then
-        verifyNoInteractions(resourceRepository);
+        verifyNoInteractions(stockRepository);
         verify(orderItemRepository, never()).save(any());
     }
 
@@ -297,15 +360,15 @@ class OrderItemServiceTest {
         second.setQuantity(5);
         second.setReservationActive(true);
 
-        testResource.setReservedQuantity(15);
+        testStock.setReservedQuantity(15);
         when(orderItemRepository.findByOrderId(eq(1L), any(Sort.class))).thenReturn(List.of(testOrderItem, second));
-        when(resourceRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(testResource));
+        when(stockRepository.findByResourceIdAndWarehouseIdForUpdate(1L, 1L)).thenReturn(Optional.of(testStock));
 
         // When
         orderItemService.releaseReservationsForOrder(1L);
 
         // Then
-        assertThat(testResource.getReservedQuantity()).isEqualTo(0);
+        assertThat(testStock.getReservedQuantity()).isEqualTo(0);
         assertThat(testOrderItem.isReservationActive()).isFalse();
         assertThat(second.isReservationActive()).isFalse();
 

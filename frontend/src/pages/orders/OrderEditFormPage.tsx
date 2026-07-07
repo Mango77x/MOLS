@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { api } from '../../api/client'
-import type { OrderEntity, UnitEntity } from '../../api/entities'
+import type { OrderEntity, UnitEntity, WarehouseEntity } from '../../api/entities'
 import { applyApiError, extractApiError } from '../../api/errors'
 import { useLookup } from '../../api/lookups'
 import { useEntity } from '../../api/useEntity'
@@ -26,6 +26,7 @@ export default function OrderEditFormPage() {
   const navigate = useNavigate()
   const { data: order, loading, notFound } = useEntity<OrderEntity>(`/orders/${id}`)
   const { byId: units } = useLookup<UnitEntity>('/units')
+  const { byId: warehouses } = useLookup<WarehouseEntity>('/warehouses')
   const [banner, setBanner] = useState<string | null>(null)
 
   const {
@@ -84,6 +85,17 @@ export default function OrderEditFormPage() {
             </option>
           ))}
         </SelectField>
+        <div>
+          <span className="block text-sm font-medium text-gray-700 dark:text-gray-300">Origin warehouse</span>
+          <p className="mt-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-300">
+            {warehouses[order.warehouseId]
+              ? `${warehouses[order.warehouseId].name}${warehouses[order.warehouseId].location ? ` — ${warehouses[order.warehouseId].location}` : ''}`
+              : '…'}
+          </p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Fixed at creation — every item reserves stock from this warehouse.
+          </p>
+        </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <TextField
             label="Date created"

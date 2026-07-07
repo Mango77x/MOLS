@@ -5,8 +5,12 @@ import jakarta.validation.constraints.Size;
 
 /**
  * Data Transfer Object for updating an existing Shipment.
- * 
+ *
  * All fields are optional - only provided fields will be updated.
+ *
+ * <p>No warehouse field: it always follows the shipment's order (see
+ * {@code CreateShipmentRequest}) — re-derived automatically by
+ * {@code ShipmentService} if {@code orderId} changes.</p>
  */
 public class UpdateShipmentRequest {
 
@@ -15,9 +19,6 @@ public class UpdateShipmentRequest {
 
     @Positive(message = "Vehicle ID must be a positive number")
     private Long vehicleId;
-
-    @Positive(message = "Warehouse ID must be a positive number")
-    private Long warehouseId;
 
     @Size(min = 2, max = 50, message = "Shipment status must be between 2 and 50 characters")
     private String status;
@@ -39,14 +40,6 @@ public class UpdateShipmentRequest {
 
     public void setVehicleId(Long vehicleId) {
         this.vehicleId = vehicleId;
-    }
-
-    public Long getWarehouseId() {
-        return warehouseId;
-    }
-
-    public void setWarehouseId(Long warehouseId) {
-        this.warehouseId = warehouseId;
     }
 
     public String getStatus() {
