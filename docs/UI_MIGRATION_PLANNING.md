@@ -93,10 +93,20 @@ Estimates follow the plan's ~21-day budget, re-sequenced so backend prerequisite
 
 ### Sprint 4 — Data tables (4–5 days)
 
-- [ ] Generic table component on `@tanstack/react-table`: server-side pagination/sort/filter wired to Sprint 0 endpoints
-- [ ] Migrate list pages in order of simplicity: Warehouses → Resources → Vehicles → Units → Stocks (incl. adjust action) → Movements (read-only audit) → Orders (expandable items) → Shipments
-- [ ] Inline actions with role-aware visibility; confirm dialogs for deletes
-- Exit criteria: every list page usable in React; Thymeleaf equivalents still available as fallback
+- [x] Generic table component on `@tanstack/react-table` (`DataTable` + `useServerTable` in
+  `frontend/src/components/table/`): server-side pagination/sort/filter, always requesting the
+  `PageResponse` envelope, wired to the Sprint 0 endpoints
+- [x] Migrated list pages in order of simplicity: Warehouses → Resources → Vehicles → Units →
+  Stocks (Adjust action, resource/warehouse names resolved via lookups) → Movements (read-only
+  audit, resolved through stock→resource/warehouse lookups, default sort newest-first) → Orders
+  (expandable line items via `GET /api/order-items?orderId=`) → Shipments
+- [x] Inline actions with role-aware visibility (edit links to the existing `/ui/**` forms;
+  ADMIN-only for Warehouses/Resources/Vehicles/Units/Stock; ADMIN+OPERATOR edit / ADMIN-only
+  delete for Orders/Shipments, matching the API role matrix) and a native `confirm()` dialog
+  before every delete, mirroring the Thymeleaf UI's own confirm pattern
+- Exit criteria: every list page usable in React; Thymeleaf equivalents still available as
+  fallback — verified against the running `docker compose` stack with real seeded data (filters,
+  sorting, pagination, lookups, order-item expansion and role-gated actions all checked)
 
 ### Sprint 5 — Forms & detail pages (4–5 days)
 
