@@ -18,8 +18,10 @@ RUN sed -i 's/\r$//' mvnw && chmod +x mvnw
 # Download dependencies (cached layer)
 RUN ./mvnw dependency:go-offline -B
 
-# Copy source code
+# Copy source code and the React frontend (built by the frontend-maven-plugin
+# during the Maven package, with its own pinned Node — no node image needed)
 COPY src ./src
+COPY frontend ./frontend
 
 # Build the JAR, skipping tests (tests run in CI, not in Docker build)
 RUN ./mvnw clean package -DskipTests

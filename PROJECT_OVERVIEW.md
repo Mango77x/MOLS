@@ -13,11 +13,14 @@ The goal of this doc is to help a developer understand where things live, how th
 
 ## Project Status
 
-- Runtime: Spring Boot 4.0.2 on Java 21
+- Runtime: Spring Boot 4.x on Java 21
 - Database: PostgreSQL (local or via Docker Compose)
 - API: `/api/**` (Swagger at `/swagger-ui.html`)
-- UI: `/ui/**` (Thymeleaf + Bootstrap, dark mode)
-- Build/tests: Maven wrapper (`./mvnw.cmd test`)
+- UI: `/ui/**` (Thymeleaf + Bootstrap, dark mode) — being migrated to a
+  React SPA served at `/app/**` (see `frontend/` and
+  `docs/UI_MIGRATION_PLANNING.md`)
+- Build/tests: Maven wrapper (`./mvnw.cmd verify`); the Maven build also
+  lints, tests and builds the frontend (skippable with `-Dskip.frontend=true`)
 - CI: GitHub Actions workflow in `.github/workflows/ci.yml`
 
 ## Repo Layout (High Level)
@@ -60,6 +63,26 @@ DTOs live in `src/main/java/com/mls/logistics/dto` (request/response).
 Exceptions live in `src/main/java/com/mls/logistics/exception` (global handler + typed exceptions).
 
 Security lives in `src/main/java/com/mls/logistics/security` (JWT for API + form login for UI).
+
+### Frontend: React SPA (incremental migration)
+
+The new interface lives in `frontend/` (Vite + React 19 + TypeScript +
+Tailwind 4) and is served at `/app/**`:
+
+- **Auth**: cookie-based (the HttpOnly JWT cookie from `POST /api/auth/login`);
+  session restored on page load via `GET /api/auth/me`; a 401 from any API
+  call drops the client session and returns the user to the login page.
+- **Shell**: sidebar/topbar layout, role-aware navigation (ADMIN-only entries
+  hidden and route-guarded client-side; real enforcement is the API role
+  matrix), light/dark theme, military-green design tokens in `src/index.css`.
+- **Pages**: Sprint 1 ships the KPI dashboard (fed by `GET /api/dashboard`);
+  other sections are placeholders linking to their working `/ui` pages.
+- **Serving**: the production build is packaged into the jar at
+  `static/app/` and served by `config/SpaWebConfig` with an `index.html`
+  fallback for client-side routes.
+- **Dev loop**: `npm run dev` inside `frontend/` (Vite proxies `/api` to
+  `localhost:8080`); `npm run lint` (oxlint) and `npm test` (Vitest) run in
+  the Maven build too.
 
 ### UI: Server-Side Admin Interface
 

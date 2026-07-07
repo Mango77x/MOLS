@@ -64,6 +64,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/auth/register").hasRole("ADMIN")
                 // Logout only clears the HttpOnly auth cookie — safe to allow
                 .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
+                // Session descriptor for browser clients (SPA session restore)
+                .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
                 // Block any other auth endpoints by default
                 .requestMatchers("/api/auth/**").denyAll()
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**",
@@ -113,6 +115,8 @@ public class SecurityConfig {
             .securityMatcher(
                 "/",
                 "/ui/**",
+                "/app",
+                "/app/**",
                 "/css/**",
                 "/js/**",
                 "/images/**",
@@ -125,6 +129,11 @@ public class SecurityConfig {
                 .requestMatchers("/ui/setup").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico").permitAll()
                 .requestMatchers("/").permitAll()
+
+                // React SPA shell + static assets: public — the SPA handles
+                // login client-side and every API call it makes is protected
+                // by the JWT-cookie API chain above.
+                .requestMatchers("/app", "/app/**").permitAll()
 
                 // Admin-only module
                 .requestMatchers("/ui/users/**").hasRole("ADMIN")

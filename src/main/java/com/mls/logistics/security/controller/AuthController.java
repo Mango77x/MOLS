@@ -5,6 +5,7 @@ import com.mls.logistics.security.config.JwtProperties;
 import com.mls.logistics.security.domain.AppUser;
 import com.mls.logistics.security.dto.AuthResponse;
 import com.mls.logistics.security.dto.LoginRequest;
+import com.mls.logistics.security.dto.MeResponse;
 import com.mls.logistics.security.dto.RegisterRequest;
 import com.mls.logistics.security.repository.AppUserRepository;
 import com.mls.logistics.security.service.JwtService;
@@ -23,6 +24,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -122,6 +124,25 @@ public class AuthController {
             // lockouts. A single generic 401 avoids leaking which case it was.
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+    }
+
+    @Operation(summary = "Current session",
+               description = "Returns the authenticated user's name and role. Browser "
+                       + "clients use it to restore their session on page load, since the "
+                       + "JWT lives in an HttpOnly cookie they cannot read.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Session information returned"),
+        @ApiResponse(responseCode = "403", description = "Not authenticated")
+    })
+    @GetMapping("/me")
+    public ResponseEntity<MeResponse> me(Authentication authentication) {
+        String role = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(authority -> authority.startsWith("ROLE_"))
+                .map(authority -> authority.substring("ROLE_".length()))
+                .findFirst()
+                .orElse(null);
+        return ResponseEntity.ok(new MeResponse(authentication.getName(), role));
     }
 
     @Operation(summary = "Logout",

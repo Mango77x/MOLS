@@ -41,6 +41,18 @@ class CookieAuthIntegrationTest extends AbstractIntegrationTest {
                 new HttpEntity<>(null, withCookie), String.class)
                 .getStatusCode().value()).isEqualTo(200);
 
+        // --- /auth/me restores the session for the SPA on page load ---
+        var me = restTemplate.exchange("/api/auth/me", HttpMethod.GET,
+                new HttpEntity<>(null, withCookie), String.class);
+        assertThat(me.getStatusCode().value()).isEqualTo(200);
+        var meBody = readJson(me.getBody());
+        assertThat(meBody.get("username").asText()).isEqualTo("cookie-user");
+        assertThat(meBody.get("role").asText()).isEqualTo("ADMIN");
+
+        // --- /auth/me is not available anonymously ---
+        assertThat(restTemplate.exchange("/api/auth/me", HttpMethod.GET,
+                jsonEntity(null, null), String.class).getStatusCode().value()).isEqualTo(403);
+
         // --- A tampered cookie is treated as anonymous (403 on protected
         // endpoints) rather than 401: cookies travel implicitly, so an
         // unusable one must never block the user from reaching login again ---

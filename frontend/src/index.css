@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+/* Dark mode is toggled by putting the `dark` class on <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * MOLS design tokens.
+ *
+ * - army:   primary military-green palette (brand)
+ * - status: semantic colors — ok (green) / warn (yellow) / critical (red)
+ */
+@theme {
+  --color-army-50: #f4f6ee;
+  --color-army-100: #e5ead8;
+  --color-army-200: #ccd6b4;
+  --color-army-300: #aebd8a;
+  --color-army-400: #92a466;
+  --color-army-500: #75894a;
+  --color-army-600: #5a6b38;
+  --color-army-700: #46532e;
+  --color-army-800: #3a4429;
+  --color-army-900: #333b26;
+  --color-army-950: #191f11;
+
+  --color-status-ok: #16a34a;
+  --color-status-warn: #ca8a04;
+  --color-status-critical: #dc2626;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-gray-100 text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100;
+}
