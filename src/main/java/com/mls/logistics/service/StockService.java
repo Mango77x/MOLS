@@ -21,12 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Service layer for Stock-related business operations.
@@ -225,51 +223,32 @@ public class StockService {
     /**
      * Aggregates current stock quantity by warehouse name.
      *
-     * This is used by the dashboard to render the stock distribution chart.
+     * Summed and ordered in the database ({@link StockRepository#sumQuantityByWarehouse})
+     * instead of loading every stock row into memory. Used by the dashboard
+     * to render the stock distribution chart.
      */
     public Map<String, Long> getStockQuantityByWarehouse() {
-        Map<String, Long> aggregated = stockRepository.findAll()
-                .stream()
-                .filter(s -> s.getWarehouse() != null)
-                .collect(Collectors.groupingBy(
-                        s -> {
-                            String name = s.getWarehouse().getName();
-                            return (name == null || name.isBlank()) ? "(Unnamed)" : name;
-                        },
-                        Collectors.summingLong(s -> (long) s.getQuantity())
-                ));
-
-        return aggregated.entrySet()
-                .stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue(Comparator.reverseOrder())
-                        .thenComparing(Map.Entry.comparingByKey(String.CASE_INSENSITIVE_ORDER)))
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (a, b) -> a,
-                        LinkedHashMap::new
-                ));
+        Map<String, Long> result = new LinkedHashMap<>();
+        for (StockRepository.WarehouseQuantity row : stockRepository.sumQuantityByWarehouse()) {
+            result.put(row.getWarehouseName(), row.getTotal());
+        }
+        return result;
     }
 
     /**
-     * Minimum stock quantity per warehouse id.
+     * Minimum stock quantity per warehouse id, computed in the database
+     * ({@link StockRepository#minQuantityByWarehouse}).
      *
      * Used by the map to color warehouse pins by stock health: the worst
      * (lowest) quantity in a warehouse determines whether the whole pin
      * reads OK, WARNING or CRITICAL.
      */
     public Map<Long, Integer> getMinQuantityByWarehouseId() {
-        Map<Long, Optional<Integer>> minByWarehouse = stockRepository.findAll()
-                .stream()
-                .filter(s -> s.getWarehouse() != null && s.getWarehouse().getId() != null)
-                .collect(Collectors.groupingBy(
-                        s -> s.getWarehouse().getId(),
-                        Collectors.mapping(Stock::getQuantity, Collectors.minBy(Integer::compareTo))));
-
-        return minByWarehouse.entrySet()
-                .stream()
-                .filter(entry -> entry.getValue().isPresent())
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().get()));
+        Map<Long, Integer> result = new LinkedHashMap<>();
+        for (StockRepository.WarehouseMinQuantity row : stockRepository.minQuantityByWarehouse()) {
+            result.put(row.getWarehouseId(), row.getMinQuantity());
+        }
+        return result;
     }
 
     public long countByQuantityLessThan(int threshold) {

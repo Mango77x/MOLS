@@ -16,7 +16,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Read-only service layer for the Movement audit trail.
@@ -115,17 +114,18 @@ public class MovementService {
     }
 
     /**
-     * Counts movements per type since the given timestamp.
+     * Counts movements per type since the given timestamp, grouped in the
+     * database ({@link MovementRepository#countByTypeSince}) instead of
+     * loading every matching row into memory.
      *
      * Keys are {@code MovementType} names; used by the dashboard chart.
      */
     public Map<String, Long> getMovementCountByType(LocalDateTime since) {
-        return movementRepository.findByDateTimeAfter(since)
-                .stream()
-                .collect(Collectors.groupingBy(
-                        m -> m.getType() == null ? "UNKNOWN" : m.getType().name(),
-                        LinkedHashMap::new,
-                        Collectors.counting()
-                ));
+        Map<String, Long> result = new LinkedHashMap<>();
+        for (MovementRepository.TypeCount row : movementRepository.countByTypeSince(since)) {
+            String key = row.getType() == null ? "UNKNOWN" : row.getType().name();
+            result.put(key, row.getCount());
+        }
+        return result;
     }
 }

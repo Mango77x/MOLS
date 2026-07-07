@@ -61,4 +61,41 @@ class DashboardIntegrationTest extends AbstractIntegrationTest {
         assertThat(dash.get("thresholds").get("lowStockThreshold").asInt()).isEqualTo(10);
         assertThat(dash.get("thresholds").get("criticalStockThreshold").asInt()).isEqualTo(5);
     }
+
+    @Test
+    void stockByWarehouseChart_SumsAndOrdersAcrossMultipleWarehousesInTheDatabase() {
+        // Proves the SUM(...) GROUP BY ... ORDER BY done in
+        // StockRepository.sumQuantityByWarehouse (not in Java) is correct:
+        // highest total first, ties broken alphabetically.
+        String admin = createUserAndLogin("admin-dashboard-multi", Role.ADMIN);
+
+        long depotA = postForId("/api/warehouses", "{\"name\":\"Alpha Depot\",\"location\":\"Madrid\"}", admin);
+        long depotB = postForId("/api/warehouses", "{\"name\":\"Bravo Depot\",\"location\":\"Burgos\"}", admin);
+        long depotC = postForId("/api/warehouses", "{\"name\":\"Charlie Depot\",\"location\":\"Leon\"}", admin);
+        long resourceOne = postForId("/api/resources",
+                "{\"name\":\"Ration pack\",\"type\":\"SUPPLY\",\"criticality\":\"LOW\"}", admin);
+        long resourceTwo = postForId("/api/resources",
+                "{\"name\":\"Fuel can\",\"type\":\"SUPPLY\",\"criticality\":\"LOW\"}", admin);
+
+        // Alpha: 40 total (two stock rows, same warehouse) — highest, must be first
+        postForId("/api/stocks",
+                "{\"resourceId\":" + resourceOne + ",\"warehouseId\":" + depotA + ",\"quantity\":25}", admin);
+        postForId("/api/stocks",
+                "{\"resourceId\":" + resourceTwo + ",\"warehouseId\":" + depotA + ",\"quantity\":15}", admin);
+        // Bravo and Charlie tie at 10 — alphabetical tie-break
+        postForId("/api/stocks",
+                "{\"resourceId\":" + resourceOne + ",\"warehouseId\":" + depotC + ",\"quantity\":10}", admin);
+        postForId("/api/stocks",
+                "{\"resourceId\":" + resourceOne + ",\"warehouseId\":" + depotB + ",\"quantity\":10}", admin);
+
+        var dash = getJson("/api/dashboard", admin);
+        var chart = dash.get("charts").get("stockByWarehouse");
+
+        assertThat(chart.get("labels").get(0).asText()).isEqualTo("Alpha Depot");
+        assertThat(chart.get("values").get(0).asLong()).isEqualTo(40);
+        assertThat(chart.get("labels").get(1).asText()).isEqualTo("Bravo Depot");
+        assertThat(chart.get("values").get(1).asLong()).isEqualTo(10);
+        assertThat(chart.get("labels").get(2).asText()).isEqualTo("Charlie Depot");
+        assertThat(chart.get("values").get(2).asLong()).isEqualTo(10);
+    }
 }

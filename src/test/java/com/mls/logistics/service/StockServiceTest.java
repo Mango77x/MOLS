@@ -149,24 +149,18 @@ class StockServiceTest {
     }
 
     @Test
-    void getMinQuantityByWarehouseId_ShouldReturnLowestQuantityPerWarehouse() {
-        // Given: warehouse 1 has two stock rows (5 and 20), warehouse 2 has one (0)
-        Warehouse warehouseOne = new Warehouse();
-        warehouseOne.setId(1L);
-        Warehouse warehouseTwo = new Warehouse();
-        warehouseTwo.setId(2L);
+    void getMinQuantityByWarehouseId_ShouldMapDatabaseProjectionRowsToAMap() {
+        // Given: the MIN(quantity)-per-warehouse grouping happens in SQL
+        // (StockRepository.minQuantityByWarehouse) — this test only checks
+        // the service correctly maps those projection rows into a Map.
+        var rowOne = mock(StockRepository.WarehouseMinQuantity.class);
+        when(rowOne.getWarehouseId()).thenReturn(1L);
+        when(rowOne.getMinQuantity()).thenReturn(5);
+        var rowTwo = mock(StockRepository.WarehouseMinQuantity.class);
+        when(rowTwo.getWarehouseId()).thenReturn(2L);
+        when(rowTwo.getMinQuantity()).thenReturn(0);
 
-        Stock stockA = new Stock();
-        stockA.setWarehouse(warehouseOne);
-        stockA.setQuantity(20);
-        Stock stockB = new Stock();
-        stockB.setWarehouse(warehouseOne);
-        stockB.setQuantity(5);
-        Stock stockC = new Stock();
-        stockC.setWarehouse(warehouseTwo);
-        stockC.setQuantity(0);
-
-        when(stockRepository.findAll()).thenReturn(List.of(stockA, stockB, stockC));
+        when(stockRepository.minQuantityByWarehouse()).thenReturn(List.of(rowOne, rowTwo));
 
         // When
         var result = stockService.getMinQuantityByWarehouseId();
@@ -176,17 +170,27 @@ class StockServiceTest {
     }
 
     @Test
-    void getMinQuantityByWarehouseId_WithNoWarehouse_ShouldIgnoreStock() {
-        // Given: a stock row with no warehouse reference (should never happen, but must not crash)
-        Stock orphanStock = new Stock();
-        orphanStock.setQuantity(10);
-        when(stockRepository.findAll()).thenReturn(List.of(orphanStock));
+    void getStockQuantityByWarehouse_ShouldMapDatabaseProjectionRowsToAMap() {
+        // Given: the SUM(quantity)-per-warehouse grouping and ordering
+        // happens in SQL (StockRepository.sumQuantityByWarehouse) — this
+        // test only checks the service preserves that order in the Map.
+        var rowOne = mock(StockRepository.WarehouseQuantity.class);
+        when(rowOne.getWarehouseName()).thenReturn("Central Depot");
+        when(rowOne.getTotal()).thenReturn(120L);
+        var rowTwo = mock(StockRepository.WarehouseQuantity.class);
+        when(rowTwo.getWarehouseName()).thenReturn("Northern Depot");
+        when(rowTwo.getTotal()).thenReturn(30L);
+
+        when(stockRepository.sumQuantityByWarehouse()).thenReturn(List.of(rowOne, rowTwo));
 
         // When
-        var result = stockService.getMinQuantityByWarehouseId();
+        var result = stockService.getStockQuantityByWarehouse();
 
         // Then
-        assertThat(result).isEmpty();
+        assertThat(result).containsExactly(
+                java.util.Map.entry("Central Depot", 120L),
+                java.util.Map.entry("Northern Depot", 30L)
+        );
     }
 
     @Test
