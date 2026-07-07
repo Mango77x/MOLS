@@ -87,18 +87,52 @@ Tailwind 4) and is served at `/app/**`:
   Units, Stock, Orders, Shipments and the Audit log are server-paginated
   tables (`@tanstack/react-table` via a shared `DataTable`/`useServerTable`
   pair in `src/components/table/`) wired to the Sprint 0 pagination/sort/
-  filter query params, with role-aware inline actions (edit links to the
-  existing `/ui/**` forms, real delete calls with a confirm dialog) and,
-  for Stock/Movements/Orders/Shipments, client-side lookups against the
+  filter query params, with role-aware inline actions and, for
+  Stock/Movements/Orders/Shipments, client-side lookups against the
   plain-array reference endpoints to resolve foreign ids to names. Orders
   rows expand inline to their line items (`GET /api/order-items?orderId=`).
   Users remains a placeholder linking to `/ui/users`.
+- **Forms & detail pages** (Sprint 5): full create/edit flows built with
+  `react-hook-form` + a `zod` resolver — shared field components live in
+  `src/components/form/` (`TextField`/`SelectField`/`FormBanner`/buttons)
+  plus `zodHelpers.ts` (numeric id/quantity/coordinate schema helpers, built
+  with `z.custom` rather than `z.number()`/`z.preprocess` so an
+  untouched/empty field shows a friendly message instead of zod's own
+  "expected number, received NaN" — see the comment there for why).
+  API errors are normalized by `api/errors.ts`: 400 validation failures map
+  field-by-field onto the form via `setError`, 404/409 business conflicts
+  (e.g. insufficient stock) surface as a banner.
+  - Warehouse/Resource/Vehicle/Unit/Stock (create + Stock's delta-based
+    Adjust) are simple ADMIN-only forms; Warehouse/Unit include a
+    click-to-place `LocationPicker` map (`src/components/map/`, reusing the
+    dashboard map's tile layer) for latitude/longitude.
+  - **Order wizard** (`pages/orders/OrderWizardPage.tsx`, ADMIN/OPERATOR):
+    header → items → optional shipment. Items get a best-effort
+    client-side stock-availability check (sums `GET /api/stocks?resourceId=`)
+    that warns but doesn't block adding — the authoritative check is the
+    atomic `POST /api/orders/with-items` call (new in Sprint 5, wraps the
+    existing transactional `OrderService.createOrderWithItems`: an
+    insufficient-stock conflict on any item leaves nothing persisted). The
+    optional shipment is a separate `POST /api/shipments` call after the
+    order succeeds; if it fails, the user lands on the order detail page
+    with a banner rather than losing the created order.
+  - **Order/Shipment edit + detail pages**: order edit is header-only plus
+    an inline, immediately-persisted items manager (`OrderItemsManager.tsx`,
+    mirroring the Thymeleaf inline-add/update/delete flow); shipment
+    edit is a single form covering the PLANNED→IN_TRANSIT→DELIVERED
+    transition (DELIVERED deducts stock and is rejected on insufficient
+    stock, same as the API). Detail pages are read-only traceability views:
+    order detail shows items/shipments/linked movements, shipment detail
+    shows context/order items/linked movements — both link to each other
+    (`Movement.shipmentId` → shipment detail) for end-to-end tracing.
 - **Serving**: the production build is packaged into the jar at
   `static/app/` and served by `config/SpaWebConfig` with an `index.html`
   fallback for client-side routes.
 - **Dev loop**: `npm run dev` inside `frontend/` (Vite proxies `/api` to
   `localhost:8080`); `npm run lint` (oxlint) and `npm test` (Vitest) run in
-  the Maven build too.
+  the Maven build too. A `frontend-dev` launch config
+  (`.claude/launch.json`) lets the Preview tooling run the Vite dev server
+  standalone against an already-running backend for fast UI iteration.
 
 ### UI: Server-Side Admin Interface
 
@@ -475,6 +509,14 @@ pagination, sort or enum filter values return HTTP 400.
 Additional stock operation:
 - `PATCH /api/stocks/{id}/adjust` — adjusts stock by delta and auto-creates movement audit record.
 
+Additional order operation:
+- `POST /api/orders/with-items` — creates an order and its line items in a
+  single transaction (ADMIN or OPERATOR, same rule as other order writes).
+  Body is `{ header: CreateOrderRequest, items: [{ resourceId, quantity }] }`;
+  reuses `OrderService.createOrderWithItems`, so an insufficient-stock
+  conflict (409) or validation error (400) on any item leaves nothing
+  persisted. Backs the React order wizard's atomic create step.
+
 Dashboard endpoint:
 - `GET /api/dashboard` — aggregated operational snapshot (KPIs, chart series,
   low-stock/stale-order alerts, recent movements and the thresholds used),
@@ -565,4 +607,4 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 - Decide whether shipments should support partial fulfillment (would require shipment line items)
 - Split the monolithic UI controller (API pagination/filtering is done)
 
-**Last updated**: 2026-07-07
+**Last updated**: 2026-07-07 (Sprint 5: forms & detail pages)

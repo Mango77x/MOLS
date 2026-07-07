@@ -1,11 +1,12 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useCurrentRole } from '../../auth/roles'
 import { api } from '../../api/client'
 import type { VehicleEntity, VehicleStatus } from '../../api/entities'
 import Badge, { type BadgeTone } from '../../components/Badge'
 import DataTable from '../../components/table/DataTable'
-import { ActionLink, DeleteAction } from '../../components/table/RowActions'
+import { DeleteAction, RouteActionLink } from '../../components/table/RowActions'
 import { useServerTable } from '../../components/table/useServerTable'
 
 const STATUS_TONE: Record<VehicleStatus, BadgeTone> = {
@@ -54,7 +55,7 @@ export default function VehiclesPage() {
       header: 'Actions',
       cell: ({ row }) => (
         <div className="flex gap-3">
-          <ActionLink href={`/ui/vehicles/${row.original.id}/edit`}>Edit</ActionLink>
+          <RouteActionLink to={`/vehicles/${row.original.id}/edit`}>Edit</RouteActionLink>
           <DeleteAction label="vehicle" onConfirm={() => handleDelete(row.original.id)} />
         </div>
       ),
@@ -66,12 +67,12 @@ export default function VehiclesPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold">Vehicles</h1>
         {isAdmin && (
-          <a
-            href="/ui/vehicles/new"
+          <Link
+            to="/vehicles/new"
             className="rounded bg-army-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-army-800"
           >
             New vehicle
-          </a>
+          </Link>
         )}
       </div>
 

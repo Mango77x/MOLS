@@ -2,6 +2,9 @@ package com.mls.logistics.controller;
 
 import com.mls.logistics.domain.Order;
 import com.mls.logistics.dto.request.CreateOrderRequest;
+import com.mls.logistics.dto.request.CreateOrderWithItemsRequest;
+import com.mls.logistics.dto.request.CreateOrderItemRequest;
+import com.mls.logistics.dto.request.OrderItemLineRequest;
 import com.mls.logistics.dto.request.UpdateOrderRequest;
 import com.mls.logistics.dto.response.OrderResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
@@ -21,6 +24,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -139,6 +143,40 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         Order createdOrder = orderService.createOrder(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(OrderResponse.from(createdOrder));
+    }
+
+    /**
+     * Creates a new order together with its line items in one atomic call.
+     *
+     * POST /api/orders/with-items
+     *
+     * Mirrors the React "order wizard" (order -&gt; items -&gt; optional shipment):
+     * the order and every item are created in a single transaction, so an
+     * insufficient-stock conflict on any item leaves nothing persisted.
+     *
+     * @param request DTO containing the order header and its line items
+     * @return created order with HTTP 201 status
+     */
+    @Operation(
+        summary = "Create an order with its line items",
+        description = "Creates a new order and all of its line items in a single transaction. " +
+                "If any item fails validation (e.g. insufficient stock), nothing is persisted."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Order and items created successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request data"),
+        @ApiResponse(responseCode = "409", description = "Insufficient stock for one or more items")
+    })
+    @PostMapping("/with-items")
+    public ResponseEntity<OrderResponse> createOrderWithItems(
+            @Valid @RequestBody CreateOrderWithItemsRequest request) {
+        List<CreateOrderItemRequest> items = request.getItems() == null
+                ? Collections.emptyList()
+                : request.getItems().stream()
+                        .map(line -> new CreateOrderItemRequest(null, line.getResourceId(), line.getQuantity()))
+                        .collect(Collectors.toList());
+        Order createdOrder = orderService.createOrderWithItems(request.getHeader(), items);
         return ResponseEntity.status(HttpStatus.CREATED).body(OrderResponse.from(createdOrder));
     }
 

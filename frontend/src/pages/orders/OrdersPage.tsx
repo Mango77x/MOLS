@@ -1,12 +1,13 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { hasAnyRole, useCurrentRole } from '../../auth/roles'
 import { api } from '../../api/client'
 import { useLookup } from '../../api/lookups'
 import type { OrderEntity, OrderStatus, ResourceEntity, UnitEntity } from '../../api/entities'
 import Badge, { type BadgeTone } from '../../components/Badge'
 import DataTable from '../../components/table/DataTable'
-import { ActionLink, DeleteAction } from '../../components/table/RowActions'
+import { DeleteAction, RouteActionLink } from '../../components/table/RowActions'
 import { useServerTable } from '../../components/table/useServerTable'
 import OrderItemsRow from './OrderItemsRow'
 
@@ -80,8 +81,8 @@ export default function OrdersPage() {
       header: 'Actions',
       cell: ({ row }) => (
         <div className="flex gap-3">
-          <ActionLink href={`/ui/orders/${row.original.id}`}>View</ActionLink>
-          {canEdit && <ActionLink href={`/ui/orders/${row.original.id}/edit`}>Edit</ActionLink>}
+          <RouteActionLink to={`/orders/${row.original.id}`}>View</RouteActionLink>
+          {canEdit && <RouteActionLink to={`/orders/${row.original.id}/edit`}>Edit</RouteActionLink>}
           {isAdmin && (
             <DeleteAction label="order" onConfirm={() => handleDelete(row.original.id)} />
           )}
@@ -95,12 +96,12 @@ export default function OrdersPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold">Orders</h1>
         {canEdit && (
-          <a
-            href="/ui/orders/new"
+          <Link
+            to="/orders/new"
             className="rounded bg-army-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-army-800"
           >
             New order
-          </a>
+          </Link>
         )}
       </div>
 
