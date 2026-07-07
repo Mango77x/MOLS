@@ -251,6 +251,27 @@ public class StockService {
                 ));
     }
 
+    /**
+     * Minimum stock quantity per warehouse id.
+     *
+     * Used by the map to color warehouse pins by stock health: the worst
+     * (lowest) quantity in a warehouse determines whether the whole pin
+     * reads OK, WARNING or CRITICAL.
+     */
+    public Map<Long, Integer> getMinQuantityByWarehouseId() {
+        Map<Long, Optional<Integer>> minByWarehouse = stockRepository.findAll()
+                .stream()
+                .filter(s -> s.getWarehouse() != null && s.getWarehouse().getId() != null)
+                .collect(Collectors.groupingBy(
+                        s -> s.getWarehouse().getId(),
+                        Collectors.mapping(Stock::getQuantity, Collectors.minBy(Integer::compareTo))));
+
+        return minByWarehouse.entrySet()
+                .stream()
+                .filter(entry -> entry.getValue().isPresent())
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().get()));
+    }
+
     public long countByQuantityLessThan(int threshold) {
         return stockRepository.countByQuantityLessThan(threshold);
     }
