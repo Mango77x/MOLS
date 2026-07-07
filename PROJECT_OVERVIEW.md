@@ -5,7 +5,7 @@
 MOLS is a Spring Boot logistics app with:
 
 - a REST API (JWT-secured) for CRUD operations
-- a server-rendered admin UI (`/ui`) for day-to-day usage
+- a React SPA admin UI (`/app`) for day-to-day usage
 - stock + movement auditing so changes are traceable — the movement log is
   **append-only** (never updated or deleted) and records **who** made each change
 
@@ -16,9 +16,9 @@ The goal of this doc is to help a developer understand where things live, how th
 - Runtime: Spring Boot 4.x on Java 21
 - Database: PostgreSQL (local or via Docker Compose)
 - API: `/api/**` (Swagger at `/swagger-ui.html`)
-- UI: `/ui/**` (Thymeleaf + Bootstrap, dark mode) — being migrated to a
-  React SPA served at `/app/**` (see `frontend/` and
-  `docs/UI_MIGRATION_PLANNING.md`)
+- UI: React SPA served at `/app/**` (see `frontend/`). The old Thymeleaf
+  admin UI (`/ui/**`) was fully removed in Sprint 6 — `/ui/**` now just
+  302-redirects to the `/app` equivalent for old bookmarks/links.
 - Build/tests: Maven wrapper (`./mvnw.cmd verify`); the Maven build also
   lints, tests and builds the frontend (skippable with `-Dskip.frontend=true`)
 - CI: GitHub Actions workflow in `.github/workflows/ci.yml`
@@ -62,9 +62,9 @@ DTOs live in `src/main/java/com/mls/logistics/dto` (request/response).
 
 Exceptions live in `src/main/java/com/mls/logistics/exception` (global handler + typed exceptions).
 
-Security lives in `src/main/java/com/mls/logistics/security` (JWT for API + form login for UI).
+Security lives in `src/main/java/com/mls/logistics/security` (JWT for API and the SPA, delivered via an HttpOnly cookie).
 
-### Frontend: React SPA (incremental migration)
+### Frontend: React SPA
 
 The new interface lives in `frontend/` (Vite + React 19 + TypeScript +
 Tailwind 4) and is served at `/app/**`:
@@ -91,7 +91,11 @@ Tailwind 4) and is served at `/app/**`:
   Stock/Movements/Orders/Shipments, client-side lookups against the
   plain-array reference endpoints to resolve foreign ids to names. Orders
   rows expand inline to their line items (`GET /api/order-items?orderId=`).
-  Users remains a placeholder linking to `/ui/users`.
+  Users (`/app/users`, ADMIN-only) lists accounts, creates users, changes
+  roles, resets passwords and enables/disables accounts against
+  `/api/users/**` (Sprint 6). First-run setup (`/app/setup`) creates the
+  initial ADMIN when the database has zero users, backed by
+  `GET/POST /api/auth/setup-status` and `/api/auth/setup`.
 - **Forms & detail pages** (Sprint 5): full create/edit flows built with
   `react-hook-form` + a `zod` resolver — shared field components live in
   `src/components/form/` (`TextField`/`SelectField`/`FormBanner`/buttons)
@@ -134,38 +138,13 @@ Tailwind 4) and is served at `/app/**`:
   (`.claude/launch.json`) lets the Preview tooling run the Vite dev server
   standalone against an already-running backend for fast UI iteration.
 
-### UI: Server-Side Admin Interface
+### Dashboard (Operational)
 
-The project includes a server-rendered admin UI built with Thymeleaf.
-
-- **UI Controller**: `web/UiController` (Spring MVC `@Controller`)
-- **Templates**: `src/main/resources/templates/ui/*` + fragments under `templates/fragments/*`
-- **Static assets**: `src/main/resources/static/*`
-- **Theme**: Bootstrap 5.3 color modes (dark mode toggle)
-
-**UI Routes**:
-- Dashboard: `/ui`
-- Login: `/ui/login`
-- First-run setup: `/ui/setup` (only when no users exist)
-- Logout (POST): `/ui/logout`
-- Warehouses: `/ui/warehouses`
-- Resources: `/ui/resources`
-- Vehicles: `/ui/vehicles`
-- Stock: `/ui/stocks` (create + adjust + delete)
-- Audit log: `/ui/movements`
-- Orders: `/ui/orders` (expand items in-table; create/edit with inline items)
-- Order detail: `/ui/orders/{id}` (shipments + linked movements)
-- Shipments: `/ui/shipments`
-- Shipment detail: `/ui/shipments/{id}` (order context + linked movements)
-- Units: `/ui/units`
-- Users (ADMIN-only): `/ui/users` (create users, change roles, reset passwords, enable/disable)
-
-#### Dashboard (Operational)
-
-The `/ui` dashboard is a quick operational snapshot. It shows:
+The dashboard (`/app`) is a quick operational snapshot, fed by `GET /api/dashboard`. It shows:
 
 - KPI cards with context (pending orders badge, fulfillment target flag, etc.)
-- Charts (Chart.js v4) with safe fallbacks when the database has little/no historical data
+- Charts (Recharts) with safe fallbacks when the database has little/no historical data
+- A live logistics map (warehouse/unit pins, animated shipment routes)
 - Recent activity (last 15 movements)
 - Actionable alerts:
    - Low stock items with direct link to the stock adjust screen
@@ -190,7 +169,7 @@ Implementation notes:
 - Aggregations live in services (the UI controller doesn’t talk to repositories).
 - Recent movements query uses an `@EntityGraph` to avoid N+1 during view rendering.
 
-**Security note**: `/api/**` remains JWT-protected. The UI uses form login + session auth; most `/ui/**` routes require login, with `/ui/login` and `/ui/setup` public.
+**Security note**: `/api/**` is JWT-protected (cookie or header); `/api/users/**` and `/api/auth/register` are ADMIN-only, `/api/auth/setup-status` and `/api/auth/setup` are public (first-run only).
 
 ### Configuration
 - **Database**: PostgreSQL configured in `src/main/resources/application.properties`
@@ -239,14 +218,11 @@ Implementation notes:
        - Anything not explicitly matched is denied (`denyAll` fallback)
 - **Brute-force protection**: after `SECURITY_LOCKOUT_MAX_ATTEMPTS` (default 5)
   consecutive failed logins a username is locked for
-  `SECURITY_LOCKOUT_DURATION_MS` (default 15 min). Applies to both the API
-  login and the UI form login; all auth events are logged (`SECURITY:` lines).
+  `SECURITY_LOCKOUT_DURATION_MS` (default 15 min); all auth events are logged (`SECURITY:` lines).
 - **Password policy**: minimum 12 characters (API register, admin user
   management, and first-run setup).
-- **UI Security**:
-   - `/ui/**` uses Spring Security form login + server-side session
-   - CSRF protection enabled for UI forms
-   - Template conditional rendering uses Thymeleaf Spring Security dialect (`thymeleaf-extras-springsecurity6`)
+- **CSP**: `Content-Security-Policy` header on the `/app/**`-serving chain
+  (`default-src 'self'`, plus the OpenStreetMap tile host for the logistics map).
 - **Bootstrap admin** (dev): can create an initial ADMIN user if none exists (see `application.properties`).
 
 ### Operational Notes (Local Dev)
@@ -407,23 +383,24 @@ Code/comments are in English. Constructor injection is preferred throughout.
 
 ```
 src/main/java/com/mls/logistics/
-├── controller/      # REST API controllers (9 files)
+├── controller/      # REST API controllers (10 files, incl. UserController)
 ├── domain/          # JPA entities (9 entities)
 ├── repository/      # Spring Data repositories (9 interfaces)
 ├── service/         # Business logic services (9 services)
-├── web/             # Thymeleaf UI controller + UI form/view models
 ├── security/        # JWT auth, users, roles, and security config
 ├── exception/       # Global exception handling and error contracts
 ├── dto/             # Request/response DTO contracts
-├── config/          # OpenAPI and app configuration classes
+├── config/          # OpenAPI, SPA serving (SpaWebConfig), and the
+│                    # LegacyUiRedirectController (/ui/** -> /app/**)
 └── LogisticsApplication.java
 
 src/main/resources/
-├── templates/        # Thymeleaf templates
-│   ├── fragments/    # layout fragments
-│   └── ui/           # UI pages
-└── static/           # CSS/JS/assets
+└── static/app/       # Built React SPA (from frontend/dist), served at /app
 ```
+
+The Thymeleaf `web` package and `templates/` were fully removed in Sprint 6
+once the React SPA reached feature parity — see git history before this
+sprint if you need to reference the old server-rendered pages.
 
 ### Containerization
 
