@@ -83,6 +83,7 @@ function DonutChart({ series }: { series: ChartSeries }) {
           innerRadius={50}
           outerRadius={80}
           paddingAngle={2}
+          isAnimationActive={false}
         >
           {rows.map((row, index) => (
             <Cell
