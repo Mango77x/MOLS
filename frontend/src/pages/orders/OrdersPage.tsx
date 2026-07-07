@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { hasAnyRole, useCurrentRole } from '../../auth/roles'
 import { api } from '../../api/client'
 import { useLookup } from '../../api/lookups'
-import type { OrderEntity, OrderStatus, ResourceEntity, UnitEntity } from '../../api/entities'
+import type { OrderEntity, OrderStatus, ResourceEntity, UnitEntity, WarehouseEntity } from '../../api/entities'
 import Badge, { type BadgeTone } from '../../components/Badge'
 import DataTable from '../../components/table/DataTable'
 import { DeleteAction, RouteActionLink } from '../../components/table/RowActions'
@@ -27,6 +27,7 @@ export default function OrdersPage() {
   const [expanded, setExpanded] = useState<Set<number>>(new Set())
 
   const { byId: units } = useLookup<UnitEntity>('/units')
+  const { byId: warehouses } = useLookup<WarehouseEntity>('/warehouses')
   const { byId: resources } = useLookup<ResourceEntity>('/resources')
 
   const table = useServerTable<OrderEntity>('/orders', { status, unitId }, { field: 'id', desc: false })
@@ -64,6 +65,11 @@ export default function OrdersPage() {
       id: 'unit',
       header: 'Unit',
       cell: ({ row }) => units[row.original.unitId]?.name ?? `#${row.original.unitId}`,
+    },
+    {
+      id: 'warehouse',
+      header: 'Warehouse',
+      cell: ({ row }) => warehouses[row.original.warehouseId]?.name ?? `#${row.original.warehouseId}`,
     },
     { id: 'dateCreated', header: 'Date created', accessorKey: 'dateCreated', enableSorting: true },
     {

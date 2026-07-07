@@ -205,22 +205,6 @@ public class StockService {
     }
 
     /**
-     * Returns the total available quantity of a resource across all warehouses.
-     *
-     * Used by OrderItemService to validate order requests against available supply.
-     *
-     * @param resourceId the resource identifier
-     * @return total quantity available across all warehouses
-     */
-    public int getTotalAvailableQuantity(Long resourceId) {
-        return stockRepository
-                .findByResourceId(resourceId)
-                .stream()
-                .mapToInt(Stock::getQuantity)
-                .sum();
-    }
-
-    /**
      * Aggregates current stock quantity by warehouse name.
      *
      * Summed and ordered in the database ({@link StockRepository#sumQuantityByWarehouse})

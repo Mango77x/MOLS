@@ -48,6 +48,7 @@ export default function OrderWizardPage() {
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [header, setHeader] = useState<WizardHeader>({
     unitId: undefined,
+    warehouseId: undefined,
     dateCreated: new Date().toISOString().slice(0, 10),
     status: 'CREATED',
   })
@@ -60,17 +61,22 @@ export default function OrderWizardPage() {
     setSubmitting(true)
     try {
       const orderResponse = await api.post<{ id: number }>('/orders/with-items', {
-        header: { unitId: header.unitId, dateCreated: header.dateCreated, status: header.status },
+        header: {
+          unitId: header.unitId,
+          warehouseId: header.warehouseId,
+          dateCreated: header.dateCreated,
+          status: header.status,
+        },
         items: items.map((item) => ({ resourceId: item.resourceId, quantity: item.quantity })),
       })
       const orderId = orderResponse.data.id
 
       if (shipment.enabled) {
         try {
+          // No warehouseId: the shipment inherits it from the order.
           await api.post('/shipments', {
             orderId,
             vehicleId: shipment.vehicleId,
-            warehouseId: shipment.warehouseId,
             status: shipment.status,
           })
         } catch (shipmentError) {
@@ -106,11 +112,18 @@ export default function OrderWizardPage() {
             onCancel={() => navigate('/orders')}
           />
         )}
-        {step === 2 && (
-          <ItemsStep items={items} onChange={setItems} onNext={() => setStep(3)} onBack={() => setStep(1)} />
+        {step === 2 && header.warehouseId !== undefined && (
+          <ItemsStep
+            warehouseId={header.warehouseId}
+            items={items}
+            onChange={setItems}
+            onNext={() => setStep(3)}
+            onBack={() => setStep(1)}
+          />
         )}
-        {step === 3 && (
+        {step === 3 && header.warehouseId !== undefined && (
           <ShipmentStep
+            warehouseId={header.warehouseId}
             initial={{ enabled: false, status: 'PLANNED' }}
             submitting={submitting}
             onSubmit={handleCreate}

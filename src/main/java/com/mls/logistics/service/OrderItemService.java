@@ -4,15 +4,15 @@ import com.mls.logistics.domain.OrderItem;
 import com.mls.logistics.domain.Order;
 import com.mls.logistics.domain.OrderStatus;
 import com.mls.logistics.domain.Resource;
+import com.mls.logistics.domain.Stock;
 import com.mls.logistics.dto.request.CreateOrderItemRequest;
 import com.mls.logistics.dto.request.UpdateOrderItemRequest;
 import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.OrderItemRepository;
 import com.mls.logistics.repository.OrderRepository;
-import com.mls.logistics.repository.ResourceRepository;
+import com.mls.logistics.repository.StockRepository;
 import com.mls.logistics.exception.InsufficientStockException;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -29,14 +30,18 @@ import java.util.Optional;
  * enforcing business rules and application logic.
  *
  * <h3>Stock reservation</h3>
- * <p>Creating/editing an order item reserves stock against
- * {@link Resource#getReservedQuantity()} instead of only checking physical
- * stock: the check-and-reserve sequence locks the resource row
- * ({@link ResourceRepository#findByIdForUpdate}) so concurrent requests
- * against the same resource serialize, and the reservation itself means a
- * second order can no longer promise stock a first order already claimed
- * (physical stock alone can't tell the two apart). The reservation is
- * released exactly once — via {@link #releaseReservation} /
+ * <p>Every order has a fixed origin warehouse (see {@code Order.warehouse}),
+ * so creating/editing an order item reserves stock against that specific
+ * {@code (resource, warehouse)} {@link Stock} row instead of only checking
+ * physical quantity: the check-and-reserve sequence locks the stock row
+ * ({@link StockRepository#findByResourceIdAndWarehouseIdForUpdate}) so
+ * concurrent requests against the same resource+warehouse serialize, and the
+ * reservation itself means a second order sourced from the same warehouse
+ * can no longer promise stock a first order already claimed. Because the
+ * warehouse is fixed at order creation, a validated item can never fail at
+ * delivery for a warehouse mismatch — the deduction in {@code ShipmentService}
+ * always targets the same stock row the reservation was made against. The
+ * reservation is released exactly once — via {@link #releaseReservation} /
  * {@link #releaseReservationsForOrder} — when the order is cancelled,
  * completed, or the item/order is deleted; see {@code OrderService} and
  * {@code ShipmentService} for the call sites.</p>
@@ -47,8 +52,7 @@ public class OrderItemService {
 
     private final OrderItemRepository orderItemRepository;
     private final OrderRepository orderRepository;
-    private final ResourceRepository resourceRepository;
-    private final StockService stockService;
+    private final StockRepository stockRepository;
 
     /**
      * Constructor-based dependency injection.
@@ -56,12 +60,10 @@ public class OrderItemService {
      */
     public OrderItemService(OrderItemRepository orderItemRepository,
                             OrderRepository orderRepository,
-                            ResourceRepository resourceRepository,
-                            @Lazy StockService stockService) {
+                            StockRepository stockRepository) {
         this.orderItemRepository = orderItemRepository;
         this.orderRepository = orderRepository;
-        this.resourceRepository = resourceRepository;
-        this.stockService = stockService;
+        this.stockRepository = stockRepository;
     }
 
     /**
@@ -140,7 +142,7 @@ public class OrderItemService {
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "id", request.getOrderId()));
         assertOrderIsOpen(order);
 
-        reserve(request.getResourceId(), request.getQuantity());
+        reserve(request.getResourceId(), order.getWarehouse().getId(), request.getQuantity());
 
         OrderItem orderItem = new OrderItem();
         orderItem.setOrder(order);
@@ -172,9 +174,22 @@ public class OrderItemService {
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("OrderItem", "id", id));
 
-        if (orderItem.getOrder() != null) {
-            assertOrderIsOpen(orderItem.getOrder());
+        Order previousOrder = orderItem.getOrder();
+        if (previousOrder != null) {
+            assertOrderIsOpen(previousOrder);
         }
+        Long previousWarehouseId = previousOrder != null && previousOrder.getWarehouse() != null
+                ? previousOrder.getWarehouse().getId() : null;
+
+        Order targetOrder = previousOrder;
+        if (request.getOrderId() != null) {
+            targetOrder = orderRepository
+                    .findById(request.getOrderId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Order", "id", request.getOrderId()));
+            assertOrderIsOpen(targetOrder);
+        }
+        Long targetWarehouseId = targetOrder != null && targetOrder.getWarehouse() != null
+                ? targetOrder.getWarehouse().getId() : null;
 
         Long previousResourceId = orderItem.getResource() != null ? orderItem.getResource().getId() : null;
         int previousQuantity = orderItem.getQuantity();
@@ -182,28 +197,29 @@ public class OrderItemService {
         Long effectiveResourceId = request.getResourceId() != null ? request.getResourceId() : previousResourceId;
         int effectiveQuantity = request.getQuantity() != null ? request.getQuantity() : previousQuantity;
 
+        // A change in resource, quantity, OR the order's warehouse (moving
+        // the item to an order sourced from a different warehouse) all
+        // invalidate the existing reservation the same way.
         boolean reservationChanged = orderItem.isReservationActive()
-                && (!effectiveResourceId.equals(previousResourceId) || effectiveQuantity != previousQuantity);
+                && (!effectiveResourceId.equals(previousResourceId)
+                        || effectiveQuantity != previousQuantity
+                        || !Objects.equals(targetWarehouseId, previousWarehouseId));
 
         if (reservationChanged) {
-            release(previousResourceId, previousQuantity);
+            release(previousResourceId, previousWarehouseId, previousQuantity);
             try {
-                reserve(effectiveResourceId, effectiveQuantity);
+                reserve(effectiveResourceId, targetWarehouseId, effectiveQuantity);
             } catch (RuntimeException ex) {
                 // Roll the released amount back so a failed re-reservation
                 // doesn't silently shrink the original one (best-effort;
                 // the enclosing transaction will roll back anyway).
-                reserve(previousResourceId, previousQuantity);
+                reserve(previousResourceId, previousWarehouseId, previousQuantity);
                 throw ex;
             }
         }
 
         if (request.getOrderId() != null) {
-            Order newOrder = orderRepository
-                    .findById(request.getOrderId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Order", "id", request.getOrderId()));
-            assertOrderIsOpen(newOrder);
-            orderItem.setOrder(newOrder);
+            orderItem.setOrder(targetOrder);
         }
         if (request.getResourceId() != null) {
             Resource resource = new Resource();
@@ -262,56 +278,61 @@ public class OrderItemService {
             return;
         }
         Long resourceId = item.getResource() != null ? item.getResource().getId() : null;
-        release(resourceId, item.getQuantity());
+        Long warehouseId = item.getOrder() != null && item.getOrder().getWarehouse() != null
+                ? item.getOrder().getWarehouse().getId() : null;
+        release(resourceId, warehouseId, item.getQuantity());
         item.setReservationActive(false);
         orderItemRepository.save(item);
     }
 
     /**
-     * Locks the resource row, checks it has enough physical stock left
-     * after subtracting what's already reserved by other order items, and
-     * — if so — reserves {@code quantity} against it.
+     * Locks the {@code (resource, warehouse)} stock row, checks it has
+     * enough physical stock left after subtracting what's already reserved
+     * by other order items sourced from the same warehouse, and — if so —
+     * reserves {@code quantity} against it.
      *
      * <p>The lock is held for the rest of the caller's transaction, so a
-     * second concurrent call for the same resource blocks here until the
+     * second concurrent call for the same stock row blocks here until the
      * first commits (or rolls back), instead of both reading the same
      * stale "available" figure and over-committing it.</p>
      *
-     * @throws ResourceNotFoundException if the resource doesn't exist
-     * @throws InsufficientStockException if quantity exceeds physical stock minus existing reservations
+     * @throws InsufficientStockException if there's no stock record for this resource
+     *         in this warehouse, or quantity exceeds physical stock minus existing reservations
      */
-    private void reserve(Long resourceId, int quantity) {
-        Resource resource = resourceRepository
-                .findByIdForUpdate(resourceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Resource", "id", resourceId));
+    private void reserve(Long resourceId, Long warehouseId, int quantity) {
+        Stock stock = stockRepository
+                .findByResourceIdAndWarehouseIdForUpdate(resourceId, warehouseId)
+                .orElseThrow(() -> new InsufficientStockException(
+                    "Cannot reserve stock: this resource has no stock record in the order's warehouse. " +
+                    "Requested: " + quantity + ". Resource id: " + resourceId + ", warehouse id: " + warehouseId
+                ));
 
-        int physicalTotal = stockService.getTotalAvailableQuantity(resourceId);
-        int trulyAvailable = physicalTotal - resource.getReservedQuantity();
+        int trulyAvailable = stock.getQuantity() - stock.getReservedQuantity();
         if (quantity > trulyAvailable) {
             throw new InsufficientStockException(
                 "Cannot reserve stock. Requested: " + quantity +
-                ", available (physical stock minus existing reservations): " + trulyAvailable +
-                ". Resource id: " + resourceId
+                ", available in this warehouse (physical stock minus existing reservations): " + trulyAvailable +
+                ". Resource id: " + resourceId + ", warehouse id: " + warehouseId
             );
         }
 
-        resource.setReservedQuantity(resource.getReservedQuantity() + quantity);
-        resourceRepository.save(resource);
+        stock.setReservedQuantity(stock.getReservedQuantity() + quantity);
+        stockRepository.save(stock);
     }
 
     /**
-     * Locks the resource row and releases a previously-held reservation.
-     * Clamped at zero and silently no-ops for a missing resource — a
-     * release must never itself fail, or a cancellation/deletion could get
-     * stuck unable to complete.
+     * Locks the {@code (resource, warehouse)} stock row and releases a
+     * previously-held reservation. Clamped at zero and silently no-ops when
+     * no matching stock row exists — a release must never itself fail, or a
+     * cancellation/deletion could get stuck unable to complete.
      */
-    private void release(Long resourceId, int quantity) {
-        if (resourceId == null || quantity <= 0) {
+    private void release(Long resourceId, Long warehouseId, int quantity) {
+        if (resourceId == null || warehouseId == null || quantity <= 0) {
             return;
         }
-        resourceRepository.findByIdForUpdate(resourceId).ifPresent(resource -> {
-            resource.setReservedQuantity(Math.max(0, resource.getReservedQuantity() - quantity));
-            resourceRepository.save(resource);
+        stockRepository.findByResourceIdAndWarehouseIdForUpdate(resourceId, warehouseId).ifPresent(stock -> {
+            stock.setReservedQuantity(Math.max(0, stock.getReservedQuantity() - quantity));
+            stockRepository.save(stock);
         });
     }
 

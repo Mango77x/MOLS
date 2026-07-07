@@ -119,7 +119,7 @@ class ShipmentControllerTest {
     @WithMockUser(roles = "ADMIN")
     void createShipment_WithValidRequest_ShouldReturn201() throws Exception {
         // Given
-        CreateShipmentRequest request = new CreateShipmentRequest(1L, 1L, 1L, "PLANNED");
+        CreateShipmentRequest request = new CreateShipmentRequest(1L, 1L, "PLANNED");
         when(shipmentService.createShipment(any(CreateShipmentRequest.class))).thenReturn(testShipment);
 
         // When & Then
@@ -136,7 +136,7 @@ class ShipmentControllerTest {
     @WithMockUser(roles = "ADMIN")
     void createShipment_WithInvalidRequest_ShouldReturn400() throws Exception {
         // Given
-        CreateShipmentRequest request = new CreateShipmentRequest(null, null, null, "");
+        CreateShipmentRequest request = new CreateShipmentRequest(null, null, "");
 
         // When & Then
         mockMvc.perform(post("/api/shipments")

@@ -1,9 +1,12 @@
 package com.mls.logistics.repository;
 
 import com.mls.logistics.domain.Stock;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,15 +30,19 @@ public interface StockRepository
     Optional<Stock> findByResourceIdAndWarehouseId(Long resourceId, Long warehouseId);
 
     /**
-     * Finds all stock records for a specific resource across all warehouses.
+     * Same as {@link #findByResourceIdAndWarehouseId} but acquires a
+     * row-level lock for the duration of the caller's transaction.
      *
-     * Used to calculate total available quantity of a resource
-     * regardless of warehouse location.
-     *
-     * @param resourceId the resource identifier
-     * @return list of stock records for this resource
+     * <p>Used by {@code OrderItemService} to serialize the
+     * check-reserved-then-reserve sequence when creating/editing/releasing
+     * order items against the same (resource, warehouse) pair, closing the
+     * check-then-act race that plain reads leave open under concurrent
+     * requests.</p>
      */
-    java.util.List<Stock> findByResourceId(Long resourceId);
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select s from Stock s where s.resource.id = :resourceId and s.warehouse.id = :warehouseId")
+    Optional<Stock> findByResourceIdAndWarehouseIdForUpdate(
+            @Param("resourceId") Long resourceId, @Param("warehouseId") Long warehouseId);
 
     List<Stock> findByQuantityLessThan(int threshold);
 

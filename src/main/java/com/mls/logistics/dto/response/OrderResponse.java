@@ -5,7 +5,7 @@ import java.time.LocalDate;
 
 /**
  * Data Transfer Object for Order responses.
- * 
+ *
  * This class defines the structure of order data returned by the API,
  * allowing control over exactly what fields are exposed to clients.
  */
@@ -13,6 +13,7 @@ public class OrderResponse {
 
     private Long id;
     private Long unitId;
+    private Long warehouseId;
     private LocalDate dateCreated;
     private String status;
 
@@ -27,19 +28,21 @@ public class OrderResponse {
      *
      * @param id order identifier
      * @param unitId unit identifier
+     * @param warehouseId origin warehouse identifier
      * @param dateCreated creation date
      * @param status order status
      */
-    public OrderResponse(Long id, Long unitId, LocalDate dateCreated, String status) {
+    public OrderResponse(Long id, Long unitId, Long warehouseId, LocalDate dateCreated, String status) {
         this.id = id;
         this.unitId = unitId;
+        this.warehouseId = warehouseId;
         this.dateCreated = dateCreated;
         this.status = status;
     }
 
     /**
      * Creates an OrderResponse from an Order entity.
-     * 
+     *
      * This static factory method converts domain entities to DTOs,
      * decoupling the API from the persistence layer.
      *
@@ -50,6 +53,7 @@ public class OrderResponse {
         return new OrderResponse(
                 order.getId(),
                 order.getUnit().getId(),
+                order.getWarehouse().getId(),
                 order.getDateCreated(),
                 order.getStatus() != null ? order.getStatus().name() : null
         );
@@ -71,6 +75,14 @@ public class OrderResponse {
 
     public void setUnitId(Long unitId) {
         this.unitId = unitId;
+    }
+
+    public Long getWarehouseId() {
+        return warehouseId;
+    }
+
+    public void setWarehouseId(Long warehouseId) {
+        this.warehouseId = warehouseId;
     }
 
     public LocalDate getDateCreated() {

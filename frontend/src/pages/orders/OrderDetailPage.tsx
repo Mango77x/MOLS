@@ -84,8 +84,8 @@ export default function OrderDetailPage() {
         <div>
           <h1 className="text-xl font-bold">Order #{order.id}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {unit?.name ?? `Unit #${order.unitId}`} • {order.dateCreated} •{' '}
-            <Badge tone={ORDER_STATUS_TONE[order.status]}>{order.status}</Badge>
+            {unit?.name ?? `Unit #${order.unitId}`} • from {warehouses[order.warehouseId]?.name ?? `Warehouse #${order.warehouseId}`}{' '}
+            • {order.dateCreated} • <Badge tone={ORDER_STATUS_TONE[order.status]}>{order.status}</Badge>
           </p>
         </div>
         <div className="flex gap-3">

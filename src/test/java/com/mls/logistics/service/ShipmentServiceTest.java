@@ -124,7 +124,15 @@ class ShipmentServiceTest {
     @Test
     void createShipment_WithValidRequest_ShouldReturnCreatedShipment() {
         // Given
-        CreateShipmentRequest request = new CreateShipmentRequest(1L, 1L, 1L, "PLANNED");
+        CreateShipmentRequest request = new CreateShipmentRequest(1L, 1L, "PLANNED");
+
+        Order order = new Order();
+        order.setId(1L);
+        order.setStatus(OrderStatus.CREATED);
+        Warehouse warehouse = new Warehouse();
+        warehouse.setId(1L);
+        order.setWarehouse(warehouse);
+        when(orderService.getOrderById(1L)).thenReturn(Optional.of(order));
         when(shipmentRepository.save(any(Shipment.class))).thenReturn(testShipment);
 
         // When
@@ -242,7 +250,7 @@ class ShipmentServiceTest {
         completed.setStatus(OrderStatus.COMPLETED);
         when(orderService.getOrderById(1L)).thenReturn(Optional.of(completed));
 
-        CreateShipmentRequest request = new CreateShipmentRequest(1L, 1L, 1L, "PLANNED");
+        CreateShipmentRequest request = new CreateShipmentRequest(1L, 1L, "PLANNED");
 
         // When & Then
         assertThatThrownBy(() -> shipmentService.createShipment(request))

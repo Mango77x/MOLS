@@ -26,7 +26,8 @@ class DashboardIntegrationTest extends AbstractIntegrationTest {
         postForId("/api/stocks",
                 "{\"resourceId\":" + resourceId + ",\"warehouseId\":" + warehouseId + ",\"quantity\":3}", admin);
         postForId("/api/orders",
-                "{\"unitId\":" + unitId + ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", admin);
+                "{\"unitId\":" + unitId + ",\"warehouseId\":" + warehouseId +
+                        ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", admin);
 
         String auditor = createUserAndLogin("auditor-dashboard", Role.AUDITOR);
         var dash = getJson("/api/dashboard", auditor);

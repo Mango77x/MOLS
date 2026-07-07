@@ -104,7 +104,7 @@ class OrderServiceTest {
     @Test
     void createOrder_WithValidRequest_ShouldReturnCreatedOrder() {
         // Given
-        CreateOrderRequest request = new CreateOrderRequest(1L, LocalDate.now(), "CREATED");
+        CreateOrderRequest request = new CreateOrderRequest(1L, 1L, LocalDate.now(), "CREATED");
         when(orderRepository.save(any(Order.class))).thenReturn(testOrder);
 
         // When
@@ -119,7 +119,7 @@ class OrderServiceTest {
     @Test
     void createOrderWithItems_WithValidItems_ShouldCreateOrderAndItems() {
         // Given
-        CreateOrderRequest request = new CreateOrderRequest(1L, LocalDate.now(), "CREATED");
+        CreateOrderRequest request = new CreateOrderRequest(1L, 1L, LocalDate.now(), "CREATED");
         when(orderRepository.save(any(Order.class))).thenReturn(testOrder);
 
         CreateOrderItemRequest item1 = new CreateOrderItemRequest(null, 10L, 2);

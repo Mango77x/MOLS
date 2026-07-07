@@ -41,14 +41,15 @@ class FulfillmentFlowIntegrationTest extends AbstractIntegrationTest {
 
         // --- Order with one item ---
         long orderId = postForId("/api/orders",
-                "{\"unitId\":" + unitId + ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", token);
+                "{\"unitId\":" + unitId + ",\"warehouseId\":" + warehouseId +
+                        ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", token);
         postForId("/api/order-items",
                 "{\"orderId\":" + orderId + ",\"resourceId\":" + resourceId + ",\"quantity\":30}", token);
 
-        // --- Shipment: planned, then delivered ---
+        // --- Shipment: planned, then delivered. Inherits its warehouse from
+        // the order automatically — no warehouseId in the request. ---
         long shipmentId = postForId("/api/shipments",
-                "{\"orderId\":" + orderId + ",\"vehicleId\":" + vehicleId +
-                        ",\"warehouseId\":" + warehouseId + ",\"status\":\"PLANNED\"}", token);
+                "{\"orderId\":" + orderId + ",\"vehicleId\":" + vehicleId + ",\"status\":\"PLANNED\"}", token);
 
         var deliver = restTemplate.exchange("/api/shipments/" + shipmentId, HttpMethod.PUT,
                 jsonEntity("{\"status\":\"DELIVERED\"}", token), String.class);
@@ -106,7 +107,8 @@ class FulfillmentFlowIntegrationTest extends AbstractIntegrationTest {
         postForId("/api/stocks",
                 "{\"resourceId\":" + resourceId + ",\"warehouseId\":" + warehouseId + ",\"quantity\":5}", token);
         long orderId = postForId("/api/orders",
-                "{\"unitId\":" + unitId + ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", token);
+                "{\"unitId\":" + unitId + ",\"warehouseId\":" + warehouseId +
+                        ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", token);
 
         var response = restTemplate.postForEntity("/api/order-items",
                 jsonEntity("{\"orderId\":" + orderId + ",\"resourceId\":" + resourceId + ",\"quantity\":6}", token),
@@ -119,10 +121,13 @@ class FulfillmentFlowIntegrationTest extends AbstractIntegrationTest {
     void invalidStatusTransition_IsRejectedWith400() {
         String token = createUserAndLogin("admin-transitions", Role.ADMIN);
 
+        long warehouseId = postForId("/api/warehouses",
+                "{\"name\":\"Zaragoza Depot\",\"location\":\"Zaragoza\"}", token);
         long unitId = postForId("/api/units",
                 "{\"name\":\"Charlie Unit\",\"location\":\"Zaragoza\"}", token);
         long orderId = postForId("/api/orders",
-                "{\"unitId\":" + unitId + ",\"dateCreated\":\"2026-07-01\",\"status\":\"COMPLETED\"}", token);
+                "{\"unitId\":" + unitId + ",\"warehouseId\":" + warehouseId +
+                        ",\"dateCreated\":\"2026-07-01\",\"status\":\"COMPLETED\"}", token);
 
         // COMPLETED is terminal: reopening must be rejected by the state machine
         var response = restTemplate.exchange("/api/orders/" + orderId, HttpMethod.PUT,

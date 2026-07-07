@@ -15,7 +15,6 @@ import { positiveId } from '../../components/form/zodHelpers'
 const schema = z.object({
   orderId: positiveId('Select an order'),
   vehicleId: positiveId('Select a vehicle'),
-  warehouseId: positiveId('Select a warehouse'),
   status: z.enum(['PLANNED', 'IN_TRANSIT', 'DELIVERED'], { message: 'Select a status' }),
 })
 
@@ -43,31 +42,36 @@ export default function ShipmentFormPage() {
     handleSubmit,
     reset,
     setError,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       orderId: prefillOrderId,
       vehicleId: undefined,
-      warehouseId: undefined,
       status: 'PLANNED',
     },
   })
 
   // Re-applies whenever a lookup finishes loading too: a <select>'s value only
   // "sticks" once the matching <option> exists in the DOM, so resetting only
-  // on `shipment` risks a silent no-op if the order/vehicle/warehouse lookups
-  // (separate async fetches) haven't populated their options yet.
+  // on `shipment` risks a silent no-op if the order/vehicle lookups (separate
+  // async fetches) haven't populated their options yet.
   useEffect(() => {
     if (shipment) {
       reset({
         orderId: shipment.orderId,
         vehicleId: shipment.vehicleId,
-        warehouseId: shipment.warehouseId,
         status: shipment.status,
       })
     }
-  }, [shipment, orders, vehicles, warehouses, reset])
+  }, [shipment, orders, vehicles, reset])
+
+  // The origin warehouse is never chosen here — it's fixed on the order and
+  // the shipment inherits it automatically, so the order's items and the
+  // delivery deduction always agree on which warehouse. Just shown read-only.
+  const selectedOrderId = watch('orderId')
+  const originWarehouse = selectedOrderId ? warehouses[orders[selectedOrderId]?.warehouseId] : undefined
 
   async function onSubmit(values: FormValues) {
     setBanner(null)
@@ -130,22 +134,15 @@ export default function ShipmentFormPage() {
             </option>
           ))}
         </SelectField>
-        <SelectField
-          label="Warehouse (origin)"
-          id="warehouseId"
-          defaultValue=""
-          registration={register('warehouseId', { valueAsNumber: true })}
-          error={errors.warehouseId?.message}
-        >
-          <option value="" disabled>
-            Select a warehouse
-          </option>
-          {Object.values(warehouses).map((w) => (
-            <option key={w.id} value={w.id}>
-              {w.name} — {w.location}
-            </option>
-          ))}
-        </SelectField>
+        <div>
+          <span className="block text-sm font-medium text-gray-700 dark:text-gray-300">Warehouse (origin)</span>
+          <p className="mt-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-300">
+            {originWarehouse
+              ? `${originWarehouse.name}${originWarehouse.location ? ` — ${originWarehouse.location}` : ''}`
+              : 'Select an order first'}
+          </p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Fixed to the selected order's warehouse.</p>
+        </div>
         <SelectField label="Status" id="status" registration={register('status')} error={errors.status?.message}>
           <option value="PLANNED">Planned</option>
           <option value="IN_TRANSIT">In transit</option>

@@ -9,7 +9,7 @@ import jakarta.validation.constraints.Size;
 
 /**
  * Data Transfer Object for creating a new Order.
- * 
+ *
  * This class defines the structure of data accepted by the API
  * when creating an order, separating API contracts from
  * domain entities.
@@ -19,6 +19,10 @@ public class CreateOrderRequest {
     @NotNull(message = "Unit ID is required")
     @Positive(message = "Unit ID must be a positive number")
     private Long unitId;
+
+    @NotNull(message = "Warehouse ID is required")
+    @Positive(message = "Warehouse ID must be a positive number")
+    private Long warehouseId;
 
     @NotNull(message = "Order creation date is required")
     private LocalDate dateCreated;
@@ -37,11 +41,13 @@ public class CreateOrderRequest {
      * Constructs a CreateOrderRequest with all fields.
      *
      * @param unitId unit identifier
+     * @param warehouseId origin warehouse identifier
      * @param dateCreated creation date
      * @param status order status
      */
-    public CreateOrderRequest(Long unitId, LocalDate dateCreated, String status) {
+    public CreateOrderRequest(Long unitId, Long warehouseId, LocalDate dateCreated, String status) {
         this.unitId = unitId;
+        this.warehouseId = warehouseId;
         this.dateCreated = dateCreated;
         this.status = status;
     }
@@ -54,6 +60,14 @@ public class CreateOrderRequest {
 
     public void setUnitId(Long unitId) {
         this.unitId = unitId;
+    }
+
+    public Long getWarehouseId() {
+        return warehouseId;
+    }
+
+    public void setWarehouseId(Long warehouseId) {
+        this.warehouseId = warehouseId;
     }
 
     public LocalDate getDateCreated() {

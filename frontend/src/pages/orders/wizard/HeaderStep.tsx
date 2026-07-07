@@ -1,13 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import type { UnitEntity } from '../../../api/entities'
+import type { UnitEntity, WarehouseEntity } from '../../../api/entities'
 import { useLookup } from '../../../api/lookups'
 import { SecondaryButton, SelectField, SubmitButton, TextField } from '../../../components/form/fields'
 import { positiveId, type WizardHeader } from './shared'
 
 const schema = z.object({
   unitId: positiveId('Select a unit'),
+  warehouseId: positiveId('Select an origin warehouse'),
   dateCreated: z.string().min(1, 'Order creation date is required'),
   status: z.enum(['CREATED', 'VALIDATED', 'COMPLETED', 'CANCELLED'], { message: 'Select a status' }),
 })
@@ -24,6 +25,7 @@ export default function HeaderStep({
   onCancel: () => void
 }) {
   const { byId: units } = useLookup<UnitEntity>('/units')
+  const { byId: warehouses } = useLookup<WarehouseEntity>('/warehouses')
 
   const {
     register,
@@ -53,6 +55,27 @@ export default function HeaderStep({
           </option>
         ))}
       </SelectField>
+      <SelectField
+        label="Origin warehouse"
+        id="warehouseId"
+        defaultValue=""
+        registration={register('warehouseId', { valueAsNumber: true })}
+        error={errors.warehouseId?.message}
+      >
+        <option value="" disabled>
+          Select a warehouse
+        </option>
+        {Object.values(warehouses).map((w) => (
+          <option key={w.id} value={w.id}>
+            {w.name}
+            {w.location ? ` — ${w.location}` : ''}
+          </option>
+        ))}
+      </SelectField>
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        Fixed for the whole order — every item reserves stock from this warehouse, and the shipment inherits it
+        automatically.
+      </p>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <TextField
           label="Date created"
