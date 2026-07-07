@@ -94,13 +94,19 @@ class MovementServiceTest {
     }
 
     @Test
-    void getMovementCountByType_ShouldGroupByEnumName() {
-        // Given
-        Movement exit = new Movement();
-        exit.setType(MovementType.EXIT);
+    void getMovementCountByType_ShouldMapDatabaseProjectionRowsToEnumNames() {
+        // Given: the COUNT(*)-per-type grouping happens in SQL
+        // (MovementRepository.countByTypeSince) — this test only checks the
+        // service maps those projection rows into a Map keyed by enum name.
         LocalDateTime since = LocalDateTime.of(2024, 1, 1, 0, 0);
-        when(movementRepository.findByDateTimeAfter(since))
-                .thenReturn(List.of(testMovement, exit, testMovement));
+        var entryRow = mock(MovementRepository.TypeCount.class);
+        when(entryRow.getType()).thenReturn(MovementType.ENTRY);
+        when(entryRow.getCount()).thenReturn(2L);
+        var exitRow = mock(MovementRepository.TypeCount.class);
+        when(exitRow.getType()).thenReturn(MovementType.EXIT);
+        when(exitRow.getCount()).thenReturn(1L);
+
+        when(movementRepository.countByTypeSince(since)).thenReturn(List.of(entryRow, exitRow));
 
         // When
         Map<String, Long> result = movementService.getMovementCountByType(since);
