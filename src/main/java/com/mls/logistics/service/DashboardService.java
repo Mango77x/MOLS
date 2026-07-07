@@ -23,9 +23,7 @@ import java.util.Map;
  * {@code GET /api/dashboard}.
  *
  * <p>Delegates every metric to the owning domain service and only composes
- * the result. The Thymeleaf dashboard in {@code UiController} still builds its
- * own model (with per-widget error fallbacks for page rendering); that path is
- * scheduled to be replaced by this service during the React migration.</p>
+ * the result.</p>
  */
 @Service
 @Transactional(readOnly = true)

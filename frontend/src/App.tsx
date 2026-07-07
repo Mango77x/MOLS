@@ -2,9 +2,9 @@ import { useEffect } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import LoginPage from './auth/LoginPage'
 import RequireAuth from './auth/RequireAuth'
+import SetupPage from './auth/SetupPage'
 import { useAuthStore } from './auth/store'
 import AppLayout from './layout/AppLayout'
-import ComingSoon from './pages/ComingSoon'
 import DashboardPage from './pages/DashboardPage'
 import MovementsPage from './pages/movements/MovementsPage'
 import OrderDetailPage from './pages/orders/OrderDetailPage'
@@ -21,6 +21,9 @@ import StockCreateFormPage from './pages/stocks/StockCreateFormPage'
 import StocksPage from './pages/stocks/StocksPage'
 import UnitFormPage from './pages/units/UnitFormPage'
 import UnitsPage from './pages/units/UnitsPage'
+import UserFormPage from './pages/users/UserFormPage'
+import UserResetPasswordPage from './pages/users/UserResetPasswordPage'
+import UsersPage from './pages/users/UsersPage'
 import VehicleFormPage from './pages/vehicles/VehicleFormPage'
 import VehiclesPage from './pages/vehicles/VehiclesPage'
 import WarehouseFormPage from './pages/warehouses/WarehouseFormPage'
@@ -43,6 +46,7 @@ export default function App() {
     <BrowserRouter basename="/app">
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/setup" element={<SetupPage />} />
 
         <Route
           element={
@@ -182,11 +186,28 @@ export default function App() {
           />
 
           <Route path="movements" element={<MovementsPage />} />
+
           <Route
             path="users"
             element={
               <RequireAuth roles={['ADMIN']}>
-                <ComingSoon title="Users" uiPath="/ui/users" />
+                <UsersPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="users/new"
+            element={
+              <RequireAuth roles={['ADMIN']}>
+                <UserFormPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="users/:id/reset-password"
+            element={
+              <RequireAuth roles={['ADMIN']}>
+                <UserResetPasswordPage />
               </RequireAuth>
             }
           />
