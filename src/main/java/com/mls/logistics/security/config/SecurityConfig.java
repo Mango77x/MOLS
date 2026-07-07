@@ -26,7 +26,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * - Which endpoints are public vs protected
  * - Role-based access rules per HTTP method
  * - Stateless REST API security (JWT)
- * - Stateful UI security (form login + session)
+ * - The public SPA-shell chain (static assets + client-side routes; the SPA
+ *   itself authenticates purely via the JWT-cookie API chain above)
  * - Password encoding with BCrypt
  */
 @Configuration
@@ -60,6 +61,11 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints — no token required
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                // First-run setup: by definition no one can be authenticated
+                // yet, and the status check itself must be reachable to know
+                // whether to show the setup page or the login page.
+                .requestMatchers(HttpMethod.GET, "/api/auth/setup-status").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/setup").permitAll()
                 // Registration is ADMIN-only (no public self-signup)
                 .requestMatchers(HttpMethod.POST, "/api/auth/register").hasRole("ADMIN")
                 // Logout only clears the HttpOnly auth cookie — safe to allow
@@ -75,6 +81,10 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/health", "/actuator/health/**",
                     "/actuator/info").permitAll()
                 .requestMatchers("/actuator/**").hasRole("ADMIN")
+                // User administration is ADMIN-only end to end, including reads
+                // (unlike every other /api/** resource) — account lists/roles
+                // are sensitive. Must come before the generic GET rule below.
+                .requestMatchers("/api/users/**").hasRole("ADMIN")
                 // Read operations — any authenticated user (ADMIN/OPERATOR/AUDITOR)
                 .requestMatchers(HttpMethod.GET, "/api/**").authenticated()
                 // Operational writes — parity with the UI role model: OPERATOR
@@ -109,7 +119,7 @@ public class SecurityConfig {
 
         @Bean
         @Order(2)
-        public SecurityFilterChain uiSecurityFilterChain(HttpSecurity http)
+        public SecurityFilterChain spaSecurityFilterChain(HttpSecurity http)
             throws Exception {
         http
             .securityMatcher(
@@ -122,56 +132,33 @@ public class SecurityConfig {
                 "/images/**",
                 "/webjars/**",
                 "/favicon.ico")
+            // No forms, no server-rendered pages, nothing to protect with a
+            // session anymore now that Thymeleaf is gone (Sprint 6 cutover) —
+            // this chain only serves the public SPA shell/static assets and
+            // /ui/** courtesy redirects (LegacyUiRedirectController). Real
+            // protection for everything the SPA does is the JWT-cookie API
+            // chain above.
+            .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/ui/login").permitAll()
-                .requestMatchers("/ui/setup").permitAll()
-                .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico").permitAll()
-                .requestMatchers("/").permitAll()
-
-                // React SPA shell + static assets: public — the SPA handles
-                // login client-side and every API call it makes is protected
-                // by the JWT-cookie API chain above.
-                .requestMatchers("/app", "/app/**").permitAll()
-
-                // Admin-only module
-                .requestMatchers("/ui/users/**").hasRole("ADMIN")
-
-                // Admin-only master data + stock operations (pages)
-                .requestMatchers(
-                    "/ui/warehouses/new", "/ui/warehouses/*/edit",
-                    "/ui/resources/new", "/ui/resources/*/edit",
-                    "/ui/vehicles/new", "/ui/vehicles/*/edit",
-                    "/ui/units/new", "/ui/units/*/edit",
-                    "/ui/stocks/new", "/ui/stocks/*/adjust"
-                ).hasRole("ADMIN")
-
-                // Operational screens (pages)
-                .requestMatchers(
-                    "/ui/orders/new", "/ui/orders/*/edit",
-                    "/ui/shipments/new", "/ui/shipments/*/edit"
-                ).hasAnyRole("ADMIN", "OPERATOR")
-
-                // UI write actions: allow OPERATOR only for Orders/Shipments
-                .requestMatchers(HttpMethod.POST, "/ui/orders/*/delete").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST, "/ui/shipments/*/delete").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST, "/ui/orders/**").hasAnyRole("ADMIN", "OPERATOR")
-                .requestMatchers(HttpMethod.POST, "/ui/shipments/**").hasAnyRole("ADMIN", "OPERATOR")
-                .requestMatchers(HttpMethod.POST, "/ui/logout").authenticated()
-                .requestMatchers(HttpMethod.POST, "/ui/**").hasRole("ADMIN")
-
-                // Everything else under UI requires authentication
-                .requestMatchers("/ui/**").authenticated()
-                .anyRequest().authenticated())
-            .formLogin(form -> form
-                .loginPage("/ui/login")
-                .loginProcessingUrl("/ui/login")
-                .defaultSuccessUrl("/ui", true)
-                .failureUrl("/ui/login?error"))
-            .logout(logout -> logout
-                .logoutUrl("/ui/logout")
-                .logoutSuccessUrl("/ui/login?logout"));
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+            // Content-Security-Policy for the SPA (Sprint 6, once Thymeleaf's
+            // CDN-loaded Bootstrap/Icons were removed there was nothing left
+            // to accommodate — everything the React build needs is bundled
+            // by Vite). style-src needs 'unsafe-inline': Leaflet positions
+            // map tiles via inline `style="transform:..."` attributes for
+            // performance, not stylesheets. img-src allows the OpenStreetMap
+            // tile hosts the logistics map fetches tiles from.
+            .headers(headers -> headers.contentSecurityPolicy(csp -> csp.policyDirectives(
+                "default-src 'self'; "
+                    + "script-src 'self'; "
+                    + "style-src 'self' 'unsafe-inline'; "
+                    + "img-src 'self' data: https://*.tile.openstreetmap.org; "
+                    + "font-src 'self'; "
+                    + "connect-src 'self'; "
+                    + "object-src 'none'; "
+                    + "base-uri 'self'; "
+                    + "frame-ancestors 'self'")));
 
         return http.build();
         }

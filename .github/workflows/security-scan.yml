@@ -1,9 +1,11 @@
 # ================================================
-# OWASP Dependency-Check (Software Composition Analysis)
+# Dependency Security Scan (backend + frontend)
 #
-# Scans all dependencies against the NVD for known CVEs. Runs weekly and
-# on demand (not per-push: the NVD feed download is slow and rate-limited).
-# The build fails on any CVE with CVSS >= 7 (High/Critical).
+# Backend: OWASP Dependency-Check scans all Maven dependencies against the
+# NVD for known CVEs. Frontend: `npm audit` scans the npm dependency tree
+# against the GitHub Advisory Database. Both run weekly and on demand (not
+# per-push: the NVD feed download is slow and rate-limited). Each fails on
+# High/Critical findings (CVSS >= 7 for Maven, audit level "high" for npm).
 #
 # Optional: add an NVD_API_KEY repository secret (free at
 # https://nvd.nist.gov/developers/request-an-api-key) to speed up feed
@@ -64,3 +66,26 @@ jobs:
         with:
           name: dependency-check-report
           path: target/dependency-check-report.html
+
+  npm-audit:
+    name: npm audit (frontend)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run npm audit
+        working-directory: frontend
+        run: npm audit --audit-level=high

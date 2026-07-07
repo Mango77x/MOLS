@@ -78,3 +78,12 @@ export interface ShipmentEntity {
   warehouseId: number
   status: ShipmentStatus
 }
+
+export type UserRole = 'ADMIN' | 'OPERATOR' | 'AUDITOR'
+
+export interface UserEntity {
+  id: number
+  username: string
+  role: UserRole
+  enabled: boolean
+}
