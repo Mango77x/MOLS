@@ -35,11 +35,20 @@ FROM eclipse-temurin:21-jre
 # Set working directory
 WORKDIR /app
 
-# Copy only the built JAR from the builder stage
-COPY --from=builder /app/target/*.jar app.jar
+# Run as a dedicated non-root user instead of the image's default root —
+# a compromised JVM process shouldn't have root inside the container.
+RUN groupadd --system mols && useradd --system --gid mols --home /app mols
+COPY --from=builder --chown=mols:mols /app/target/*.jar app.jar
+USER mols
 
 # Expose application port
 EXPOSE 8080
+
+# Container-level liveness check against the public actuator endpoint
+# (SecurityConfig permits /actuator/health without auth). start-period
+# gives Flyway migrations + Spring context startup time to finish.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+    CMD curl --fail http://localhost:8080/actuator/health || exit 1
 
 # Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]
