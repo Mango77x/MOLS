@@ -64,8 +64,9 @@ class FulfillmentFlowIntegrationTest extends AbstractIntegrationTest {
         assertThat(shipmentById.get("items").size()).isEqualTo(1);
         assertThat(shipmentById.get("items").get(0).get("quantity").asInt()).isEqualTo(30);
 
+        // orderId is a filter, so this response is the paginated envelope, not a plain array.
         var shipmentsByOrder = getJson("/api/shipments?orderId=" + orderId, token);
-        assertThat(shipmentsByOrder.get(0).get("items").size()).isEqualTo(1);
+        assertThat(shipmentsByOrder.get("content").get(0).get("items").size()).isEqualTo(1);
 
         // --- Stock was deducted ---
         var stock = getJson("/api/stocks/" + stockId, token);
