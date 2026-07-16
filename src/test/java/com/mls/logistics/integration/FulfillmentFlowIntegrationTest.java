@@ -43,17 +43,30 @@ class FulfillmentFlowIntegrationTest extends AbstractIntegrationTest {
         long orderId = postForId("/api/orders",
                 "{\"unitId\":" + unitId + ",\"warehouseId\":" + warehouseId +
                         ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", token);
-        postForId("/api/order-items",
+        long orderItemId = postForId("/api/order-items",
                 "{\"orderId\":" + orderId + ",\"resourceId\":" + resourceId + ",\"quantity\":30}", token);
 
         // --- Shipment: planned, then delivered. Inherits its warehouse from
-        // the order automatically — no warehouseId in the request. ---
+        // the order automatically — no warehouseId in the request. Carries
+        // the order item in full. ---
         long shipmentId = postForId("/api/shipments",
-                "{\"orderId\":" + orderId + ",\"vehicleId\":" + vehicleId + ",\"status\":\"PLANNED\"}", token);
+                "{\"orderId\":" + orderId + ",\"vehicleId\":" + vehicleId + ",\"status\":\"PLANNED\"," +
+                        "\"items\":[{\"orderItemId\":" + orderItemId + ",\"quantity\":30}]}", token);
 
         var deliver = restTemplate.exchange("/api/shipments/" + shipmentId, HttpMethod.PUT,
                 jsonEntity("{\"status\":\"DELIVERED\"}", token), String.class);
         assertThat(deliver.getStatusCode().value()).isEqualTo(200);
+
+        // --- Shipment reads (single and filtered list) serialize `items` without
+        // a LazyInitializationException — regression coverage for a real bug found
+        // manually: the session used to build the response had already closed. ---
+        var shipmentById = getJson("/api/shipments/" + shipmentId, token);
+        assertThat(shipmentById.get("items").size()).isEqualTo(1);
+        assertThat(shipmentById.get("items").get(0).get("quantity").asInt()).isEqualTo(30);
+
+        // orderId is a filter, so this response is the paginated envelope, not a plain array.
+        var shipmentsByOrder = getJson("/api/shipments?orderId=" + orderId, token);
+        assertThat(shipmentsByOrder.get("content").get(0).get("items").size()).isEqualTo(1);
 
         // --- Stock was deducted ---
         var stock = getJson("/api/stocks/" + stockId, token);
@@ -92,6 +105,68 @@ class FulfillmentFlowIntegrationTest extends AbstractIntegrationTest {
 
         assertThat(restTemplate.exchange("/api/orders/" + orderId, HttpMethod.DELETE,
                 jsonEntity(null, token), String.class).getStatusCode().value()).isEqualTo(400);
+    }
+
+    @Test
+    void deliveringOneOfTwoShipments_PartiallyShipsTheOrder_ThenCompletesOnTheSecond() {
+        String admin = "admin-partial";
+        String token = createUserAndLogin(admin, Role.ADMIN);
+
+        long warehouseId = postForId("/api/warehouses",
+                "{\"name\":\"North Depot\",\"location\":\"Bilbao\"}", token);
+        long unitId = postForId("/api/units",
+                "{\"name\":\"Delta Unit\",\"location\":\"Bilbao\"}", token);
+        long resourceAId = postForId("/api/resources",
+                "{\"name\":\"Rations\",\"type\":\"SUPPLY\",\"criticality\":\"HIGH\"}", token);
+        long resourceBId = postForId("/api/resources",
+                "{\"name\":\"Ammo\",\"type\":\"SUPPLY\",\"criticality\":\"HIGH\"}", token);
+        long vehicleId = postForId("/api/vehicles",
+                "{\"type\":\"LAND\",\"capacity\":1000,\"status\":\"AVAILABLE\"}", token);
+
+        long stockAId = postForId("/api/stocks",
+                "{\"resourceId\":" + resourceAId + ",\"warehouseId\":" + warehouseId + ",\"quantity\":50}", token);
+        long stockBId = postForId("/api/stocks",
+                "{\"resourceId\":" + resourceBId + ",\"warehouseId\":" + warehouseId + ",\"quantity\":50}", token);
+
+        long orderId = postForId("/api/orders",
+                "{\"unitId\":" + unitId + ",\"warehouseId\":" + warehouseId +
+                        ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", token);
+        long itemAId = postForId("/api/order-items",
+                "{\"orderId\":" + orderId + ",\"resourceId\":" + resourceAId + ",\"quantity\":10}", token);
+        long itemBId = postForId("/api/order-items",
+                "{\"orderId\":" + orderId + ",\"resourceId\":" + resourceBId + ",\"quantity\":20}", token);
+
+        // Two shipments: the first carries only item A.
+        long shipment1Id = postForId("/api/shipments",
+                "{\"orderId\":" + orderId + ",\"vehicleId\":" + vehicleId + ",\"status\":\"PLANNED\"," +
+                        "\"items\":[{\"orderItemId\":" + itemAId + ",\"quantity\":10}]}", token);
+        long shipment2Id = postForId("/api/shipments",
+                "{\"orderId\":" + orderId + ",\"vehicleId\":" + vehicleId + ",\"status\":\"PLANNED\"," +
+                        "\"items\":[{\"orderItemId\":" + itemBId + ",\"quantity\":20}]}", token);
+
+        // Deliver the first shipment only.
+        var deliver1 = restTemplate.exchange("/api/shipments/" + shipment1Id, HttpMethod.PUT,
+                jsonEntity("{\"status\":\"DELIVERED\"}", token), String.class);
+        assertThat(deliver1.getStatusCode().value()).isEqualTo(200);
+
+        // Only item A's stock moved; item B's is untouched.
+        assertThat(getJson("/api/stocks/" + stockAId, token).get("quantity").asInt()).isEqualTo(40);
+        assertThat(getJson("/api/stocks/" + stockBId, token).get("quantity").asInt()).isEqualTo(50);
+
+        // The order reflects partial progress, not completion.
+        assertThat(getJson("/api/orders/" + orderId, token).get("status").asText()).isEqualTo("PARTIALLY_SHIPPED");
+
+        // Deliver the second (and last) shipment.
+        var deliver2 = restTemplate.exchange("/api/shipments/" + shipment2Id, HttpMethod.PUT,
+                jsonEntity("{\"status\":\"DELIVERED\"}", token), String.class);
+        assertThat(deliver2.getStatusCode().value()).isEqualTo(200);
+
+        assertThat(getJson("/api/stocks/" + stockBId, token).get("quantity").asInt()).isEqualTo(30);
+        assertThat(getJson("/api/orders/" + orderId, token).get("status").asText()).isEqualTo("COMPLETED");
+
+        // Both deliveries recorded their own EXIT movement, scoped to their own shipment.
+        var movements = getJson("/api/movements", token);
+        assertThat(movements.size()).isEqualTo(4); // 2 ENTRY (initial stock) + 2 EXIT (deliveries)
     }
 
     @Test

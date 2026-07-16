@@ -7,20 +7,25 @@ import com.mls.logistics.exception.InvalidRequestException;
  *
  * <p>Valid transitions (enforced by {@code OrderService}):</p>
  * <pre>
- * CREATED   → VALIDATED, COMPLETED, CANCELLED
- * VALIDATED → COMPLETED, CANCELLED
- * COMPLETED → (terminal)
- * CANCELLED → (terminal)
+ * CREATED           → VALIDATED, PARTIALLY_SHIPPED, COMPLETED, CANCELLED
+ * VALIDATED         → PARTIALLY_SHIPPED, COMPLETED, CANCELLED
+ * PARTIALLY_SHIPPED → COMPLETED
+ * COMPLETED         → (terminal)
+ * CANCELLED         → (terminal)
  * </pre>
  *
  * <p>{@code CREATED → COMPLETED} is allowed because fulfillment is driven by
  * shipment delivery, which may complete an order that was never explicitly
- * validated.</p>
+ * validated. {@code PARTIALLY_SHIPPED} reflects some (not all) order items
+ * having been delivered by at least one shipment; it cannot move to
+ * {@code CANCELLED} because stock has already physically left the warehouse
+ * for part of the order and there is no compensating-reversal flow.</p>
  */
 public enum OrderStatus {
 
     CREATED,
     VALIDATED,
+    PARTIALLY_SHIPPED,
     COMPLETED,
     CANCELLED;
 
@@ -44,8 +49,9 @@ public enum OrderStatus {
             return true;
         }
         return switch (this) {
-            case CREATED -> next == VALIDATED || next == COMPLETED || next == CANCELLED;
-            case VALIDATED -> next == COMPLETED || next == CANCELLED;
+            case CREATED -> next == VALIDATED || next == PARTIALLY_SHIPPED || next == COMPLETED || next == CANCELLED;
+            case VALIDATED -> next == PARTIALLY_SHIPPED || next == COMPLETED || next == CANCELLED;
+            case PARTIALLY_SHIPPED -> next == COMPLETED;
             case COMPLETED, CANCELLED -> false;
         };
     }
@@ -63,7 +69,7 @@ public enum OrderStatus {
             return OrderStatus.valueOf(value.trim().toUpperCase());
         } catch (IllegalArgumentException ex) {
             throw new InvalidRequestException(
-                "Unknown order status: '" + value + "'. Valid values: CREATED, VALIDATED, COMPLETED, CANCELLED.");
+                "Unknown order status: '" + value + "'. Valid values: CREATED, VALIDATED, PARTIALLY_SHIPPED, COMPLETED, CANCELLED.");
         }
     }
 }

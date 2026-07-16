@@ -44,6 +44,7 @@ export default function ShipmentDetailPage() {
 
   const [items, setItems] = useState<OrderItemEntity[]>([])
   const [movements, setMovements] = useState<MovementEntity[]>([])
+  const itemById = Object.fromEntries(items.map((item) => [item.id, item]))
 
   useEffect(() => {
     if (!shipment || !order) return
@@ -120,33 +121,37 @@ export default function ShipmentDetailPage() {
         </div>
 
         <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-900">
-          <h2 className="mb-3 text-lg font-semibold">Order items</h2>
+          <h2 className="mb-3 text-lg font-semibold">Items (this shipment)</h2>
           <table className="w-full text-left text-sm">
             <thead className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
               <tr>
                 <th className="py-2 pr-3 font-medium">Resource</th>
-                <th className="py-2 text-right font-medium">Qty</th>
+                <th className="py-2 text-right font-medium">Ordered</th>
+                <th className="py-2 text-right font-medium">This shipment</th>
               </tr>
             </thead>
             <tbody>
-              {items.length === 0 && (
+              {shipment.items.length === 0 && (
                 <tr>
-                  <td colSpan={2} className="py-3 text-center text-gray-400 dark:text-gray-500">
+                  <td colSpan={3} className="py-3 text-center text-gray-400 dark:text-gray-500">
                     No items.
                   </td>
                 </tr>
               )}
-              {items.map((item) => (
-                <tr key={item.id} className="border-t border-gray-100 dark:border-gray-800">
-                  <td className="py-2 pr-3">
-                    <div className="font-medium">{resources[item.resourceId]?.name ?? `#${item.resourceId}`}</div>
-                    {resources[item.resourceId] && (
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{resources[item.resourceId].type}</div>
-                    )}
-                  </td>
-                  <td className="py-2 text-right font-medium">{item.quantity}</td>
-                </tr>
-              ))}
+              {shipment.items.map((line) => {
+                const orderItem = itemById[line.orderItemId]
+                const resource = orderItem ? resources[orderItem.resourceId] : undefined
+                return (
+                  <tr key={line.id} className="border-t border-gray-100 dark:border-gray-800">
+                    <td className="py-2 pr-3">
+                      <div className="font-medium">{resource?.name ?? (orderItem ? `#${orderItem.resourceId}` : `item #${line.orderItemId}`)}</div>
+                      {resource && <div className="text-xs text-gray-500 dark:text-gray-400">{resource.type}</div>}
+                    </td>
+                    <td className="py-2 text-right text-gray-500 dark:text-gray-400">{orderItem?.quantity ?? '—'}</td>
+                    <td className="py-2 text-right font-medium">{line.quantity}</td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>

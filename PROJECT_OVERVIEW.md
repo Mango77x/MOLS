@@ -117,17 +117,25 @@ Tailwind 4) and is served at `/app/**`:
     atomic `POST /api/orders/with-items` call (new in Sprint 5, wraps the
     existing transactional `OrderService.createOrderWithItems`: an
     insufficient-stock conflict on any item leaves nothing persisted). The
-    optional shipment is a separate `POST /api/shipments` call after the
-    order succeeds; if it fails, the user lands on the order detail page
-    with a banner rather than losing the created order.
+    optional shipment step (Sprint 7) lets the user pick, per draft item, how
+    much to ship now (defaults to the full ordered quantity); once the order
+    succeeds, its real items are fetched and matched back to the drafts by
+    resource id before `POST /api/shipments`, since a shipment's items
+    reference real order-item ids. If shipment creation fails, the user lands
+    on the order detail page with a banner rather than losing the created order.
   - **Order/Shipment edit + detail pages**: order edit is header-only plus
     an inline, immediately-persisted items manager (`OrderItemsManager.tsx`,
     mirroring the Thymeleaf inline-add/update/delete flow); shipment
-    edit is a single form covering the PLANNED→IN_TRANSIT→DELIVERED
-    transition (DELIVERED deducts stock and is rejected on insufficient
-    stock, same as the API). Detail pages are read-only traceability views:
-    order detail shows items/shipments/linked movements, shipment detail
-    shows context/order items/linked movements — both link to each other
+    create/edit (`ShipmentFormPage.tsx`) includes an item picker — once an
+    order is selected, its items are listed with ordered/delivered quantities
+    and a "ship now" input capped at each item's remaining (unallocated)
+    quantity — fixed at creation and replaceable as a whole set on edit while
+    not yet `DELIVERED` (Sprint 7). Transitioning to `DELIVERED` deducts stock
+    for the shipment's own items only and is rejected on insufficient stock,
+    same as the API. Detail pages are read-only traceability views: order
+    detail shows items (with per-item shipped/ordered progress)/shipments/
+    linked movements, shipment detail shows context/this shipment's own items
+    (not the full order)/linked movements — both link to each other
     (`Movement.shipmentId` → shipment detail) for end-to-end tracing.
 - **Serving**: the production build is packaged into the jar at
   `static/app/` and served by `config/SpaWebConfig` with an `index.html`
@@ -186,6 +194,14 @@ Implementation notes:
     `stocks.version` (optimistic locking) and `movements.created_by` (audit actor)
   - `V3` — optional `latitude`/`longitude` on warehouses and units (range
     CHECKs), groundwork for the logistics map in the React frontend
+  - `V4` — stock reservation counter (`resources.reserved_quantity` at the time,
+    `order_items.reservation_active`) so order-item creation commits demand instead of
+    only checking current physical quantity
+  - `V5` — `orders.warehouse_id` (fixed origin warehouse per order); moves the reservation
+    counter from `resources` to `stocks.reserved_quantity` (per resource **and** warehouse)
+  - `V6` — `shipment_items` (shipment ↔ order item + quantity junction table) and
+    `PARTIALLY_SHIPPED` added to `orders.status`'s CHECK constraint, backing per-shipment
+    partial fulfillment (see "Partial fulfillment" above)
 - **SQL Logging**: off by default (`SPRING_JPA_SHOW_SQL=true` to enable locally)
 - **Port**: Application runs on `8080`
 - **OpenAPI/Swagger**:
@@ -336,15 +352,38 @@ These rules are **enforced in services**, not controllers:
 1. Stock must never go negative (also enforced by a DB CHECK and optimistic locking under concurrency)
 2. Order items must not exceed available stock (validated against total availability)
 3. Every stock change must generate a Movement record
-4. Shipment delivery triggers fulfillment: transitioning a shipment to `DELIVERED` deducts stock (EXIT) per order items and records movements.
+4. Shipment delivery triggers fulfillment: transitioning a shipment to `DELIVERED` deducts
+   stock (EXIT) and records movements for **that shipment's own items only** — not gated on
+   sibling shipments of the same order also being delivered (see "Partial fulfillment" below).
 5. The movement audit trail is **append-only**: no API or UI path can update or
    delete a movement; corrections are made with a new compensating adjustment.
    Deleting stock with movement history, delivered shipments, or completed
    orders is rejected to keep the trail coherent. Each movement records the
    acting user (`created_by`) via JPA auditing.
 6. Statuses follow explicit state machines (`OrderStatus`, `ShipmentStatus`):
-   - Orders: `CREATED → VALIDATED → COMPLETED / CANCELLED` (terminal states are final; `CREATED → COMPLETED` is allowed because fulfillment is shipment-driven)
+   - Orders: `CREATED → VALIDATED → PARTIALLY_SHIPPED → COMPLETED`, or `→ CANCELLED` from
+     `CREATED`/`VALIDATED` only (terminal states are final; `CREATED → COMPLETED` and
+     `CREATED/VALIDATED → PARTIALLY_SHIPPED` are both allowed because fulfillment is
+     shipment-driven, not a manual step; `PARTIALLY_SHIPPED` cannot be cancelled since stock
+     has already physically left the warehouse for part of the order)
    - Shipments: `PLANNED ↔ IN_TRANSIT → DELIVERED` (DELIVERED is terminal)
+
+### Partial fulfillment (shipment items)
+
+A shipment carries a specific subset of its order's items, each with its own quantity
+(`ShipmentItem`, table `shipment_items`) — fixed at creation (`POST /api/shipments` requires
+a non-empty `items: [{ orderItemId, quantity }]`) and only replaceable as a whole set on
+`PUT` while the shipment is not yet `DELIVERED`. A line's quantity can never exceed what's
+still unallocated on that order item across every shipment (any status), mirroring the
+existing stock-reservation math.
+
+Delivering a shipment deducts stock/records movements only for its own items, releases the
+matching *partial* portion of each order item's stock reservation
+(`OrderItemService.releasePartialReservation`), and recomputes the parent order's status from
+every item's cumulative delivered quantity: `COMPLETED` once every item is fully delivered,
+`PARTIALLY_SHIPPED` once some (but not all) are. `OrderItemResponse` exposes `deliveredQuantity`
+(sum across `DELIVERED` shipments) and `remainingQuantity` (order quantity minus allocation
+across all shipments) so the UI can show shipped-vs-ordered progress per item.
 
 ### Current Enforcement Status
 
@@ -356,8 +395,9 @@ These rules are **enforced in services**, not controllers:
 - ✅ Rule 3 implemented in `StockService.adjustStock()` and `StockService.createStock()`
    - Every stock increase/decrease records a `Movement` (`ENTRY`/`EXIT`) automatically
 - ✅ Rule 4 implemented in `ShipmentService` on transition to `DELIVERED`
-   - Deducts stock per order items and records `EXIT` movements
+   - Deducts stock per shipment item and records `EXIT` movements
    - Prevents invalid transitions (e.g., reverting DELIVERED)
+   - Order-level fulfillment status (`PARTIALLY_SHIPPED`/`COMPLETED`) derived per delivery
 
 ### Traceability Enhancements
 
@@ -494,6 +534,17 @@ Additional order operation:
   conflict (409) or validation error (400) on any item leaves nothing
   persisted. Backs the React order wizard's atomic create step.
 
+Shipment items:
+- `POST /api/shipments` requires a non-empty `items: [{ orderItemId, quantity }]`
+  alongside `orderId`/`vehicleId`/`status` — a shipment always carries at
+  least one order item. `PUT /api/shipments/{id}` accepts the same `items`
+  field to replace the shipment's whole item set (omit it to leave items
+  unchanged); replacing is rejected once the shipment is `DELIVERED`. A
+  line's quantity is capped by that order item's remaining (unallocated)
+  quantity across every shipment. `ShipmentResponse.items` and
+  `OrderItemResponse.deliveredQuantity`/`remainingQuantity` expose the
+  resulting allocation/progress — see "Partial fulfillment" above.
+
 Dashboard endpoint:
 - `GET /api/dashboard` — aggregated operational snapshot (KPIs, chart series,
   low-stock/stale-order alerts, recent movements and the thresholds used),
@@ -579,8 +630,4 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 
 - **Maintainer**: See `pom.xml` for project details
 
-**Next steps (practical)**:
-
-- Decide whether shipments should support partial fulfillment (would require shipment line items)
-
-**Last updated**: 2026-07-07 (Sprint 6: React SPA cutover — Users admin, first-run setup, `/ui` removal)
+**Last updated**: 2026-07-16 (Sprint 7: partial shipment fulfillment — `shipment_items`, `PARTIALLY_SHIPPED` order status)

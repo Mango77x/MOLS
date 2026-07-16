@@ -54,7 +54,7 @@ export interface MovementEntity {
   createdBy: string | null
 }
 
-export type OrderStatus = 'CREATED' | 'VALIDATED' | 'COMPLETED' | 'CANCELLED'
+export type OrderStatus = 'CREATED' | 'VALIDATED' | 'PARTIALLY_SHIPPED' | 'COMPLETED' | 'CANCELLED'
 
 export interface OrderEntity {
   id: number
@@ -69,9 +69,20 @@ export interface OrderItemEntity {
   orderId: number
   resourceId: number
   quantity: number
+  /** Quantity actually delivered so far, summed across DELIVERED shipments. */
+  deliveredQuantity: number
+  /** Quantity not yet allocated to any shipment — the ceiling a new shipment may still claim. */
+  remainingQuantity: number
 }
 
 export type ShipmentStatus = 'PLANNED' | 'IN_TRANSIT' | 'DELIVERED'
+
+export interface ShipmentItemEntity {
+  id: number
+  shipmentId: number
+  orderItemId: number
+  quantity: number
+}
 
 export interface ShipmentEntity {
   id: number
@@ -79,6 +90,7 @@ export interface ShipmentEntity {
   vehicleId: number
   warehouseId: number
   status: ShipmentStatus
+  items: ShipmentItemEntity[]
 }
 
 export type UserRole = 'ADMIN' | 'OPERATOR' | 'AUDITOR'
