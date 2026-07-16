@@ -582,6 +582,5 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 **Next steps (practical)**:
 
 - Decide whether shipments should support partial fulfillment (would require shipment line items)
-- Split the monolithic UI controller (API pagination/filtering is done)
 
-**Last updated**: 2026-07-07 (Sprint 5: forms & detail pages)
+**Last updated**: 2026-07-07 (Sprint 6: React SPA cutover — Users admin, first-run setup, `/ui` removal)
