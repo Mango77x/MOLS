@@ -9,6 +9,7 @@ import com.mls.logistics.service.OrderItemService;
 import jakarta.validation.Valid;
 import com.mls.logistics.dto.request.PageQuery;
 import com.mls.logistics.dto.response.PageResponse;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -79,16 +81,24 @@ public class OrderItemController {
             @Parameter(description = "Filter: parent order identifier", example = "1")
             @RequestParam(required = false) Long orderId) {
         if (page == null && size == null && sort == null && orderId == null) {
-            List<OrderItemResponse> orderItems = orderItemService
-                    .getAllOrderItems()
-                    .stream()
-                    .map(OrderItemResponse::from)
+            List<OrderItem> items = orderItemService.getAllOrderItems();
+            Map<Long, OrderItemService.ShippingProgress> progress = orderItemService.shippingProgress(items);
+            List<OrderItemResponse> orderItems = items.stream()
+                    .map(item -> toResponse(item, progress))
                     .collect(Collectors.toList());
             return ResponseEntity.ok(orderItems);
         }
         Pageable pageable = PageQuery.toPageable(page, size, sort, SORTABLE_FIELDS, Sort.by("id"));
-        return ResponseEntity.ok(PageResponse.from(
-                orderItemService.searchOrderItems(orderId, pageable), OrderItemResponse::from));
+        Page<OrderItem> itemsPage = orderItemService.searchOrderItems(orderId, pageable);
+        Map<Long, OrderItemService.ShippingProgress> progress = orderItemService.shippingProgress(itemsPage.getContent());
+        return ResponseEntity.ok(PageResponse.from(itemsPage, item -> toResponse(item, progress)));
+    }
+
+    /** Builds a response DTO from an order item plus a pre-computed batch of shipping progress. */
+    private OrderItemResponse toResponse(OrderItem item, Map<Long, OrderItemService.ShippingProgress> progress) {
+        OrderItemService.ShippingProgress itemProgress = progress
+                .getOrDefault(item.getId(), new OrderItemService.ShippingProgress(0, item.getQuantity()));
+        return OrderItemResponse.from(item, itemProgress.deliveredQuantity(), itemProgress.remainingQuantity());
     }
 
     /**
@@ -114,7 +124,7 @@ public class OrderItemController {
         OrderItem orderItem = orderItemService
                 .getOrderItemById(id)
             .orElseThrow(() -> new ResourceNotFoundException("OrderItem", "id", id));
-        return ResponseEntity.ok(OrderItemResponse.from(orderItem));
+        return ResponseEntity.ok(toResponse(orderItem, orderItemService.shippingProgress(List.of(orderItem))));
     }
 
     /**
@@ -136,7 +146,8 @@ public class OrderItemController {
     @PostMapping
     public ResponseEntity<OrderItemResponse> createOrderItem(@Valid @RequestBody CreateOrderItemRequest request) {
         OrderItem createdOrderItem = orderItemService.createOrderItem(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(OrderItemResponse.from(createdOrderItem));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(toResponse(createdOrderItem, Map.of()));
     }
 
     /**
@@ -163,7 +174,7 @@ public class OrderItemController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateOrderItemRequest request) {
         OrderItem updatedOrderItem = orderItemService.updateOrderItem(id, request);
-        return ResponseEntity.ok(OrderItemResponse.from(updatedOrderItem));
+        return ResponseEntity.ok(toResponse(updatedOrderItem, orderItemService.shippingProgress(List.of(updatedOrderItem))));
     }
 
     /**

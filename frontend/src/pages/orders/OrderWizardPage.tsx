@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../api/client'
+import type { OrderItemEntity } from '../../api/entities'
 import { extractApiError } from '../../api/errors'
 import { FormBanner } from '../../components/form/fields'
 import { FormPage } from '../../components/form/FormPage'
+import type { PageResponse } from '../../components/table/useServerTable'
 import HeaderStep from './wizard/HeaderStep'
 import ItemsStep from './wizard/ItemsStep'
 import ShipmentStep from './wizard/ShipmentStep'
@@ -73,11 +75,22 @@ export default function OrderWizardPage() {
 
       if (shipment.enabled) {
         try {
+          // The order's real items now exist with real ids; match them back to
+          // the draft items by resourceId to build the shipment's item lines.
+          const createdItems = await api.get<PageResponse<OrderItemEntity>>('/order-items', {
+            params: { orderId, page: 0, size: 100 },
+          })
+          const itemIdByResourceId = new Map(createdItems.data.content.map((i) => [i.resourceId, i.id]))
+          const shipmentItems = shipment.items
+            .map((line) => ({ orderItemId: itemIdByResourceId.get(line.resourceId), quantity: line.quantity }))
+            .filter((line): line is { orderItemId: number; quantity: number } => line.orderItemId !== undefined)
+
           // No warehouseId: the shipment inherits it from the order.
           await api.post('/shipments', {
             orderId,
             vehicleId: shipment.vehicleId,
             status: shipment.status,
+            items: shipmentItems,
           })
         } catch (shipmentError) {
           navigate(`/orders/${orderId}`, {
@@ -124,7 +137,8 @@ export default function OrderWizardPage() {
         {step === 3 && header.warehouseId !== undefined && (
           <ShipmentStep
             warehouseId={header.warehouseId}
-            initial={{ enabled: false, status: 'PLANNED' }}
+            draftItems={items}
+            initial={{ enabled: false, status: 'PLANNED', items: [] }}
             submitting={submitting}
             onSubmit={handleCreate}
             onBack={() => setStep(2)}
