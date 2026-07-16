@@ -5,8 +5,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Mango420x/MOLS/actions/workflows/ci.yml">
-    <img alt="BUILD" src="https://img.shields.io/github/actions/workflow/status/Mango420x/MOLS/ci.yml?branch=main&label=build&style=for-the-badge">
+  <a href="https://github.com/Mango77x/MOLS/actions/workflows/ci.yml">
+    <img alt="BUILD" src="https://img.shields.io/github/actions/workflow/status/Mango77x/MOLS/ci.yml?branch=main&label=build&style=for-the-badge">
   </a>
   <a href="HELP.md">
     <img alt="HELP" src="https://img.shields.io/badge/help-HELP.md-informational?style=for-the-badge">
