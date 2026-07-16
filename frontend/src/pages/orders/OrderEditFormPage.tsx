@@ -16,7 +16,7 @@ import OrderItemsManager from './OrderItemsManager'
 const schema = z.object({
   unitId: positiveId('Select a unit'),
   dateCreated: z.string().min(1, 'Order creation date is required'),
-  status: z.enum(['CREATED', 'VALIDATED', 'COMPLETED', 'CANCELLED'], { message: 'Select a status' }),
+  status: z.enum(['CREATED', 'VALIDATED', 'PARTIALLY_SHIPPED', 'COMPLETED', 'CANCELLED'], { message: 'Select a status' }),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -107,6 +107,7 @@ export default function OrderEditFormPage() {
           <SelectField label="Status" id="status" registration={register('status')} error={errors.status?.message}>
             <option value="CREATED">Created</option>
             <option value="VALIDATED">Validated</option>
+            <option value="PARTIALLY_SHIPPED">Partially shipped</option>
             <option value="COMPLETED">Completed</option>
             <option value="CANCELLED">Cancelled</option>
           </SelectField>

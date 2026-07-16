@@ -13,6 +13,7 @@ import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.OrderItemRepository;
 import com.mls.logistics.repository.OrderRepository;
+import com.mls.logistics.repository.ShipmentItemRepository;
 import com.mls.logistics.repository.StockRepository;
 import org.springframework.data.domain.Sort;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +50,9 @@ class OrderItemServiceTest {
 
     @Mock
     private StockRepository stockRepository;
+
+    @Mock
+    private ShipmentItemRepository shipmentItemRepository;
 
     @InjectMocks
     private OrderItemService orderItemService;
@@ -375,5 +379,70 @@ class OrderItemServiceTest {
         ArgumentCaptor<OrderItem> savedItems = ArgumentCaptor.forClass(OrderItem.class);
         verify(orderItemRepository, times(2)).save(savedItems.capture());
         assertThat(savedItems.getAllValues()).extracting(OrderItem::getId).containsExactlyInAnyOrder(1L, 2L);
+    }
+
+    @Test
+    void releasePartialReservation_WhenNotFullyDelivered_ShouldDrainOnlyThatQuantityAndKeepReservationActive() {
+        // Given: item reserves 10; a shipment just delivered 4 of it (not the whole item)
+        testStock.setReservedQuantity(10);
+        when(stockRepository.findByResourceIdAndWarehouseIdForUpdate(1L, 1L)).thenReturn(Optional.of(testStock));
+
+        // When
+        orderItemService.releasePartialReservation(testOrderItem, 4, false);
+
+        // Then: only the delivered portion is released; the rest stays held
+        assertThat(testStock.getReservedQuantity()).isEqualTo(6);
+        assertThat(testOrderItem.isReservationActive()).isTrue();
+        verify(orderItemRepository, never()).save(any());
+    }
+
+    @Test
+    void releasePartialReservation_WhenFullyDelivered_ShouldDeactivateReservation() {
+        // Given: item reserves 10; this call brings cumulative delivered up to the full quantity
+        testStock.setReservedQuantity(10);
+        when(stockRepository.findByResourceIdAndWarehouseIdForUpdate(1L, 1L)).thenReturn(Optional.of(testStock));
+        when(orderItemRepository.save(any(OrderItem.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // When
+        orderItemService.releasePartialReservation(testOrderItem, 10, true);
+
+        // Then
+        assertThat(testStock.getReservedQuantity()).isEqualTo(0);
+        assertThat(testOrderItem.isReservationActive()).isFalse();
+        verify(orderItemRepository, times(1)).save(testOrderItem);
+    }
+
+    @Test
+    void updateOrderItem_WhenQuantityBelowShipmentAllocation_ShouldReject() {
+        // Given: 6 of this item's 10 units are already allocated to a shipment
+        ShipmentItemRepository.OrderItemQuantity allocation = mock(ShipmentItemRepository.OrderItemQuantity.class);
+        when(allocation.getTotal()).thenReturn(6L);
+        when(shipmentItemRepository.sumQuantityByOrderItemIds(List.of(1L))).thenReturn(List.of(allocation));
+
+        UpdateOrderItemRequest request = new UpdateOrderItemRequest();
+        request.setQuantity(5);
+        when(orderItemRepository.findById(1L)).thenReturn(Optional.of(testOrderItem));
+
+        // When & Then
+        assertThatThrownBy(() -> orderItemService.updateOrderItem(1L, request))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("already allocated to shipments");
+        verify(orderItemRepository, never()).save(any());
+    }
+
+    @Test
+    void deleteOrderItem_WhenAllocatedToShipment_ShouldReject() {
+        // Given
+        ShipmentItemRepository.OrderItemQuantity allocation = mock(ShipmentItemRepository.OrderItemQuantity.class);
+        when(allocation.getTotal()).thenReturn(3L);
+        when(shipmentItemRepository.sumQuantityByOrderItemIds(List.of(1L))).thenReturn(List.of(allocation));
+        when(orderItemRepository.findById(1L)).thenReturn(Optional.of(testOrderItem));
+
+        // When & Then
+        assertThatThrownBy(() -> orderItemService.deleteOrderItem(1L))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("already allocated to a shipment");
+        verify(orderItemRepository, never()).deleteById(any());
+        verifyNoInteractions(stockRepository);
     }
 }
