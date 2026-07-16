@@ -7,6 +7,7 @@ import com.mls.logistics.domain.ShipmentStatus;
 import com.mls.logistics.domain.Vehicle;
 import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.CreateShipmentRequest;
+import com.mls.logistics.dto.request.ShipmentItemLineRequest;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.security.service.AppUserService;
 import com.mls.logistics.security.service.JwtService;
@@ -20,6 +21,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -119,7 +121,8 @@ class ShipmentControllerTest {
     @WithMockUser(roles = "ADMIN")
     void createShipment_WithValidRequest_ShouldReturn201() throws Exception {
         // Given
-        CreateShipmentRequest request = new CreateShipmentRequest(1L, 1L, "PLANNED");
+        CreateShipmentRequest request = new CreateShipmentRequest(1L, 1L, "PLANNED",
+                List.of(new ShipmentItemLineRequest(100L, 3)));
         when(shipmentService.createShipment(any(CreateShipmentRequest.class))).thenReturn(testShipment);
 
         // When & Then
@@ -136,7 +139,7 @@ class ShipmentControllerTest {
     @WithMockUser(roles = "ADMIN")
     void createShipment_WithInvalidRequest_ShouldReturn400() throws Exception {
         // Given
-        CreateShipmentRequest request = new CreateShipmentRequest(null, null, "");
+        CreateShipmentRequest request = new CreateShipmentRequest(null, null, "", null);
 
         // When & Then
         mockMvc.perform(post("/api/shipments")

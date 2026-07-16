@@ -33,7 +33,8 @@ MOLS is a logistics app to manage warehouses, resources, stock, orders and shipm
 - **Hardened login**: temporary lockout after repeated failures, security event
   logging, 12+ character password policy
 - Orders with items (create/edit, inline item management)
-- Shipments with fulfillment on delivery
+- Shipments carry specific order items/quantities; delivering one shipment fulfills only its
+  own items, so an order can be `PARTIALLY_SHIPPED` across several shipments before `COMPLETED`
 - Traceability views (Order/Shipment details show linked movements)
 - Dashboard with KPIs, charts, a live logistics map, recent activity and alerts
 - First-run setup to create the initial admin user

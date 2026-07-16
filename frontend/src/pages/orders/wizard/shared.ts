@@ -17,4 +17,6 @@ export interface WizardShipment {
   enabled: boolean
   vehicleId?: number
   status: 'PLANNED' | 'IN_TRANSIT' | 'DELIVERED'
+  /** Draft items (matched back to the order's real items by resourceId once created) and how much of each to ship now. */
+  items: { resourceId: number; quantity: number }[]
 }

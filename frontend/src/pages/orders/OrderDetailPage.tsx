@@ -22,6 +22,7 @@ import type { PageResponse } from '../../components/table/useServerTable'
 const ORDER_STATUS_TONE: Record<OrderStatus, BadgeTone> = {
   CREATED: 'neutral',
   VALIDATED: 'warn',
+  PARTIALLY_SHIPPED: 'warn',
   COMPLETED: 'ok',
   CANCELLED: 'critical',
 }
@@ -110,12 +111,13 @@ export default function OrderDetailPage() {
               <tr>
                 <th className="py-2 pr-3 font-medium">Resource</th>
                 <th className="py-2 text-right font-medium">Qty</th>
+                <th className="py-2 text-right font-medium">Shipped</th>
               </tr>
             </thead>
             <tbody>
               {items.length === 0 && (
                 <tr>
-                  <td colSpan={2} className="py-3 text-center text-gray-400 dark:text-gray-500">
+                  <td colSpan={3} className="py-3 text-center text-gray-400 dark:text-gray-500">
                     No items.
                   </td>
                 </tr>
@@ -129,6 +131,9 @@ export default function OrderDetailPage() {
                     )}
                   </td>
                   <td className="py-2 text-right font-medium">{item.quantity}</td>
+                  <td className="py-2 text-right text-gray-500 dark:text-gray-400">
+                    {item.deliveredQuantity} / {item.quantity}
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -11,6 +11,7 @@ import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.OrderItemRepository;
 import com.mls.logistics.repository.OrderRepository;
+import com.mls.logistics.repository.ShipmentItemRepository;
 import com.mls.logistics.repository.StockRepository;
 import com.mls.logistics.exception.InsufficientStockException;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -53,6 +56,7 @@ public class OrderItemService {
     private final OrderItemRepository orderItemRepository;
     private final OrderRepository orderRepository;
     private final StockRepository stockRepository;
+    private final ShipmentItemRepository shipmentItemRepository;
 
     /**
      * Constructor-based dependency injection.
@@ -60,10 +64,46 @@ public class OrderItemService {
      */
     public OrderItemService(OrderItemRepository orderItemRepository,
                             OrderRepository orderRepository,
-                            StockRepository stockRepository) {
+                            StockRepository stockRepository,
+                            ShipmentItemRepository shipmentItemRepository) {
         this.orderItemRepository = orderItemRepository;
         this.orderRepository = orderRepository;
         this.stockRepository = stockRepository;
+        this.shipmentItemRepository = shipmentItemRepository;
+    }
+
+    /** Per-item shipment progress: what's been delivered, and what's still unallocated. */
+    public record ShippingProgress(int deliveredQuantity, int remainingQuantity) {
+    }
+
+    /**
+     * Computes {@link ShippingProgress} for a batch of order items in two
+     * database round trips total (one for delivered totals, one for overall
+     * allocated totals), regardless of how many items are passed — building
+     * an {@code OrderItemResponse} page never costs a query per row.
+     */
+    public Map<Long, ShippingProgress> shippingProgress(List<OrderItem> items) {
+        if (items == null || items.isEmpty()) {
+            return Map.of();
+        }
+        List<Long> ids = items.stream().map(OrderItem::getId).toList();
+
+        Map<Long, Integer> delivered = new HashMap<>();
+        for (ShipmentItemRepository.OrderItemQuantity row : shipmentItemRepository.sumDeliveredQuantityByOrderItemIds(ids)) {
+            delivered.put(row.getOrderItemId(), row.getTotal() != null ? row.getTotal().intValue() : 0);
+        }
+        Map<Long, Integer> allocated = new HashMap<>();
+        for (ShipmentItemRepository.OrderItemQuantity row : shipmentItemRepository.sumQuantityByOrderItemIds(ids)) {
+            allocated.put(row.getOrderItemId(), row.getTotal() != null ? row.getTotal().intValue() : 0);
+        }
+
+        Map<Long, ShippingProgress> result = new HashMap<>();
+        for (OrderItem item : items) {
+            int deliveredQty = delivered.getOrDefault(item.getId(), 0);
+            int remainingQty = item.getQuantity() - allocated.getOrDefault(item.getId(), 0);
+            result.put(item.getId(), new ShippingProgress(deliveredQty, remainingQty));
+        }
+        return result;
     }
 
     /**
@@ -197,6 +237,25 @@ public class OrderItemService {
         Long effectiveResourceId = request.getResourceId() != null ? request.getResourceId() : previousResourceId;
         int effectiveQuantity = request.getQuantity() != null ? request.getQuantity() : previousQuantity;
 
+        // An item already carried (in full or in part) by a shipment can't
+        // change what it represents, or shrink below what's already
+        // allocated — the shipment's own line would then refer to more (or
+        // something else) than this item actually is.
+        int allocated = allocatedQuantity(id);
+        if (allocated > 0) {
+            boolean resourceChanging = request.getResourceId() != null && !request.getResourceId().equals(previousResourceId);
+            Long previousOrderId = previousOrder != null ? previousOrder.getId() : null;
+            boolean orderChanging = request.getOrderId() != null && !request.getOrderId().equals(previousOrderId);
+            if (resourceChanging || orderChanging) {
+                throw new InvalidRequestException(
+                    "Cannot change the resource or order of an order item already allocated to a shipment. Order item id: " + id);
+            }
+            if (effectiveQuantity < allocated) {
+                throw new InvalidRequestException(
+                    "Cannot reduce quantity below " + allocated + " already allocated to shipments. Order item id: " + id);
+            }
+        }
+
         // A change in resource, quantity, OR the order's warehouse (moving
         // the item to an order sourced from a different warehouse) all
         // invalidate the existing reservation the same way.
@@ -239,14 +298,27 @@ public class OrderItemService {
      *
      * @param id order item identifier
      * @throws ResourceNotFoundException if order item doesn't exist
+     * @throws InvalidRequestException if the item is already allocated to a shipment
      */
     @Transactional
     public void deleteOrderItem(Long id) {
         OrderItem orderItem = orderItemRepository
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("OrderItem", "id", id));
+        if (allocatedQuantity(id) > 0) {
+            throw new InvalidRequestException(
+                "Cannot delete an order item already allocated to a shipment. Order item id: " + id);
+        }
         releaseReservation(orderItem);
         orderItemRepository.deleteById(id);
+    }
+
+    /** Total quantity of this order item allocated across every shipment, regardless of status. */
+    private int allocatedQuantity(Long orderItemId) {
+        return shipmentItemRepository.sumQuantityByOrderItemIds(List.of(orderItemId)).stream()
+                .findFirst()
+                .map(row -> row.getTotal() != null ? row.getTotal().intValue() : 0)
+                .orElse(0);
     }
 
     /**
@@ -283,6 +355,35 @@ public class OrderItemService {
         release(resourceId, warehouseId, item.getQuantity());
         item.setReservationActive(false);
         orderItemRepository.save(item);
+    }
+
+    /**
+     * Releases part of an order item's reservation as it gets delivered by a
+     * shipment (see {@code ShipmentService.fulfillIfOrderIsComplete}). Unlike
+     * {@link #releaseReservation}, this drains only {@code quantity} from the
+     * held reservation instead of the item's full quantity, since a single
+     * shipment may cover only part of an item — once stock physically leaves
+     * the warehouse for that portion, holding it as "reserved" as well would
+     * double-count it against availability.
+     *
+     * @param fullyDelivered whether this call brings the item's cumulative
+     *        delivered quantity up to its full {@code quantity} — if so, the
+     *        reservation is marked inactive so {@link #releaseReservation}
+     *        (fired on order completion/cancellation) never re-releases it
+     */
+    @Transactional
+    public void releasePartialReservation(OrderItem item, int quantity, boolean fullyDelivered) {
+        if (item == null || !item.isReservationActive() || quantity <= 0) {
+            return;
+        }
+        Long resourceId = item.getResource() != null ? item.getResource().getId() : null;
+        Long warehouseId = item.getOrder() != null && item.getOrder().getWarehouse() != null
+                ? item.getOrder().getWarehouse().getId() : null;
+        release(resourceId, warehouseId, quantity);
+        if (fullyDelivered) {
+            item.setReservationActive(false);
+            orderItemRepository.save(item);
+        }
     }
 
     /**

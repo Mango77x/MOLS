@@ -14,6 +14,7 @@ import OrderItemsRow from './OrderItemsRow'
 const STATUS_TONE: Record<OrderStatus, BadgeTone> = {
   CREATED: 'neutral',
   VALIDATED: 'warn',
+  PARTIALLY_SHIPPED: 'warn',
   COMPLETED: 'ok',
   CANCELLED: 'critical',
 }
@@ -120,6 +121,7 @@ export default function OrdersPage() {
           <option value="">All statuses</option>
           <option value="CREATED">CREATED</option>
           <option value="VALIDATED">VALIDATED</option>
+          <option value="PARTIALLY_SHIPPED">PARTIALLY_SHIPPED</option>
           <option value="COMPLETED">COMPLETED</option>
           <option value="CANCELLED">CANCELLED</option>
         </select>

@@ -2,9 +2,11 @@ package com.mls.logistics.dto.response;
 
 import com.mls.logistics.domain.Shipment;
 
+import java.util.List;
+
 /**
  * Data Transfer Object for Shipment responses.
- * 
+ *
  * This class defines the structure of shipment data returned by the API,
  * allowing control over exactly what fields are exposed to clients.
  */
@@ -15,6 +17,7 @@ public class ShipmentResponse {
     private Long vehicleId;
     private Long warehouseId;
     private String status;
+    private List<ShipmentItemResponse> items;
 
     /**
      * Default constructor for serialization.
@@ -30,18 +33,21 @@ public class ShipmentResponse {
      * @param vehicleId vehicle identifier
      * @param warehouseId warehouse identifier
      * @param status shipment status
+     * @param items order items (and quantities) carried by this shipment
      */
-    public ShipmentResponse(Long id, Long orderId, Long vehicleId, Long warehouseId, String status) {
+    public ShipmentResponse(Long id, Long orderId, Long vehicleId, Long warehouseId, String status,
+                             List<ShipmentItemResponse> items) {
         this.id = id;
         this.orderId = orderId;
         this.vehicleId = vehicleId;
         this.warehouseId = warehouseId;
         this.status = status;
+        this.items = items;
     }
 
     /**
      * Creates a ShipmentResponse from a Shipment entity.
-     * 
+     *
      * This static factory method converts domain entities to DTOs,
      * decoupling the API from the persistence layer.
      *
@@ -54,7 +60,10 @@ public class ShipmentResponse {
                 shipment.getOrder().getId(),
                 shipment.getVehicle().getId(),
                 shipment.getWarehouse().getId(),
-                shipment.getStatus() != null ? shipment.getStatus().name() : null
+                shipment.getStatus() != null ? shipment.getStatus().name() : null,
+                shipment.getItems() != null
+                        ? shipment.getItems().stream().map(ShipmentItemResponse::from).toList()
+                        : List.of()
         );
     }
 
@@ -98,5 +107,13 @@ public class ShipmentResponse {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public List<ShipmentItemResponse> getItems() {
+        return items;
+    }
+
+    public void setItems(List<ShipmentItemResponse> items) {
+        this.items = items;
     }
 }

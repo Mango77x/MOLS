@@ -41,7 +41,7 @@ public class OrderService {
 
     /** Statuses that still accept work (items, shipments, edits). */
     private static final List<OrderStatus> OPEN_STATUSES =
-            List.of(OrderStatus.CREATED, OrderStatus.VALIDATED);
+            List.of(OrderStatus.CREATED, OrderStatus.VALIDATED, OrderStatus.PARTIALLY_SHIPPED);
 
     /** Terminal statuses — no further changes allowed. */
     private static final List<OrderStatus> TERMINAL_STATUSES =
@@ -275,6 +275,33 @@ public class OrderService {
         }
 
         applyStatusTransition(order, OrderStatus.COMPLETED);
+        orderRepository.save(order);
+    }
+
+    /**
+     * Marks an order as partially shipped.
+     *
+     * Used by shipment fulfillment: when a shipment delivers some, but not
+     * all, of an order's items. Idempotent and only moves forward — a no-op
+     * if the order is already {@code PARTIALLY_SHIPPED} or {@code COMPLETED}
+     * (a faster concurrent delivery that already finished the order is never
+     * regressed back to partial).
+     */
+    @Transactional
+    public void markOrderPartiallyShipped(Long orderId) {
+        if (orderId == null) {
+            return;
+        }
+
+        Order order = orderRepository
+                .findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
+
+        if (order.getStatus() == OrderStatus.PARTIALLY_SHIPPED || order.getStatus() == OrderStatus.COMPLETED) {
+            return;
+        }
+
+        applyStatusTransition(order, OrderStatus.PARTIALLY_SHIPPED);
         orderRepository.save(order);
     }
 
