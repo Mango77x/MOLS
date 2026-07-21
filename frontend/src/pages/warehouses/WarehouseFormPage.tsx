@@ -11,6 +11,7 @@ import { FormBanner, SecondaryButton, SubmitButton, TextField } from '../../comp
 import { FormPage } from '../../components/form/FormPage'
 import { coordinate } from '../../components/form/zodHelpers'
 import LocationPicker from '../../components/map/LocationPicker'
+import { useToast } from '../../components/toast/toastContext'
 
 const schema = z.object({
   name: z
@@ -31,6 +32,7 @@ export default function WarehouseFormPage() {
   const { id } = useParams()
   const isEdit = id !== undefined
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const { data: warehouse, loading, notFound } = useEntity<WarehouseEntity>(
     isEdit ? `/warehouses/${id}` : null,
   )
@@ -74,8 +76,10 @@ export default function WarehouseFormPage() {
     try {
       if (isEdit) {
         await api.put(`/warehouses/${id}`, payload)
+        showToast('Warehouse updated.', 'success')
       } else {
         await api.post('/warehouses', payload)
+        showToast('Warehouse created.', 'success')
       }
       navigate('/warehouses')
     } catch (error) {
