@@ -7,6 +7,7 @@ import { api } from '../../api/client'
 import { applyApiError, extractApiError } from '../../api/errors'
 import { FormBanner, SecondaryButton, SelectField, SubmitButton, TextField } from '../../components/form/fields'
 import { FormPage } from '../../components/form/FormPage'
+import { useToast } from '../../components/toast/toastContext'
 
 const schema = z.object({
   username: z
@@ -24,6 +25,7 @@ type FormValues = z.infer<typeof schema>
 
 export default function UserFormPage() {
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const [banner, setBanner] = useState<string | null>(null)
 
   const {
@@ -40,6 +42,7 @@ export default function UserFormPage() {
     setBanner(null)
     try {
       await api.post('/users', values)
+      showToast('User created.', 'success')
       navigate('/users')
     } catch (error) {
       setBanner(applyApiError(extractApiError(error), setError))

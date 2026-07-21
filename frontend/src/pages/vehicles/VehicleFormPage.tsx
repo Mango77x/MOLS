@@ -10,6 +10,7 @@ import { useEntity } from '../../api/useEntity'
 import { FormBanner, SecondaryButton, SelectField, SubmitButton, TextField } from '../../components/form/fields'
 import { FormPage } from '../../components/form/FormPage'
 import { positiveNumber } from '../../components/form/zodHelpers'
+import { useToast } from '../../components/toast/toastContext'
 import { VEHICLE_STATUS_LABELS, VEHICLE_TYPE_LABELS } from '../../lib/enumLabels'
 
 const schema = z.object({
@@ -24,6 +25,7 @@ export default function VehicleFormPage() {
   const { id } = useParams()
   const isEdit = id !== undefined
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const { data: vehicle, loading, notFound } = useEntity<VehicleEntity>(
     isEdit ? `/vehicles/${id}` : null,
   )
@@ -55,8 +57,10 @@ export default function VehicleFormPage() {
     try {
       if (isEdit) {
         await api.put(`/vehicles/${id}`, values)
+        showToast('Vehicle updated.', 'success')
       } else {
         await api.post('/vehicles', values)
+        showToast('Vehicle created.', 'success')
       }
       navigate('/vehicles')
     } catch (error) {

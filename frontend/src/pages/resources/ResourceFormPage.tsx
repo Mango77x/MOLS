@@ -9,6 +9,7 @@ import { applyApiError, extractApiError } from '../../api/errors'
 import { useEntity } from '../../api/useEntity'
 import { FormBanner, SecondaryButton, SelectField, SubmitButton, TextField } from '../../components/form/fields'
 import { FormPage } from '../../components/form/FormPage'
+import { useToast } from '../../components/toast/toastContext'
 
 const schema = z.object({
   name: z
@@ -28,6 +29,7 @@ export default function ResourceFormPage() {
   const { id } = useParams()
   const isEdit = id !== undefined
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const { data: resource, loading, notFound } = useEntity<ResourceEntity>(
     isEdit ? `/resources/${id}` : null,
   )
@@ -59,8 +61,10 @@ export default function ResourceFormPage() {
     try {
       if (isEdit) {
         await api.put(`/resources/${id}`, values)
+        showToast('Resource updated.', 'success')
       } else {
         await api.post('/resources', values)
+        showToast('Resource created.', 'success')
       }
       navigate('/resources')
     } catch (error) {
