@@ -33,17 +33,23 @@ type TextFieldProps = {
   registration: UseFormRegisterReturn
   error?: string
   hint?: string
+  /** Non-blocking nudge (e.g. a likely duplicate name) — shown instead of `hint`, never in place of `error`. */
+  warning?: string | null
 } & InputHTMLAttributes<HTMLInputElement>
 
 /** Text/number/date input wired to react-hook-form's `register`. */
-export function TextField({ label, id, registration, error, hint, ...rest }: TextFieldProps) {
+export function TextField({ label, id, registration, error, hint, warning, ...rest }: TextFieldProps) {
   return (
     <div>
       <label htmlFor={id} className="mb-1 block text-sm font-medium">
         {label}
       </label>
       <input id={id} className={inputClass} {...registration} {...rest} />
-      {hint && !error && <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{hint}</p>}
+      {warning && !error ? (
+        <output className="mt-1 block text-xs text-status-warn">{warning}</output>
+      ) : (
+        hint && !error && <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{hint}</p>
+      )}
       <FieldError message={error} />
     </div>
   )
