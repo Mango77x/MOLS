@@ -44,9 +44,50 @@ export default function DataTable<T>({
     getCoreRowModel: getCoreRowModel(),
   })
 
+  const headers = table.getHeaderGroups()[0]?.headers ?? []
+
   return (
     <div className="rounded-xl bg-white shadow-sm dark:bg-gray-900">
-      <div className="overflow-x-auto">
+      {/* Card list — mobile only. Same columns/data as the table below, one
+          labeled row per column instead of a <td>, so the actions column
+          never scrolls out of view on a narrow viewport. */}
+      <div className="divide-y divide-gray-100 sm:hidden dark:divide-gray-800" data-testid="data-table-cards">
+        {loading &&
+          Array.from({ length: 3 }, (_, rowIndex) => (
+            <div key={`skeleton-card-${rowIndex}`} aria-hidden="true" className="space-y-2 p-3">
+              {columns.map((_, colIndex) => (
+                <div key={colIndex} className="h-4 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+              ))}
+            </div>
+          ))}
+        {!loading && error && (
+          <p className="px-3 py-6 text-center text-status-critical">Could not load data. Please try again.</p>
+        )}
+        {!loading && !error && data.length === 0 && (
+          <p className="px-3 py-6 text-center text-gray-400 dark:text-gray-500">{emptyMessage}</p>
+        )}
+        {!loading &&
+          !error &&
+          table.getRowModel().rows.map((row) => (
+            <Fragment key={row.id}>
+              <div className="space-y-1 p-3">
+                {row.getVisibleCells().map((cell, cellIndex) => (
+                  <div key={cell.id} className="flex items-start justify-between gap-3 text-sm">
+                    <span className="shrink-0 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      {headers[cellIndex]
+                        ? flexRender(headers[cellIndex].column.columnDef.header, headers[cellIndex].getContext())
+                        : null}
+                    </span>
+                    <span className="text-right">{flexRender(cell.column.columnDef.cell, cell.getContext())}</span>
+                  </div>
+                ))}
+              </div>
+              {renderRowExtra?.(row.original)}
+            </Fragment>
+          ))}
+      </div>
+
+      <div className="hidden overflow-x-auto sm:block">
         <table className="w-full text-left text-sm">
           <caption className="sr-only" aria-live="polite">
             {loading ? 'Loading…' : error ? 'Could not load data.' : `${totalElements} results`}
