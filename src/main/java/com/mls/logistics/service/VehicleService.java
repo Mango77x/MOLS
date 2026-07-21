@@ -86,17 +86,6 @@ public class VehicleService {
     }
 
     /**
-     * Creates a new vehicle.
-     * 
-     * Business rules can be added here in the future
-     * (e.g. vehicle maintenance checks).
-     */
-    @Transactional
-    public Vehicle createVehicle(Vehicle vehicle) {
-        return vehicleRepository.save(vehicle);
-    }
-
-    /**
      * Creates a new vehicle from a DTO request.
      * 
      * This method separates API contracts from domain logic.

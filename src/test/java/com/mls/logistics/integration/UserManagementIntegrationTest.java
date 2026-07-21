@@ -1,5 +1,6 @@
 package com.mls.logistics.integration;
 
+import com.mls.logistics.security.domain.AppUser;
 import com.mls.logistics.security.domain.Role;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
@@ -81,5 +82,49 @@ class UserManagementIntegrationTest extends AbstractIntegrationTest {
         assertThat(restTemplate.exchange("/api/users/" + firstAdmin.getId() + "/role", HttpMethod.PATCH,
                 jsonEntity("{\"role\":\"AUDITOR\"}", token), String.class).getStatusCode().value())
                 .isEqualTo(200);
+    }
+
+    @Test
+    void disablingAUser_RevokesTheirAlreadyIssuedToken() {
+        AppUser target = createUser("revoke-on-disable", Role.OPERATOR);
+        String targetToken = loginToken("revoke-on-disable", TEST_PASSWORD);
+
+        // The token works normally before the account is disabled.
+        assertThat(restTemplate.exchange("/api/warehouses", HttpMethod.GET,
+                jsonEntity(null, targetToken), String.class).getStatusCode().value()).isEqualTo(200);
+
+        String admin = createUserAndLogin("admin-revoke-disable", Role.ADMIN);
+        assertThat(restTemplate.exchange("/api/users/" + target.getId() + "/enabled", HttpMethod.PATCH,
+                jsonEntity("{\"enabled\":false}", admin), String.class).getStatusCode().value())
+                .isEqualTo(200);
+
+        // The same, still-unexpired token must stop working immediately —
+        // not just future login attempts.
+        assertThat(restTemplate.exchange("/api/warehouses", HttpMethod.GET,
+                jsonEntity(null, targetToken), String.class).getStatusCode().value()).isEqualTo(401);
+    }
+
+    @Test
+    void resettingAUsersPassword_RevokesTheirAlreadyIssuedToken() {
+        AppUser target = createUser("revoke-on-reset", Role.OPERATOR);
+        String targetToken = loginToken("revoke-on-reset", TEST_PASSWORD);
+
+        assertThat(restTemplate.exchange("/api/warehouses", HttpMethod.GET,
+                jsonEntity(null, targetToken), String.class).getStatusCode().value()).isEqualTo(200);
+
+        String admin = createUserAndLogin("admin-revoke-reset", Role.ADMIN);
+        assertThat(restTemplate.exchange("/api/users/" + target.getId() + "/password", HttpMethod.PATCH,
+                jsonEntity("{\"password\":\"a-brand-new-long-password\"}", admin), String.class)
+                .getStatusCode().value()).isEqualTo(200);
+
+        // The token minted under the old password must stop working, even
+        // though it hasn't expired.
+        assertThat(restTemplate.exchange("/api/warehouses", HttpMethod.GET,
+                jsonEntity(null, targetToken), String.class).getStatusCode().value()).isEqualTo(401);
+
+        // The new password logs in fine and gets a token that works.
+        String freshToken = loginToken("revoke-on-reset", "a-brand-new-long-password");
+        assertThat(restTemplate.exchange("/api/warehouses", HttpMethod.GET,
+                jsonEntity(null, freshToken), String.class).getStatusCode().value()).isEqualTo(200);
     }
 }

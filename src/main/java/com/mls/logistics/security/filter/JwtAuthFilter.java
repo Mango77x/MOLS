@@ -1,6 +1,7 @@
 package com.mls.logistics.security.filter;
 
 import com.mls.logistics.security.config.JwtProperties;
+import com.mls.logistics.security.domain.AppUser;
 import com.mls.logistics.security.service.AppUserService;
 import com.mls.logistics.security.service.JwtService;
 import io.jsonwebtoken.JwtException;
@@ -69,17 +70,27 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 UserDetails userDetails = appUserService.loadUserByUsername(username);
 
                 if (jwtService.isTokenValid(jwt, userDetails)) {
-                    UsernamePasswordAuthenticationToken authToken =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails,
-                                    null,
-                                    userDetails.getAuthorities());
+                    if (isNotRevoked(jwt, userDetails)) {
+                        UsernamePasswordAuthenticationToken authToken =
+                                new UsernamePasswordAuthenticationToken(
+                                        userDetails,
+                                        null,
+                                        userDetails.getAuthorities());
 
-                    authToken.setDetails(
-                            new WebAuthenticationDetailsSource()
-                                    .buildDetails(request));
+                        authToken.setDetails(
+                                new WebAuthenticationDetailsSource()
+                                        .buildDetails(request));
 
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    } else if (headerToken != null) {
+                        // Syntactically valid, but the account was disabled or
+                        // the password was changed/reset after this token was
+                        // issued: same 401 treatment as an invalid token for
+                        // API clients presenting it explicitly (cookie clients
+                        // just fall through to anonymous below).
+                        writeUnauthorized(response);
+                        return;
+                    }
                 }
             }
         } catch (JwtException | IllegalArgumentException | AuthenticationException ex) {
@@ -102,6 +113,38 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * Checks whether a valid-looking token should still be honored: the
+     * account must be enabled, and the token's embedded {@code pwdVersion}
+     * claim (set at issuance, see
+     * {@link com.mls.logistics.security.service.JwtService#generateToken})
+     * must still match the user's current {@code passwordVersion}.
+     *
+     * <p>{@code isTokenValid} only checks username + expiration, so without
+     * this a disabled user or a just-reset password wouldn't actually revoke
+     * a token already in the wild — it would keep working until it expired
+     * naturally (up to {@code security.jwt.expiration-ms}, 24h by default).
+     * This compares an incrementing integer claim, not a timestamp — two
+     * earlier versions of this check (before/after comparison, then
+     * equality on a truncated-to-seconds timestamp) both broke under fast
+     * sequential requests (e.g. login immediately followed by a reset in a
+     * test/script), because two distinct password-set events landing in the
+     * same wall-clock second produce an identical value once a timestamp
+     * loses precision — see {@code AppUser.passwordVersion}'s javadoc.</p>
+     */
+    private boolean isNotRevoked(String jwt, UserDetails userDetails) {
+        if (!userDetails.isEnabled()) {
+            return false;
+        }
+        if (userDetails instanceof AppUser appUser) {
+            Integer tokenPasswordVersion = jwtService.extractPasswordVersion(jwt);
+            if (tokenPasswordVersion == null || tokenPasswordVersion != appUser.getPasswordVersion()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

@@ -90,17 +90,6 @@ public class WarehouseService {
     }
 
     /**
-     * Creates a new warehouse.
-     * 
-     * Business rules can be added here in the future
-     * (e.g. warehouse capacity validation).
-     */
-    @Transactional
-    public Warehouse createWarehouse(Warehouse warehouse) {
-        return warehouseRepository.save(warehouse);
-    }
-
-    /**
      * Creates a new warehouse from a DTO request.
      * 
      * This method separates API contracts from domain logic.

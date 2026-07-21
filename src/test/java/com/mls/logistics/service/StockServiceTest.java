@@ -5,6 +5,7 @@ import com.mls.logistics.domain.Resource;
 import com.mls.logistics.domain.Stock;
 import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.CreateStockRequest;
+import com.mls.logistics.exception.DuplicateResourceException;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.repository.MovementRepository;
@@ -117,6 +118,22 @@ class StockServiceTest {
         assertThat(result.getQuantity()).isEqualTo(20);
         verify(stockRepository, times(1)).save(any(Stock.class));
         verify(movementRepository, times(1)).save(any(Movement.class));
+    }
+
+    @Test
+    void createStock_WhenResourceAlreadyStockedInWarehouse_ShouldThrowException() {
+        // Given: stocks has a UNIQUE(resource_id, warehouse_id) constraint —
+        // a duplicate must be rejected with a clean 409, not a raw DB error.
+        CreateStockRequest request = new CreateStockRequest(1L, 1L, 20);
+        when(stockRepository.findByResourceIdAndWarehouseId(1L, 1L)).thenReturn(Optional.of(testStock));
+
+        // When & Then
+        assertThatThrownBy(() -> stockService.createStock(request))
+                .isInstanceOf(DuplicateResourceException.class)
+                .hasMessageContaining("resource id 1")
+                .hasMessageContaining("warehouse id 1");
+
+        verify(stockRepository, never()).save(any());
     }
 
     @Test

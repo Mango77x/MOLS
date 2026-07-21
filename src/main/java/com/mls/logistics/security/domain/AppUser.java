@@ -45,6 +45,23 @@ public class AppUser implements UserDetails {
     @Column
     private Boolean enabled;
 
+    /**
+     * Incremented every time this user's password is set (creation counts as
+     * the first "set"). A JWT embeds the version current at login; JwtAuthFilter
+     * rejects a token whose embedded version no longer matches the current
+     * one, so a reset actually revokes any token issued under the old
+     * password instead of leaving it valid until it naturally expires.
+     *
+     * <p>Deliberately an incrementing counter rather than a "changed at"
+     * timestamp: a timestamp can only be compared at whatever precision it's
+     * stored/embedded at (a JWT's {@code iat} is whole-seconds), so two
+     * distinct password-set events landing in the same second would produce
+     * indistinguishable values — an integer bump can never collide like
+     * that, however fast the events happen.</p>
+     */
+    @Column(nullable = false)
+    private int passwordVersion;
+
     public AppUser() {
     }
 
@@ -53,6 +70,7 @@ public class AppUser implements UserDetails {
         this.password = password;
         this.role = role;
         this.enabled = Boolean.TRUE;
+        this.passwordVersion = 0;
     }
 
     // UserDetails implementation
@@ -124,5 +142,13 @@ public class AppUser implements UserDetails {
 
     public void setEnabledFlag(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public int getPasswordVersion() {
+        return passwordVersion;
+    }
+
+    public void setPasswordVersion(int passwordVersion) {
+        this.passwordVersion = passwordVersion;
     }
 }

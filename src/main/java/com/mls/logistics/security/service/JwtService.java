@@ -1,6 +1,7 @@
 package com.mls.logistics.security.service;
 
 import com.mls.logistics.security.config.JwtProperties;
+import com.mls.logistics.security.domain.AppUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -34,6 +35,17 @@ public class JwtService {
     /**
      * Generates a JWT token for the given user.
      *
+     * <p>Embeds the user's {@code passwordVersion} at the moment of
+     * issuance, so JwtAuthFilter can later reject the token if that no
+     * longer matches the current value — i.e. the password was
+     * changed/reset since. This is an integer-equality check rather than a
+     * timestamp comparison specifically because a timestamp can only be
+     * compared at whatever precision it's embedded at (a JWT's {@code iat}
+     * is whole-seconds), so two password-set events within the same second
+     * — e.g. account creation immediately followed by a reset in a fast
+     * test/script — would be indistinguishable; an incrementing counter
+     * can't collide like that no matter how fast the events happen.</p>
+     *
      * @param userDetails the authenticated user
      * @return signed JWT token string
      */
@@ -41,6 +53,9 @@ public class JwtService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", userDetails.getAuthorities()
                 .iterator().next().getAuthority());
+        if (userDetails instanceof AppUser appUser) {
+            claims.put("pwdVersion", appUser.getPasswordVersion());
+        }
         return buildToken(claims, userDetails);
     }
 
@@ -52,6 +67,18 @@ public class JwtService {
      */
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+
+    /**
+     * Extracts the {@code pwdVersion} claim embedded at token issuance —
+     * see {@link #generateToken}. {@code null} if the token predates this
+     * claim existing.
+     *
+     * @param token the JWT token string
+     * @return the embedded passwordVersion, or null if absent
+     */
+    public Integer extractPasswordVersion(String token) {
+        return extractClaim(token, claims -> claims.get("pwdVersion", Integer.class));
     }
 
     /**

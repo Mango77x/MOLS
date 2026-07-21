@@ -70,6 +70,15 @@ class AppUserAdminServiceTest {
     }
 
     @Test
+    void createUser_ShorterThanTwelveButAtLeastSix_ShouldThrow() {
+        assertThatThrownBy(() -> appUserAdminService.createUser("newuser", "eightchr", Role.OPERATOR))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("12 characters");
+
+        verify(appUserRepository, never()).save(any());
+    }
+
+    @Test
     void createUser_WithBlankUsername_ShouldThrow() {
         assertThatThrownBy(() -> appUserAdminService.createUser("  ", "a-long-enough-password", Role.OPERATOR))
                 .isInstanceOf(InvalidRequestException.class)
@@ -137,6 +146,48 @@ class AppUserAdminServiceTest {
                 .isInstanceOf(InvalidRequestException.class);
 
         verify(appUserRepository, never()).findById(any());
+    }
+
+    @Test
+    void resetPassword_ShorterThanTwelveButAtLeastSix_ShouldThrow() {
+        // This used to pass under a stale, unreachable-from-the-API 6-char
+        // floor here — confirms the service now matches the 12-character
+        // policy enforced everywhere else (CreateUserRequest/ResetPasswordRequest).
+        assertThatThrownBy(() -> appUserAdminService.resetPassword(1L, "eightchr"))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("12 characters");
+
+        verify(appUserRepository, never()).findById(any());
+    }
+
+    @Test
+    void resetPassword_ShouldBumpPasswordVersion_ToRevokeExistingTokens() {
+        // Given: admin starts at passwordVersion 0 (set by the constructor),
+        // as if a token had already been issued carrying that version.
+        when(appUserRepository.findById(1L)).thenReturn(Optional.of(admin));
+        when(passwordEncoder.encode("a-new-long-password")).thenReturn("new-hash");
+        when(appUserRepository.save(any(AppUser.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        AppUser result = appUserAdminService.resetPassword(1L, "a-new-long-password");
+
+        // JwtAuthFilter rejects any token whose embedded pwdVersion no longer
+        // matches — bumping it is what actually revokes tokens minted under
+        // the old password. An incrementing counter (not a timestamp) so two
+        // resets in quick succession can never produce an indistinguishable
+        // value, however fast they happen.
+        assertThat(result.getPasswordVersion()).isEqualTo(1);
+    }
+
+    @Test
+    void resetPassword_CalledTwice_KeepsIncrementingPasswordVersion() {
+        when(appUserRepository.findById(1L)).thenReturn(Optional.of(admin));
+        when(passwordEncoder.encode(any())).thenReturn("new-hash");
+        when(appUserRepository.save(any(AppUser.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        appUserAdminService.resetPassword(1L, "a-new-long-password");
+        AppUser result = appUserAdminService.resetPassword(1L, "yet-another-long-password");
+
+        assertThat(result.getPasswordVersion()).isEqualTo(2);
     }
 
     @Test

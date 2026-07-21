@@ -154,17 +154,6 @@ public class OrderItemService {
     }
 
     /**
-     * Creates a new order item.
-     * 
-     * Business rules can be added here in the future
-     * (e.g. item quantity validation).
-     */
-    @Transactional
-    public OrderItem createOrderItem(OrderItem orderItem) {
-        return orderItemRepository.save(orderItem);
-    }
-
-    /**
      * Creates a new order item from a DTO request.
      *
      * This method separates API contracts from domain logic.

@@ -1,5 +1,7 @@
 package com.mls.logistics.security.domain;
 
+import com.mls.logistics.exception.InvalidRequestException;
+
 /**
  * Roles available in the MOLS system.
  *
@@ -10,5 +12,23 @@ package com.mls.logistics.security.domain;
 public enum Role {
     ADMIN,
     OPERATOR,
-    AUDITOR
+    AUDITOR;
+
+    /**
+     * Parses a role from a request value, same friendly-error convention as
+     * OrderStatus/ShipmentStatus/VehicleStatus.from(String) — an unknown
+     * value gets a clear 400 message instead of falling through to Jackson's
+     * generic enum-deserialization error.
+     */
+    public static Role from(String value) {
+        if (value == null || value.isBlank()) {
+            throw new InvalidRequestException("Role is required.");
+        }
+        try {
+            return Role.valueOf(value.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new InvalidRequestException(
+                "Unknown role: '" + value + "'. Valid values: ADMIN, OPERATOR, AUDITOR.");
+        }
+    }
 }
