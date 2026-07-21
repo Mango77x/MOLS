@@ -119,14 +119,6 @@ public class OrderService {
     }
 
     /**
-     * Creates a new order.
-     */
-    @Transactional
-    public Order createOrder(Order order) {
-        return orderRepository.save(order);
-    }
-
-    /**
      * Creates a new order from a DTO request.
      *
      * This method separates API contracts from domain logic. The status

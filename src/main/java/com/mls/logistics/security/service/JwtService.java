@@ -55,6 +55,20 @@ public class JwtService {
     }
 
     /**
+     * Extracts the issued-at timestamp from a JWT token.
+     *
+     * Used to reject a token issued before the user's most recent password
+     * change (see JwtAuthFilter) — a reset should revoke tokens minted under
+     * the old password rather than leaving them valid until they expire.
+     *
+     * @param token the JWT token string
+     * @return the token's issued-at date
+     */
+    public Date extractIssuedAt(String token) {
+        return extractClaim(token, Claims::getIssuedAt);
+    }
+
+    /**
      * Validates a JWT token against the user details.
      *
      * Checks that the username matches and the token is not expired.

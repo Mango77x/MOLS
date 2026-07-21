@@ -11,6 +11,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,6 +22,14 @@ import java.util.Optional;
 @Service
 @Transactional(readOnly = true)
 public class AppUserAdminService {
+
+    /**
+     * Minimum password length, mirrored from the {@code @Size(min = 12, ...)}
+     * on CreateUserRequest/ResetPasswordRequest so this service enforces the
+     * same floor even if ever called from somewhere that bypasses DTO
+     * validation (previously this was a stale, unreachable 6 here).
+     */
+    private static final int MIN_PASSWORD_LENGTH = 12;
 
     private final AppUserRepository appUserRepository;
     private final PasswordEncoder passwordEncoder;
@@ -47,8 +57,8 @@ public class AppUserAdminService {
         if (rawPassword == null || rawPassword.isBlank()) {
             throw new InvalidRequestException("Password is required.");
         }
-        if (rawPassword.length() < 6) {
-            throw new InvalidRequestException("Password must be at least 6 characters.");
+        if (rawPassword.length() < MIN_PASSWORD_LENGTH) {
+            throw new InvalidRequestException("Password must be at least " + MIN_PASSWORD_LENGTH + " characters.");
         }
         if (role == null) {
             throw new InvalidRequestException("Role is required.");
@@ -92,14 +102,18 @@ public class AppUserAdminService {
         if (rawPassword == null || rawPassword.isBlank()) {
             throw new InvalidRequestException("Password is required.");
         }
-        if (rawPassword.length() < 6) {
-            throw new InvalidRequestException("Password must be at least 6 characters.");
+        if (rawPassword.length() < MIN_PASSWORD_LENGTH) {
+            throw new InvalidRequestException("Password must be at least " + MIN_PASSWORD_LENGTH + " characters.");
         }
 
         AppUser user = appUserRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
 
         user.setPassword(passwordEncoder.encode(rawPassword));
+        // Revokes any token issued before this reset — see JwtAuthFilter.
+        // Truncated to seconds to match a JWT's `iat` precision; see
+        // AppUser's constructor for why that matters.
+        user.setPasswordChangedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
         return appUserRepository.save(user);
     }
 

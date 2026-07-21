@@ -91,17 +91,6 @@ public class ResourceService {
     }
 
     /**
-     * Creates a new resource.
-     * 
-     * Business rules can be added here in the future
-     * (e.g. resource availability checks).
-     */
-    @Transactional
-    public Resource createResource(Resource resource) {
-        return resourceRepository.save(resource);
-    }
-
-    /**
      * Creates a new resource from a DTO request.
      * 
      * This method separates API contracts from domain logic.

@@ -1,6 +1,7 @@
 package com.mls.logistics.security.filter;
 
 import com.mls.logistics.security.config.JwtProperties;
+import com.mls.logistics.security.domain.AppUser;
 import com.mls.logistics.security.service.AppUserService;
 import com.mls.logistics.security.service.JwtService;
 import io.jsonwebtoken.JwtException;
@@ -20,6 +21,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.ZoneId;
+import java.util.Date;
 
 /**
  * JWT authentication filter.
@@ -69,17 +72,27 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 UserDetails userDetails = appUserService.loadUserByUsername(username);
 
                 if (jwtService.isTokenValid(jwt, userDetails)) {
-                    UsernamePasswordAuthenticationToken authToken =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails,
-                                    null,
-                                    userDetails.getAuthorities());
+                    if (isNotRevoked(jwt, userDetails)) {
+                        UsernamePasswordAuthenticationToken authToken =
+                                new UsernamePasswordAuthenticationToken(
+                                        userDetails,
+                                        null,
+                                        userDetails.getAuthorities());
 
-                    authToken.setDetails(
-                            new WebAuthenticationDetailsSource()
-                                    .buildDetails(request));
+                        authToken.setDetails(
+                                new WebAuthenticationDetailsSource()
+                                        .buildDetails(request));
 
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    } else if (headerToken != null) {
+                        // Syntactically valid, but the account was disabled or
+                        // the password was changed/reset after this token was
+                        // issued: same 401 treatment as an invalid token for
+                        // API clients presenting it explicitly (cookie clients
+                        // just fall through to anonymous below).
+                        writeUnauthorized(response);
+                        return;
+                    }
                 }
             }
         } catch (JwtException | IllegalArgumentException | AuthenticationException ex) {
@@ -102,6 +115,31 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * Checks whether a valid-looking token should still be honored: the
+     * account must be enabled, and the token must have been issued at or
+     * after the user's most recent password change.
+     *
+     * <p>{@code isTokenValid} only checks username + expiration, so without
+     * this a disabled user or a just-reset password wouldn't actually revoke
+     * a token already in the wild — it would keep working until it expired
+     * naturally (up to {@code security.jwt.expiration-ms}, 24h by default).</p>
+     */
+    private boolean isNotRevoked(String jwt, UserDetails userDetails) {
+        if (!userDetails.isEnabled()) {
+            return false;
+        }
+        if (userDetails instanceof AppUser appUser && appUser.getPasswordChangedAt() != null) {
+            Date issuedAt = jwtService.extractIssuedAt(jwt);
+            Date passwordChangedAt = Date.from(
+                    appUser.getPasswordChangedAt().atZone(ZoneId.systemDefault()).toInstant());
+            if (issuedAt.before(passwordChangedAt)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
