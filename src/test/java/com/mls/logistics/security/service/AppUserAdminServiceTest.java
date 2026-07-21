@@ -13,7 +13,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -162,19 +161,33 @@ class AppUserAdminServiceTest {
     }
 
     @Test
-    void resetPassword_ShouldBumpPasswordChangedAt_ToRevokeExistingTokens() {
-        // Given: an old password-changed-at, as if the user had logged in
-        // and been carrying a token from before this reset.
-        admin.setPasswordChangedAt(LocalDateTime.now().minusDays(1));
+    void resetPassword_ShouldBumpPasswordVersion_ToRevokeExistingTokens() {
+        // Given: admin starts at passwordVersion 0 (set by the constructor),
+        // as if a token had already been issued carrying that version.
         when(appUserRepository.findById(1L)).thenReturn(Optional.of(admin));
         when(passwordEncoder.encode("a-new-long-password")).thenReturn("new-hash");
         when(appUserRepository.save(any(AppUser.class))).thenAnswer(inv -> inv.getArgument(0));
 
         AppUser result = appUserAdminService.resetPassword(1L, "a-new-long-password");
 
-        // JwtAuthFilter rejects any token issued before this timestamp —
-        // bumping it is what actually revokes tokens minted under the old password.
-        assertThat(result.getPasswordChangedAt()).isAfter(LocalDateTime.now().minusMinutes(1));
+        // JwtAuthFilter rejects any token whose embedded pwdVersion no longer
+        // matches — bumping it is what actually revokes tokens minted under
+        // the old password. An incrementing counter (not a timestamp) so two
+        // resets in quick succession can never produce an indistinguishable
+        // value, however fast they happen.
+        assertThat(result.getPasswordVersion()).isEqualTo(1);
+    }
+
+    @Test
+    void resetPassword_CalledTwice_KeepsIncrementingPasswordVersion() {
+        when(appUserRepository.findById(1L)).thenReturn(Optional.of(admin));
+        when(passwordEncoder.encode(any())).thenReturn("new-hash");
+        when(appUserRepository.save(any(AppUser.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        appUserAdminService.resetPassword(1L, "a-new-long-password");
+        AppUser result = appUserAdminService.resetPassword(1L, "yet-another-long-password");
+
+        assertThat(result.getPasswordVersion()).isEqualTo(2);
     }
 
     @Test
