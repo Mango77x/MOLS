@@ -21,8 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.time.ZoneId;
-import java.util.Date;
+import java.time.ZoneOffset;
 
 /**
  * JWT authentication filter.
@@ -119,23 +118,31 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     /**
      * Checks whether a valid-looking token should still be honored: the
-     * account must be enabled, and the token must have been issued at or
-     * after the user's most recent password change.
+     * account must be enabled, and the token's embedded
+     * {@code pwdChangedAt} claim (set at issuance, see
+     * {@link com.mls.logistics.security.service.JwtService#generateToken})
+     * must still match the user's current {@code passwordChangedAt}.
      *
      * <p>{@code isTokenValid} only checks username + expiration, so without
      * this a disabled user or a just-reset password wouldn't actually revoke
      * a token already in the wild — it would keep working until it expired
-     * naturally (up to {@code security.jwt.expiration-ms}, 24h by default).</p>
+     * naturally (up to {@code security.jwt.expiration-ms}, 24h by default).
+     * This is an equality check against a claim captured at issuance, not a
+     * timestamp comparison — an earlier before/after version of this check
+     * broke under fast sequential requests (e.g. login immediately followed
+     * by a reset) because a JWT's {@code iat} is whole-seconds precision and
+     * two events in the same wall-clock second can't be reliably ordered
+     * once that precision is lost, but "does the claim still match the
+     * current DB value" has no such ambiguity.</p>
      */
     private boolean isNotRevoked(String jwt, UserDetails userDetails) {
         if (!userDetails.isEnabled()) {
             return false;
         }
         if (userDetails instanceof AppUser appUser && appUser.getPasswordChangedAt() != null) {
-            Date issuedAt = jwtService.extractIssuedAt(jwt);
-            Date passwordChangedAt = Date.from(
-                    appUser.getPasswordChangedAt().atZone(ZoneId.systemDefault()).toInstant());
-            if (issuedAt.before(passwordChangedAt)) {
+            Long tokenPasswordChangedAt = jwtService.extractPasswordChangedAt(jwt);
+            long currentPasswordChangedAt = appUser.getPasswordChangedAt().toEpochSecond(ZoneOffset.UTC);
+            if (tokenPasswordChangedAt == null || tokenPasswordChangedAt != currentPasswordChangedAt) {
                 return false;
             }
         }
