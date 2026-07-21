@@ -19,7 +19,7 @@ const rows: Row[] = [
 ]
 
 function renderTable(overrides: Partial<Parameters<typeof DataTable<Row>>[0]> = {}) {
-  render(
+  return render(
     <DataTable<Row>
       columns={columns}
       data={rows}
@@ -72,5 +72,29 @@ describe('DataTable — mobile card view', () => {
 
     const cards = screen.getByTestId('data-table-cards')
     expect(within(cards).getByText('Could not load data. Please try again.')).toBeInTheDocument()
+  })
+})
+
+/**
+ * Sprint 14: the caption said "1 results" for a single row (contrast with
+ * the pagination summary just below it, which already special-cased 0).
+ */
+describe('DataTable — result count caption', () => {
+  it('uses the singular "result" for exactly one row', () => {
+    const { container } = renderTable({ data: [rows[0]], totalElements: 1 })
+    expect(container.querySelector('caption')).toHaveTextContent('1 result')
+  })
+
+  it('uses the plural "results" for more than one row', () => {
+    const { container } = renderTable()
+    expect(container.querySelector('caption')).toHaveTextContent('2 results')
+  })
+
+  it('uses the plural "results" for zero rows too', () => {
+    // The pagination summary below the table already says "0 results" too
+    // (it special-cased 0 from the start) — scope to the caption
+    // specifically so this test only pins the caption's own behavior.
+    const { container } = renderTable({ data: [], totalElements: 0 })
+    expect(container.querySelector('caption')).toHaveTextContent('0 results')
   })
 })
