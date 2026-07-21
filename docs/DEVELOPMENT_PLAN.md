@@ -45,9 +45,10 @@ Same workflow as prior sprints: one `sprint-N` branch per sprint, opened as a PR
 
 ### Sprint 11 — Frontend test infrastructure
 
-- [ ] Add `@testing-library/react` + jsdom environment to the Vitest config (today: 3 files, 8 tests, all pure-function, no DOM).
-- [ ] Component/behavior tests for the Sprint 10 fixes.
-- [ ] Test for the enum-label helper.
+- [x] Added `@testing-library/react`, `@testing-library/user-event`, `jsdom` and switched `test.environment` to `jsdom` in `vite.config.ts`, with a `src/test/setup.ts` handling auto-cleanup between tests (needed explicitly since this project doesn't use Vitest's `globals: true`) and a `matchMedia` stub (unimplemented in jsdom, needed by `useTheme`).
+- [x] Component/behavior tests for every Sprint 10 fix: `enumLabels` completeness, `UserFormPage` role-select validation (the ADMIN-by-default bug), `OrderEditFormPage` terminal-state lock, `RowActions`/`DeleteAction` confirm-dialog flow including the failed-delete-surfaces-a-toast regression guard, `ConfirmDialog` itself (open/close/confirm/cancel/Escape/backdrop-click), and `App` routing (404 catch-all, `/stock` and `/audit-log` redirects).
+- [x] Test for the enum-label helper.
+- Went from 3 files / 8 pure-function tests to 9 files / 35 tests, now covering DOM rendering, form validation, async user interaction, and routing.
 
 ---
 
@@ -67,4 +68,4 @@ Same workflow as prior sprints: one `sprint-N` branch per sprint, opened as a PR
 
 ---
 
-**Last updated**: 2026-07-21 (Sprint 10 complete)
+**Last updated**: 2026-07-21 (Sprint 11 complete)
