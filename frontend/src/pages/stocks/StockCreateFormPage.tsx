@@ -9,6 +9,7 @@ import { applyApiError, extractApiError } from '../../api/errors'
 import { useLookup } from '../../api/lookups'
 import { FormBanner, SecondaryButton, SelectField, SubmitButton, TextField } from '../../components/form/fields'
 import { FormPage } from '../../components/form/FormPage'
+import { useToast } from '../../components/toast/toastContext'
 import { nonNegativeNumber, positiveId } from '../../components/form/zodHelpers'
 
 const schema = z.object({
@@ -21,6 +22,7 @@ type FormValues = z.infer<typeof schema>
 
 export default function StockCreateFormPage() {
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const { byId: resources } = useLookup<ResourceEntity>('/resources')
   const { byId: warehouses } = useLookup<WarehouseEntity>('/warehouses')
   const [banner, setBanner] = useState<string | null>(null)
@@ -39,6 +41,7 @@ export default function StockCreateFormPage() {
     setBanner(null)
     try {
       await api.post('/stocks', values)
+      showToast('Stock record created.', 'success')
       navigate('/stocks')
     } catch (error) {
       setBanner(applyApiError(extractApiError(error), setError))

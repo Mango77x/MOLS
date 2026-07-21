@@ -11,6 +11,7 @@ import { FormBanner, SecondaryButton, SubmitButton, TextField } from '../../comp
 import { FormPage } from '../../components/form/FormPage'
 import { coordinate } from '../../components/form/zodHelpers'
 import LocationPicker from '../../components/map/LocationPicker'
+import { useToast } from '../../components/toast/toastContext'
 
 const schema = z.object({
   name: z
@@ -31,6 +32,7 @@ export default function UnitFormPage() {
   const { id } = useParams()
   const isEdit = id !== undefined
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const { data: unit, loading, notFound } = useEntity<UnitEntity>(isEdit ? `/units/${id}` : null)
   const [banner, setBanner] = useState<string | null>(null)
 
@@ -72,8 +74,10 @@ export default function UnitFormPage() {
     try {
       if (isEdit) {
         await api.put(`/units/${id}`, payload)
+        showToast('Unit updated.', 'success')
       } else {
         await api.post('/units', payload)
+        showToast('Unit created.', 'success')
       }
       navigate('/units')
     } catch (error) {

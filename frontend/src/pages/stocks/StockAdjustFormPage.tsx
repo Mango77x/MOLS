@@ -8,6 +8,7 @@ import type { ResourceEntity, StockEntity, WarehouseEntity } from '../../api/ent
 import { applyApiError, extractApiError } from '../../api/errors'
 import { useEntity } from '../../api/useEntity'
 import { FormBanner, SecondaryButton, SelectField, SubmitButton, TextField } from '../../components/form/fields'
+import { useToast } from '../../components/toast/toastContext'
 import { positiveNumber } from '../../components/form/zodHelpers'
 
 const schema = z.object({
@@ -20,6 +21,7 @@ type FormValues = z.infer<typeof schema>
 export default function StockAdjustFormPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const { data: stock, loading, notFound } = useEntity<StockEntity>(`/stocks/${id}`)
   const { data: resource } = useEntity<ResourceEntity>(stock ? `/resources/${stock.resourceId}` : null)
   const { data: warehouse } = useEntity<WarehouseEntity>(stock ? `/warehouses/${stock.warehouseId}` : null)
@@ -40,6 +42,7 @@ export default function StockAdjustFormPage() {
     const delta = values.operation === 'INCREASE' ? values.amount : -values.amount
     try {
       await api.patch(`/stocks/${id}/adjust`, { delta })
+      showToast('Stock adjusted.', 'success')
       navigate('/stocks')
     } catch (error) {
       setBanner(applyApiError(extractApiError(error), setError))
