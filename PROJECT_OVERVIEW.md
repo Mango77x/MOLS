@@ -136,7 +136,25 @@ Tailwind 4) and is served at `/app/**`:
     detail shows items (with per-item shipped/ordered progress)/shipments/
     linked movements, shipment detail shows context/this shipment's own items
     (not the full order)/linked movements — both link to each other
-    (`Movement.shipmentId` → shipment detail) for end-to-end tracing.
+    (`Movement.shipmentId` → shipment detail) for end-to-end tracing. Order
+    edit and `OrderItemsManager` (which takes a `locked` prop) lock down when
+    the order is `COMPLETED`/`CANCELLED` — the status select is disabled and
+    the items table drops to read-only — since the API rejects any change to
+    either in that state anyway (Sprint 10).
+  - `src/lib/enumLabels.ts` (Sprint 10) is the single source of truth for
+    human-readable `OrderStatus`/`ShipmentStatus`/`VehicleStatus`/
+    `VehicleType` labels — used by every filter dropdown, status badge, and
+    form select, replacing what used to be a raw-enum-value display on list
+    pages next to a separately hardcoded friendly-label copy on forms.
+  - `src/components/ConfirmDialog.tsx` (Sprint 10) is a themed, portal-based
+    confirmation modal (Escape/backdrop-click to cancel) used everywhere a
+    destructive or consequential action needs confirming — row deletes,
+    order-item removal, user role/enabled changes — replacing native
+    `window.confirm()`.
+  - A catch-all route renders `NotFoundPage` (Sprint 10) for any unmatched
+    `/app/*` path, with redirect aliases for the two most guessable
+    mismatches between a sidebar label and its actual route: `/app/stock` →
+    `/app/stocks`, `/app/audit-log` → `/app/movements`.
 - **Serving**: the production build is packaged into the jar at
   `static/app/` and served by `config/SpaWebConfig` with an `index.html`
   fallback for client-side routes.
@@ -656,8 +674,11 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 
 - **Maintainer**: See `pom.xml` for project details
 
-**Last updated**: 2026-07-21 (Sprint 9: JWT revocation on user disable/password
-reset, `StockService.createStock` duplicate-conflict handling, dead-code
-cleanup, and aligned Role validation with the rest of the API's enum-parsing
-convention — see `docs/DEVELOPMENT_PLAN.md` for the full technical-debt and
+**Last updated**: 2026-07-21 (Sprint 10: frontend bug-fix pass — fixed every
+`SelectField` missing `defaultValue` (including one that let a new user
+silently default to ADMIN), locked the order edit page for
+COMPLETED/CANCELLED orders, unified enum-label display via
+`lib/enumLabels.ts`, added a catch-all 404 route, and replaced every
+`window.confirm()` with a themed `ConfirmDialog` — see
+`docs/DEVELOPMENT_PLAN.md` for the full technical-debt and
 product-completion backlog)

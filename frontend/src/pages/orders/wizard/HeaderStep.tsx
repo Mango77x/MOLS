@@ -4,13 +4,18 @@ import { z } from 'zod'
 import type { UnitEntity, WarehouseEntity } from '../../../api/entities'
 import { useLookup } from '../../../api/lookups'
 import { SecondaryButton, SelectField, SubmitButton, TextField } from '../../../components/form/fields'
+import { enumLabel, ORDER_STATUS_LABELS } from '../../../lib/enumLabels'
 import { positiveId, type WizardHeader } from './shared'
+
+// PARTIALLY_SHIPPED deliberately excluded — that status is shipment-driven,
+// never set manually at order creation/header-edit time.
+const STATUS_OPTIONS = ['CREATED', 'VALIDATED', 'COMPLETED', 'CANCELLED'] as const
 
 const schema = z.object({
   unitId: positiveId('Select a unit'),
   warehouseId: positiveId('Select an origin warehouse'),
   dateCreated: z.string().min(1, 'Order creation date is required'),
-  status: z.enum(['CREATED', 'VALIDATED', 'COMPLETED', 'CANCELLED'], { message: 'Select a status' }),
+  status: z.enum(STATUS_OPTIONS, { message: 'Select a status' }),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -88,10 +93,11 @@ export default function HeaderStep({
           <option value="" disabled>
             Select a status
           </option>
-          <option value="CREATED">Created</option>
-          <option value="VALIDATED">Validated</option>
-          <option value="COMPLETED">Completed</option>
-          <option value="CANCELLED">Cancelled</option>
+          {STATUS_OPTIONS.map((value) => (
+            <option key={value} value={value}>
+              {enumLabel(ORDER_STATUS_LABELS, value)}
+            </option>
+          ))}
         </SelectField>
       </div>
       <div className="flex gap-3">

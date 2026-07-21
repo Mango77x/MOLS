@@ -9,6 +9,7 @@ import Badge, { type BadgeTone } from '../../components/Badge'
 import DataTable from '../../components/table/DataTable'
 import { DeleteAction, RouteActionLink } from '../../components/table/RowActions'
 import { useServerTable } from '../../components/table/useServerTable'
+import { enumLabel, ORDER_STATUS_LABELS } from '../../lib/enumLabels'
 import OrderItemsRow from './OrderItemsRow'
 
 const STATUS_TONE: Record<OrderStatus, BadgeTone> = {
@@ -80,7 +81,7 @@ export default function OrdersPage() {
       enableSorting: true,
       cell: ({ getValue }) => {
         const value = getValue<OrderStatus>()
-        return <Badge tone={STATUS_TONE[value]}>{value}</Badge>
+        return <Badge tone={STATUS_TONE[value]}>{enumLabel(ORDER_STATUS_LABELS, value)}</Badge>
       },
     },
     {
@@ -119,11 +120,11 @@ export default function OrdersPage() {
           className="rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
         >
           <option value="">All statuses</option>
-          <option value="CREATED">CREATED</option>
-          <option value="VALIDATED">VALIDATED</option>
-          <option value="PARTIALLY_SHIPPED">PARTIALLY_SHIPPED</option>
-          <option value="COMPLETED">COMPLETED</option>
-          <option value="CANCELLED">CANCELLED</option>
+          {Object.entries(ORDER_STATUS_LABELS).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
         </select>
         <select
           value={unitId}

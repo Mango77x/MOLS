@@ -9,6 +9,7 @@ import Badge, { type BadgeTone } from '../../components/Badge'
 import DataTable from '../../components/table/DataTable'
 import { DeleteAction, RouteActionLink } from '../../components/table/RowActions'
 import { useServerTable } from '../../components/table/useServerTable'
+import { enumLabel, SHIPMENT_STATUS_LABELS, VEHICLE_TYPE_LABELS } from '../../lib/enumLabels'
 
 const STATUS_TONE: Record<ShipmentStatus, BadgeTone> = {
   PLANNED: 'neutral',
@@ -43,7 +44,10 @@ export default function ShipmentsPage() {
     {
       id: 'vehicle',
       header: 'Vehicle',
-      cell: ({ row }) => vehicles[row.original.vehicleId]?.type ?? `#${row.original.vehicleId}`,
+      cell: ({ row }) => {
+        const vehicle = vehicles[row.original.vehicleId]
+        return vehicle ? `#${vehicle.id} — ${enumLabel(VEHICLE_TYPE_LABELS, vehicle.type)}` : `#${row.original.vehicleId}`
+      },
     },
     {
       id: 'warehouse',
@@ -57,7 +61,7 @@ export default function ShipmentsPage() {
       enableSorting: true,
       cell: ({ getValue }) => {
         const value = getValue<ShipmentStatus>()
-        return <Badge tone={STATUS_TONE[value]}>{value}</Badge>
+        return <Badge tone={STATUS_TONE[value]}>{enumLabel(SHIPMENT_STATUS_LABELS, value)}</Badge>
       },
     },
     {
@@ -96,9 +100,11 @@ export default function ShipmentsPage() {
           className="rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
         >
           <option value="">All statuses</option>
-          <option value="PLANNED">PLANNED</option>
-          <option value="IN_TRANSIT">IN_TRANSIT</option>
-          <option value="DELIVERED">DELIVERED</option>
+          {Object.entries(SHIPMENT_STATUS_LABELS).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
         </select>
         <input
           value={orderId}

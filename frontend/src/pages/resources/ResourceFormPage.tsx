@@ -97,6 +97,7 @@ export default function ResourceFormPage() {
           id="criticality"
           registration={register('criticality')}
           error={errors.criticality?.message}
+          defaultValue=""
         >
           <option value="" disabled>
             Select a level
