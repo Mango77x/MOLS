@@ -9,6 +9,7 @@ import { applyApiError, extractApiError } from '../../api/errors'
 import { useEntity } from '../../api/useEntity'
 import { FormBanner, SecondaryButton, SubmitButton, TextField } from '../../components/form/fields'
 import { FormPage } from '../../components/form/FormPage'
+import { useDuplicateNameWarning } from '../../components/form/useDuplicateNameWarning'
 import { coordinate } from '../../components/form/zodHelpers'
 import LocationPicker from '../../components/map/LocationPicker'
 import { useToast } from '../../components/toast/toastContext'
@@ -35,6 +36,11 @@ export default function UnitFormPage() {
   const { showToast } = useToast()
   const { data: unit, loading, notFound } = useEntity<UnitEntity>(isEdit ? `/units/${id}` : null)
   const [banner, setBanner] = useState<string | null>(null)
+  const { warning: nameWarning, checkName } = useDuplicateNameWarning(
+    '/units',
+    'unit',
+    isEdit ? Number(id) : undefined,
+  )
 
   const {
     register,
@@ -99,8 +105,9 @@ export default function UnitFormPage() {
         <TextField
           label="Name"
           id="name"
-          registration={register('name')}
+          registration={register('name', { onBlur: (e) => checkName(e.target.value) })}
           error={errors.name?.message}
+          warning={nameWarning}
         />
         <TextField
           label="Location"

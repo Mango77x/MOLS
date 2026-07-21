@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { api } from '../../api/client'
 import type { UnitEntity } from '../../api/entities'
+import type { PageResponse } from '../../components/table/useServerTable'
 import { ToastProvider } from '../../components/toast/ToastProvider'
 import UnitFormPage from './UnitFormPage'
 
@@ -12,8 +13,13 @@ vi.mock('../../components/map/LocationPicker', () => ({
 }))
 
 const unit: UnitEntity = { id: 1, name: '1st Battalion', location: 'Barcelona', latitude: null, longitude: null }
+const emptyPage: PageResponse<UnitEntity> = { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 }
 
-function renderCreate() {
+function renderCreate(nameLookupResult: PageResponse<UnitEntity> = emptyPage) {
+  vi.spyOn(api, 'get').mockImplementation((url: string) => {
+    if (url === '/units') return Promise.resolve({ data: nameLookupResult })
+    throw new Error(`Unmocked GET ${url}`)
+  })
   render(
     <ToastProvider>
       <MemoryRouter initialEntries={['/units/new']}>
@@ -25,8 +31,12 @@ function renderCreate() {
   )
 }
 
-function renderEdit() {
-  vi.spyOn(api, 'get').mockResolvedValue({ data: unit })
+function renderEdit(nameLookupResult: PageResponse<UnitEntity> = emptyPage) {
+  vi.spyOn(api, 'get').mockImplementation((url: string) => {
+    if (url === '/units/1') return Promise.resolve({ data: unit })
+    if (url === '/units') return Promise.resolve({ data: nameLookupResult })
+    throw new Error(`Unmocked GET ${url}`)
+  })
   render(
     <ToastProvider>
       <MemoryRouter initialEntries={['/units/1/edit']}>
@@ -66,5 +76,33 @@ describe('UnitFormPage — success toast', () => {
 
     await waitFor(() => expect(putSpy).toHaveBeenCalled())
     expect(await screen.findByText('Unit updated.')).toBeInTheDocument()
+  })
+})
+
+/** Sprint 14: non-blocking duplicate-name nudge (see WarehouseFormPage.test.tsx for the full scenario coverage). */
+describe('UnitFormPage — duplicate-name warning', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('warns on blur when another unit already has that name', async () => {
+    const user = userEvent.setup()
+    renderCreate({ content: [unit], page: 0, size: 20, totalElements: 1, totalPages: 1 })
+
+    await user.type(screen.getByLabelText('Name'), unit.name)
+    await user.click(screen.getByLabelText('Location'))
+
+    expect(await screen.findByText(`A unit named "${unit.name}" already exists.`)).toBeInTheDocument()
+  })
+
+  it('does not warn when editing a unit against its own name', async () => {
+    const user = userEvent.setup()
+    renderEdit({ content: [unit], page: 0, size: 20, totalElements: 1, totalPages: 1 })
+
+    await waitFor(() => expect((screen.getByLabelText('Name') as HTMLInputElement).value).toBe('1st Battalion'))
+    await user.click(screen.getByLabelText('Name'))
+    await user.click(screen.getByLabelText('Location'))
+
+    expect(screen.queryByText(/already exists/)).not.toBeInTheDocument()
   })
 })
