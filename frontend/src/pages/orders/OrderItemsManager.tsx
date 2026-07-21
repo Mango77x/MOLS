@@ -7,6 +7,7 @@ import type { OrderItemEntity, ResourceEntity } from '../../api/entities'
 import { extractApiError } from '../../api/errors'
 import { useLookup } from '../../api/lookups'
 import type { PageResponse } from '../../components/table/useServerTable'
+import ConfirmDialog from '../../components/ConfirmDialog'
 import { FormBanner, SelectField, SubmitButton, TextField } from '../../components/form/fields'
 import { positiveId, positiveNumber } from '../../components/form/zodHelpers'
 
@@ -17,8 +18,23 @@ const addSchema = z.object({
 
 type AddValues = z.infer<typeof addSchema>
 
-/** Inline items manager for an existing order — each change is persisted immediately (no draft). */
-export default function OrderItemsManager({ orderId }: { orderId: number }) {
+/**
+ * Inline items manager for an existing order — each change is persisted
+ * immediately (no draft).
+ *
+ * `locked` hides the add form and the per-row Update/Remove actions,
+ * leaving a read-only table — the API rejects any item change on a
+ * COMPLETED/CANCELLED order anyway (see OrderItemService), so this mirrors
+ * ShipmentFormPage's `itemsLocked` pattern instead of presenting live
+ * controls that would only fail on submit.
+ */
+export default function OrderItemsManager({
+  orderId,
+  locked = false,
+}: {
+  orderId: number
+  locked?: boolean
+}) {
   const { byId: resources } = useLookup<ResourceEntity>('/resources')
   const [items, setItems] = useState<OrderItemEntity[]>([])
   const [loading, setLoading] = useState(true)
@@ -74,8 +90,12 @@ export default function OrderItemsManager({ orderId }: { orderId: number }) {
     }
   }
 
-  async function handleRemove(itemId: number) {
-    if (!window.confirm('Remove this item from the order?')) return
+  const [removingItemId, setRemovingItemId] = useState<number | null>(null)
+
+  async function confirmRemove() {
+    if (removingItemId === null) return
+    const itemId = removingItemId
+    setRemovingItemId(null)
     setBanner(null)
     try {
       await api.delete(`/order-items/${itemId}`)
@@ -89,39 +109,47 @@ export default function OrderItemsManager({ orderId }: { orderId: number }) {
     <div className="space-y-4">
       <FormBanner message={banner} />
 
-      <form
-        onSubmit={handleSubmit(handleAdd)}
-        className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-end"
-      >
-        <SelectField
-          label="Resource"
-          id="addResourceId"
-          defaultValue=""
-          registration={register('resourceId', { valueAsNumber: true })}
-          error={errors.resourceId?.message}
+      {locked && (
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          This order is completed or cancelled — items can no longer be changed.
+        </p>
+      )}
+
+      {!locked && (
+        <form
+          onSubmit={handleSubmit(handleAdd)}
+          className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-end"
         >
-          <option value="" disabled>
-            Select a resource
-          </option>
-          {Object.values(resources).map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.name} ({r.type})
+          <SelectField
+            label="Resource"
+            id="addResourceId"
+            defaultValue=""
+            registration={register('resourceId', { valueAsNumber: true })}
+            error={errors.resourceId?.message}
+          >
+            <option value="" disabled>
+              Select a resource
             </option>
-          ))}
-        </SelectField>
-        <div className="w-32">
-          <TextField
-            label="Quantity"
-            id="addQuantity"
-            type="number"
-            min={1}
-            step={1}
-            registration={register('quantity', { valueAsNumber: true })}
-            error={errors.quantity?.message}
-          />
-        </div>
-        <SubmitButton submitting={isSubmitting}>Add</SubmitButton>
-      </form>
+            {Object.values(resources).map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name} ({r.type})
+              </option>
+            ))}
+          </SelectField>
+          <div className="w-32">
+            <TextField
+              label="Quantity"
+              id="addQuantity"
+              type="number"
+              min={1}
+              step={1}
+              registration={register('quantity', { valueAsNumber: true })}
+              error={errors.quantity?.message}
+            />
+          </div>
+          <SubmitButton submitting={isSubmitting}>Add</SubmitButton>
+        </form>
+      )}
 
       <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
         <table className="w-full text-left text-sm">
@@ -159,40 +187,55 @@ export default function OrderItemsManager({ orderId }: { orderId: number }) {
                     )}
                   </td>
                   <td className="px-3 py-2">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        aria-label={`Quantity for ${resources[item.resourceId]?.name ?? `resource #${item.resourceId}`}`}
-                        min={1}
-                        defaultValue={item.quantity}
-                        onChange={(e) =>
-                          setPendingQuantities((current) => ({ ...current, [item.id]: Number(e.target.value) }))
-                        }
-                        className="w-24 rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateQuantity(item.id)}
-                        className="text-army-700 underline dark:text-army-300"
-                      >
-                        Update
-                      </button>
-                    </div>
+                    {locked ? (
+                      item.quantity
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          aria-label={`Quantity for ${resources[item.resourceId]?.name ?? `resource #${item.resourceId}`}`}
+                          min={1}
+                          defaultValue={item.quantity}
+                          onChange={(e) =>
+                            setPendingQuantities((current) => ({ ...current, [item.id]: Number(e.target.value) }))
+                          }
+                          className="w-24 rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateQuantity(item.id)}
+                          className="text-army-700 underline dark:text-army-300"
+                        >
+                          Update
+                        </button>
+                      </div>
+                    )}
                   </td>
                   <td className="px-3 py-2 text-right">
-                    <button
-                      type="button"
-                      onClick={() => handleRemove(item.id)}
-                      className="text-status-critical underline"
-                    >
-                      Remove
-                    </button>
+                    {!locked && (
+                      <button
+                        type="button"
+                        onClick={() => setRemovingItemId(item.id)}
+                        className="text-status-critical underline"
+                      >
+                        Remove
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
           </tbody>
         </table>
       </div>
+
+      <ConfirmDialog
+        open={removingItemId !== null}
+        title="Remove this item?"
+        message="This removes the item from the order."
+        confirmLabel="Remove"
+        onConfirm={confirmRemove}
+        onCancel={() => setRemovingItemId(null)}
+      />
     </div>
   )
 }

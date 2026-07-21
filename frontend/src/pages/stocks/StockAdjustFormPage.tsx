@@ -92,6 +92,7 @@ export default function StockAdjustFormPage() {
               id="operation"
               registration={register('operation')}
               error={errors.operation?.message}
+              defaultValue=""
             >
               <option value="" disabled>
                 Select an action

@@ -65,7 +65,13 @@ export default function UserFormPage() {
           registration={register('password')}
           error={errors.password?.message}
         />
-        <SelectField label="Role" id="role" registration={register('role')} error={errors.role?.message}>
+        <SelectField
+          label="Role"
+          id="role"
+          registration={register('role')}
+          error={errors.role?.message}
+          defaultValue=""
+        >
           <option value="" disabled>
             Select a role
           </option>

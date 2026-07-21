@@ -11,6 +11,7 @@ import { useEntity } from '../../api/useEntity'
 import { FormBanner, SecondaryButton, SelectField, SubmitButton, TextField } from '../../components/form/fields'
 import { FormPage } from '../../components/form/FormPage'
 import { positiveId } from '../../components/form/zodHelpers'
+import { ORDER_STATUS_LABELS } from '../../lib/enumLabels'
 import OrderItemsManager from './OrderItemsManager'
 
 const schema = z.object({
@@ -64,6 +65,12 @@ export default function OrderEditFormPage() {
     return <FormBanner message="Order not found." />
   }
 
+  // COMPLETED and CANCELLED are terminal (see OrderStatus): the API rejects
+  // any status transition or item change from either, so the form should
+  // reflect that instead of presenting live controls that only fail on
+  // submit.
+  const isTerminal = order.status === 'COMPLETED' || order.status === 'CANCELLED'
+
   return (
     <FormPage title={`Edit order #${order.id}`} backTo={`/orders/${order.id}`} wide>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -104,14 +111,26 @@ export default function OrderEditFormPage() {
             registration={register('dateCreated')}
             error={errors.dateCreated?.message}
           />
-          <SelectField label="Status" id="status" registration={register('status')} error={errors.status?.message}>
-            <option value="CREATED">Created</option>
-            <option value="VALIDATED">Validated</option>
-            <option value="PARTIALLY_SHIPPED">Partially shipped</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="CANCELLED">Cancelled</option>
+          <SelectField
+            label="Status"
+            id="status"
+            registration={register('status')}
+            error={errors.status?.message}
+            disabled={isTerminal}
+          >
+            {Object.entries(ORDER_STATUS_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
           </SelectField>
         </div>
+        {isTerminal && (
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            This order is {order.status === 'COMPLETED' ? 'completed' : 'cancelled'} — its status can no longer
+            change.
+          </p>
+        )}
         <div className="flex gap-3">
           <SubmitButton submitting={isSubmitting}>{isSubmitting ? 'Saving…' : 'Save'}</SubmitButton>
           <SecondaryButton onClick={() => navigate(`/orders/${order.id}`)}>Cancel</SecondaryButton>
@@ -120,7 +139,7 @@ export default function OrderEditFormPage() {
 
       <div className="mt-8 border-t border-gray-200 pt-6 dark:border-gray-800">
         <h2 className="mb-3 text-lg font-semibold">Items</h2>
-        <OrderItemsManager orderId={order.id} />
+        <OrderItemsManager orderId={order.id} locked={isTerminal} />
       </div>
     </FormPage>
   )
