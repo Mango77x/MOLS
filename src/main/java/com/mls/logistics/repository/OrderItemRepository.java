@@ -39,4 +39,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      * Finds a page of items belonging to a specific order.
      */
     Page<OrderItem> findByOrderId(Long orderId, Pageable pageable);
+
+    /** Used by {@code ResourceService.deleteResource} to reject deleting a resource still referenced by order items. */
+    boolean existsByResourceId(Long resourceId);
 }

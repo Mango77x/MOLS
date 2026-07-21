@@ -27,8 +27,16 @@ public class Warehouse {
     /** Geographic longitude in decimal degrees (optional, for the logistics map) */
     private Double longitude;
 
-    /** Stock items in this warehouse */
-    @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL)
+    /**
+     * Stock items in this warehouse.
+     *
+     * No cascade: a Stock row with movement history is audit-relevant and
+     * must go through {@code StockService.deleteStock}'s own guard, not be
+     * silently removed just because its warehouse is deleted. {@code
+     * WarehouseService.deleteWarehouse} rejects deletion while any stock,
+     * order, or shipment still references this warehouse.
+     */
+    @OneToMany(mappedBy = "warehouse")
     private List<Stock> stockItems;
 
     // Getters & Setters

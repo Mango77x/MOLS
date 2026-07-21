@@ -48,6 +48,12 @@ public interface StockRepository
 
     long countByQuantityLessThan(int threshold);
 
+    /** Used by {@code WarehouseService.deleteWarehouse} to reject deleting a warehouse that still has stock. */
+    boolean existsByWarehouseId(Long warehouseId);
+
+    /** Used by {@code ResourceService.deleteResource} to reject deleting a resource that still has stock. */
+    boolean existsByResourceId(Long resourceId);
+
     /** Projection row for {@link #sumQuantityByWarehouse}. */
     interface WarehouseQuantity {
         String getWarehouseName();
