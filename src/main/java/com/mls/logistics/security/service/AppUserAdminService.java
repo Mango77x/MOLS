@@ -11,8 +11,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -110,10 +108,10 @@ public class AppUserAdminService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
 
         user.setPassword(passwordEncoder.encode(rawPassword));
-        // Revokes any token issued before this reset — see JwtAuthFilter.
-        // Truncated to seconds to match a JWT's `iat` precision; see
-        // AppUser's constructor for why that matters.
-        user.setPasswordChangedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
+        // Revokes any token issued before this reset — see JwtAuthFilter
+        // and AppUser.passwordVersion's javadoc for why this is a counter
+        // bump rather than a timestamp comparison.
+        user.setPasswordVersion(user.getPasswordVersion() + 1);
         return appUserRepository.save(user);
     }
 

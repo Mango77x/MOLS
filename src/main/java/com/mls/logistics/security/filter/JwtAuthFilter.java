@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.time.ZoneOffset;
 
 /**
  * JWT authentication filter.
@@ -118,31 +117,30 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     /**
      * Checks whether a valid-looking token should still be honored: the
-     * account must be enabled, and the token's embedded
-     * {@code pwdChangedAt} claim (set at issuance, see
+     * account must be enabled, and the token's embedded {@code pwdVersion}
+     * claim (set at issuance, see
      * {@link com.mls.logistics.security.service.JwtService#generateToken})
-     * must still match the user's current {@code passwordChangedAt}.
+     * must still match the user's current {@code passwordVersion}.
      *
      * <p>{@code isTokenValid} only checks username + expiration, so without
      * this a disabled user or a just-reset password wouldn't actually revoke
      * a token already in the wild — it would keep working until it expired
      * naturally (up to {@code security.jwt.expiration-ms}, 24h by default).
-     * This is an equality check against a claim captured at issuance, not a
-     * timestamp comparison — an earlier before/after version of this check
-     * broke under fast sequential requests (e.g. login immediately followed
-     * by a reset) because a JWT's {@code iat} is whole-seconds precision and
-     * two events in the same wall-clock second can't be reliably ordered
-     * once that precision is lost, but "does the claim still match the
-     * current DB value" has no such ambiguity.</p>
+     * This compares an incrementing integer claim, not a timestamp — two
+     * earlier versions of this check (before/after comparison, then
+     * equality on a truncated-to-seconds timestamp) both broke under fast
+     * sequential requests (e.g. login immediately followed by a reset in a
+     * test/script), because two distinct password-set events landing in the
+     * same wall-clock second produce an identical value once a timestamp
+     * loses precision — see {@code AppUser.passwordVersion}'s javadoc.</p>
      */
     private boolean isNotRevoked(String jwt, UserDetails userDetails) {
         if (!userDetails.isEnabled()) {
             return false;
         }
-        if (userDetails instanceof AppUser appUser && appUser.getPasswordChangedAt() != null) {
-            Long tokenPasswordChangedAt = jwtService.extractPasswordChangedAt(jwt);
-            long currentPasswordChangedAt = appUser.getPasswordChangedAt().toEpochSecond(ZoneOffset.UTC);
-            if (tokenPasswordChangedAt == null || tokenPasswordChangedAt != currentPasswordChangedAt) {
+        if (userDetails instanceof AppUser appUser) {
+            Integer tokenPasswordVersion = jwtService.extractPasswordVersion(jwt);
+            if (tokenPasswordVersion == null || tokenPasswordVersion != appUser.getPasswordVersion()) {
                 return false;
             }
         }

@@ -5,8 +5,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.List;
 
@@ -48,13 +46,21 @@ public class AppUser implements UserDetails {
     private Boolean enabled;
 
     /**
-     * When this user's password was last set. Used by JwtAuthFilter to
-     * reject a token issued before the most recent password change/reset,
-     * so a reset actually revokes any token issued under the old password
-     * instead of leaving it valid until it naturally expires.
+     * Incremented every time this user's password is set (creation counts as
+     * the first "set"). A JWT embeds the version current at login; JwtAuthFilter
+     * rejects a token whose embedded version no longer matches the current
+     * one, so a reset actually revokes any token issued under the old
+     * password instead of leaving it valid until it naturally expires.
+     *
+     * <p>Deliberately an incrementing counter rather than a "changed at"
+     * timestamp: a timestamp can only be compared at whatever precision it's
+     * stored/embedded at (a JWT's {@code iat} is whole-seconds), so two
+     * distinct password-set events landing in the same second would produce
+     * indistinguishable values — an integer bump can never collide like
+     * that, however fast the events happen.</p>
      */
     @Column(nullable = false)
-    private LocalDateTime passwordChangedAt;
+    private int passwordVersion;
 
     public AppUser() {
     }
@@ -64,12 +70,7 @@ public class AppUser implements UserDetails {
         this.password = password;
         this.role = role;
         this.enabled = Boolean.TRUE;
-        // Truncated to seconds to match a JWT's `iat` claim precision (JWT
-        // NumericDate is whole seconds) — otherwise a token issued in the
-        // same second as this timestamp, but genuinely after it, would look
-        // like it predates it once `iat`'s sub-second part is lost, and
-        // JwtAuthFilter would wrongly treat a brand-new token as revoked.
-        this.passwordChangedAt = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        this.passwordVersion = 0;
     }
 
     // UserDetails implementation
@@ -143,11 +144,11 @@ public class AppUser implements UserDetails {
         this.enabled = enabled;
     }
 
-    public LocalDateTime getPasswordChangedAt() {
-        return passwordChangedAt;
+    public int getPasswordVersion() {
+        return passwordVersion;
     }
 
-    public void setPasswordChangedAt(LocalDateTime passwordChangedAt) {
-        this.passwordChangedAt = passwordChangedAt;
+    public void setPasswordVersion(int passwordVersion) {
+        this.passwordVersion = passwordVersion;
     }
 }
