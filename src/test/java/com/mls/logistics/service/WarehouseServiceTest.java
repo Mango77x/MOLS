@@ -2,7 +2,11 @@ package com.mls.logistics.service;
 
 import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.CreateWarehouseRequest;
+import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
+import com.mls.logistics.repository.OrderRepository;
+import com.mls.logistics.repository.ShipmentRepository;
+import com.mls.logistics.repository.StockRepository;
 import com.mls.logistics.repository.WarehouseRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +35,15 @@ class WarehouseServiceTest {
 
     @Mock
     private WarehouseRepository warehouseRepository;
+
+    @Mock
+    private StockRepository stockRepository;
+
+    @Mock
+    private OrderRepository orderRepository;
+
+    @Mock
+    private ShipmentRepository shipmentRepository;
 
     @InjectMocks
     private WarehouseService warehouseService;
@@ -127,6 +140,48 @@ class WarehouseServiceTest {
                 .hasMessageContaining("Warehouse not found with id: '999'");
 
         verify(warehouseRepository, times(1)).existsById(999L);
+        verify(warehouseRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void deleteWarehouse_WithExistingStock_ShouldThrowException() {
+        // Given
+        when(warehouseRepository.existsById(1L)).thenReturn(true);
+        when(stockRepository.existsByWarehouseId(1L)).thenReturn(true);
+
+        // When & Then
+        assertThatThrownBy(() -> warehouseService.deleteWarehouse(1L))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("existing stock");
+
+        verify(warehouseRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void deleteWarehouse_WithExistingOrders_ShouldThrowException() {
+        // Given
+        when(warehouseRepository.existsById(1L)).thenReturn(true);
+        when(orderRepository.existsByWarehouseId(1L)).thenReturn(true);
+
+        // When & Then
+        assertThatThrownBy(() -> warehouseService.deleteWarehouse(1L))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("existing orders");
+
+        verify(warehouseRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void deleteWarehouse_WithExistingShipments_ShouldThrowException() {
+        // Given
+        when(warehouseRepository.existsById(1L)).thenReturn(true);
+        when(shipmentRepository.existsByWarehouseId(1L)).thenReturn(true);
+
+        // When & Then
+        assertThatThrownBy(() -> warehouseService.deleteWarehouse(1L))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("existing shipments");
+
         verify(warehouseRepository, never()).deleteById(any());
     }
 }

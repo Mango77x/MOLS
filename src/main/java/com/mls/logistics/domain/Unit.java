@@ -27,8 +27,16 @@ public class Unit {
     /** Geographic longitude in decimal degrees (optional, for the logistics map) */
     private Double longitude;
 
-    /** Orders created by this unit */
-    @OneToMany(mappedBy = "unit", cascade = CascadeType.ALL)
+    /**
+     * Orders created by this unit.
+     *
+     * No cascade: an Order has its own protected lifecycle (a COMPLETED
+     * order carries audit-relevant stock movements) and must go through
+     * {@code OrderService.deleteOrder}'s own guard, not be silently removed
+     * just because its unit is deleted. {@code UnitService.deleteUnit}
+     * rejects deletion while any order still references this unit.
+     */
+    @OneToMany(mappedBy = "unit")
     private List<Order> orders;
 
     // Getters & Setters

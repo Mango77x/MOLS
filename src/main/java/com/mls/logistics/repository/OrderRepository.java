@@ -20,4 +20,10 @@ public interface OrderRepository
     List<Order> findByStatusInAndDateCreatedBefore(Collection<OrderStatus> statuses, LocalDate cutoffDate);
 
     List<Order> findByStatusNotIn(Collection<OrderStatus> statuses, Sort sort);
+
+    /** Used by {@code UnitService.deleteUnit} to reject deleting a unit that still has orders. */
+    boolean existsByUnitId(Long unitId);
+
+    /** Used by {@code WarehouseService.deleteWarehouse} to reject deleting a warehouse that's still an order origin. */
+    boolean existsByWarehouseId(Long warehouseId);
 }

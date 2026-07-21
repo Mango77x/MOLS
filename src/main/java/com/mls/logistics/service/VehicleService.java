@@ -4,7 +4,9 @@ import com.mls.logistics.domain.Vehicle;
 import com.mls.logistics.domain.VehicleStatus;
 import com.mls.logistics.dto.request.CreateVehicleRequest;
 import com.mls.logistics.dto.request.UpdateVehicleRequest;
+import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
+import com.mls.logistics.repository.ShipmentRepository;
 import com.mls.logistics.repository.VehicleRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,13 +30,15 @@ import java.util.Optional;
 public class VehicleService {
 
     private final VehicleRepository vehicleRepository;
+    private final ShipmentRepository shipmentRepository;
 
     /**
      * Constructor-based dependency injection.
      * This is the recommended approach in Spring.
      */
-    public VehicleService(VehicleRepository vehicleRepository) {
+    public VehicleService(VehicleRepository vehicleRepository, ShipmentRepository shipmentRepository) {
         this.vehicleRepository = vehicleRepository;
+        this.shipmentRepository = shipmentRepository;
     }
 
     /**
@@ -143,11 +147,20 @@ public class VehicleService {
      *
      * @param id vehicle identifier
      * @throws ResourceNotFoundException if vehicle doesn't exist
+     * @throws InvalidRequestException if the vehicle still has shipments referencing it
      */
     @Transactional
     public void deleteVehicle(Long id) {
         if (!vehicleRepository.existsById(id)) {
             throw new ResourceNotFoundException("Vehicle", "id", id);
+        }
+        // Shipments reference their vehicle via a required FK; deleting a
+        // vehicle that still has shipments (of any status) would either
+        // violate that constraint or, if cascaded, silently destroy
+        // audit-relevant shipment history.
+        if (shipmentRepository.existsByVehicleId(id)) {
+            throw new InvalidRequestException(
+                "Cannot delete vehicle with existing shipments. Vehicle id: " + id);
         }
         vehicleRepository.deleteById(id);
     }

@@ -44,8 +44,15 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderItem> items;
 
-    /** Shipments associated to this order */
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    /**
+     * Shipments associated to this order.
+     *
+     * No cascade: a Shipment has its own protected lifecycle (a DELIVERED
+     * shipment carries audit-relevant stock movements) and must go through
+     * {@code ShipmentService.deleteShipment}'s own guard, not be silently
+     * removed just because its parent order is deleted.
+     */
+    @OneToMany(mappedBy = "order")
     private List<Shipment> shipments;
 
     // Getters & Setters

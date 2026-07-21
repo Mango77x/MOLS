@@ -202,6 +202,9 @@ Implementation notes:
   - `V6` — `shipment_items` (shipment ↔ order item + quantity junction table) and
     `PARTIALLY_SHIPPED` added to `orders.status`'s CHECK constraint, backing per-shipment
     partial fulfillment (see "Partial fulfillment" above)
+  - `V7` — backfills `shipment_items` for shipments that predate V6 (which didn't
+    populate it for existing rows), fixing `deliveredQuantity` reading 0 on old
+    delivered shipments even though their stock was genuinely deducted at the time
 - **SQL Logging**: off by default (`SPRING_JPA_SHOW_SQL=true` to enable locally)
 - **Port**: Application runs on `8080`
 - **OpenAPI/Swagger**:
@@ -360,6 +363,12 @@ These rules are **enforced in services**, not controllers:
    Deleting stock with movement history, delivered shipments, or completed
    orders is rejected to keep the trail coherent. Each movement records the
    acting user (`created_by`) via JPA auditing.
+   - This is enforced by direct delete guards on `Order`/`Shipment`/`Stock`
+     themselves, **and** by equivalent guards on `Unit`/`Vehicle`/`Warehouse`/
+     `Resource` — none of the parent-side `@OneToMany` relations cascade a
+     delete into their children anymore, so removing e.g. a warehouse that
+     still has stock, orders, or shipments is rejected rather than silently
+     cascading through them and orphaning `Movement` rows (Sprint 8).
 6. Statuses follow explicit state machines (`OrderStatus`, `ShipmentStatus`):
    - Orders: `CREATED → VALIDATED → PARTIALLY_SHIPPED → COMPLETED`, or `→ CANCELLED` from
      `CREATED`/`VALIDATED` only (terminal states are final; `CREATED → COMPLETED` and
@@ -630,4 +639,7 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 
 - **Maintainer**: See `pom.xml` for project details
 
-**Last updated**: 2026-07-16 (Sprint 7: partial shipment fulfillment — `shipment_items`, `PARTIALLY_SHIPPED` order status)
+**Last updated**: 2026-07-21 (Sprint 8: closed the cascade-delete gap around
+`Order`/`Unit`/`Vehicle`/`Warehouse`/`Resource`, and backfilled `shipment_items`
+for pre-Sprint-7 shipments — see `docs/DEVELOPMENT_PLAN.md` for the full
+technical-debt and product-completion backlog this sprint kicks off)

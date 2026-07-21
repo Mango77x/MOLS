@@ -15,11 +15,11 @@ Same workflow as prior sprints: one `sprint-N` branch per sprint, opened as a PR
 
 ### Sprint 8 — Data integrity (critical)
 
-- [ ] Remove `CascadeType.REMOVE` from `Order`/`Unit`/`Vehicle`/`Warehouse`/`Resource` `@OneToMany` relations (was bypassing the delete guards already enforced on `Order`/`Shipment` directly, letting a cascade delete remove `COMPLETED` orders / `DELIVERED` shipments and orphan `Movement` audit rows).
-- [ ] Add explicit delete guards to `UnitService`, `VehicleService`, `WarehouseService`, `ResourceService`, mirroring `OrderService.deleteOrder`'s pattern.
-- [ ] Extend `OrderService.deleteOrder` to also reject `PARTIALLY_SHIPPED` orders that have a `DELIVERED` shipment (today only `COMPLETED` is blocked).
-- [ ] `V7__backfill_shipment_items.sql` — backfill `shipment_items` for shipments delivered before V6, fixing `deliveredQuantity` showing 0 on old completed orders.
-- [ ] Unit + integration tests for both fixes, including a migration-compatibility test.
+- [x] Remove `CascadeType.REMOVE` from `Order.shipments`/`Unit.orders`/`Vehicle.shipments`/`Warehouse.stockItems`/`Resource.stocks` (was bypassing the delete guards already enforced on `Order`/`Shipment`/`Stock` directly, letting a cascade delete remove `COMPLETED` orders / `DELIVERED` shipments / audited stock and orphan `Movement` rows). `Order.items` and `Shipment.items` keep their cascade — those are genuinely owned line items, already guarded before the cascade fires.
+- [x] Add explicit delete guards to `UnitService`, `VehicleService`, `WarehouseService`, `ResourceService`, mirroring `OrderService.deleteOrder`'s pattern (new `existsBy*` queries on `OrderRepository`/`ShipmentRepository`/`StockRepository`/`OrderItemRepository`).
+- [x] Extend `OrderService.deleteOrder`: reject any order with a `DELIVERED` shipment (not just `COMPLETED` orders), and reject any order that still has *any* shipment at all, since shipments no longer cascade-delete with their order.
+- [x] `V7__backfill_shipment_items.sql` — backfill `shipment_items` for shipments delivered before V6, fixing `deliveredQuantity` showing 0 on old completed orders. Verified live: orders #1-#3 now show `deliveredQuantity` matching `quantity` instead of 0.
+- [x] Unit tests for all five delete guards. No automated migration-compatibility test was added for V7 — a fresh Testcontainers database runs V1-V7 in sequence with no historical data for V7 to backfill, so the scenario doesn't naturally arise in that flow; the fix was instead verified directly against the real, pre-existing seeded database: `deliveredQuantity` for orders #1-#3 went from 0 to matching their full `quantity` after the migration ran, and all five new delete guards were confirmed live (clean 400s, nothing actually deleted).
 
 ### Sprint 9 — Backend correctness & security
 
@@ -62,4 +62,4 @@ Same workflow as prior sprints: one `sprint-N` branch per sprint, opened as a PR
 
 ---
 
-**Last updated**: 2026-07-21 (Sprint 8 kickoff)
+**Last updated**: 2026-07-21 (Sprint 8 complete)
