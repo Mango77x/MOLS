@@ -69,33 +69,58 @@ const STATUS_COLORS: Record<string, string> = {
 }
 const FALLBACK_COLORS = [ARMY_GREEN, STATUS_WARN, STATUS_CRITICAL, STATUS_OK]
 
+function DonutLegend({ series }: { series: ChartSeries }) {
+  const rows = toRows(series)
+  return (
+    <ul className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-gray-600 dark:text-gray-300">
+      {rows.map((row, index) => (
+        <li key={row.label} className="flex items-center gap-1.5">
+          <span
+            aria-hidden="true"
+            className="h-2.5 w-2.5 shrink-0 rounded-full"
+            style={{
+              backgroundColor: STATUS_COLORS[row.label] ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length],
+            }}
+          />
+          <span>
+            {row.label} ({row.value})
+          </span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 function DonutChart({ series }: { series: ChartSeries }) {
   if (!hasData(series)) return <EmptyState />
   const rows = toRows(series)
   const total = rows.reduce((sum, row) => sum + row.value, 0)
   return (
-    <ResponsiveContainer width="100%" height={224}>
-      <PieChart>
-        <Pie
-          data={rows}
-          dataKey="value"
-          nameKey="label"
-          innerRadius={50}
-          outerRadius={80}
-          paddingAngle={2}
-          isAnimationActive={false}
-        >
-          {rows.map((row, index) => (
-            <Cell
-              key={row.label}
-              fill={STATUS_COLORS[row.label] ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length]}
-            />
-          ))}
-          <Label value={`${total} total`} position="center" className="fill-gray-500 text-xs dark:fill-gray-400" />
-        </Pie>
-        <Tooltip />
-      </PieChart>
-    </ResponsiveContainer>
+    <div>
+      <ResponsiveContainer width="100%" height={224}>
+        <PieChart>
+          <Pie
+            data={rows}
+            dataKey="value"
+            nameKey="label"
+            innerRadius={50}
+            outerRadius={80}
+            paddingAngle={2}
+            isAnimationActive={false}
+          >
+            {rows.map((row, index) => (
+              <Cell
+                key={row.label}
+                fill={STATUS_COLORS[row.label] ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length]}
+              />
+            ))}
+            <Label value={`${total} total`} position="center" className="fill-gray-500 text-xs dark:fill-gray-400" />
+          </Pie>
+          <Tooltip />
+        </PieChart>
+      </ResponsiveContainer>
+      <DonutLegend series={series} />
+    </div>
   )
 }
 
