@@ -25,8 +25,14 @@ public class Resource {
     /** Criticality level (e.g., LOW, MEDIUM, HIGH) */
     private String criticality;
 
-    /** Stocks where this resource exists */
-    @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL)
+    /**
+     * Stocks where this resource exists.
+     *
+     * No cascade: see {@code Warehouse.stockItems} for why. {@code
+     * ResourceService.deleteResource} rejects deletion while any stock or
+     * order item still references this resource.
+     */
+    @OneToMany(mappedBy = "resource")
     private List<Stock> stocks;
 
     // Getters & Setters

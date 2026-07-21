@@ -16,4 +16,13 @@ public interface ShipmentRepository
     List<Shipment> findByOrderId(Long orderId, Sort sort);
 
     long countByStatus(ShipmentStatus status);
+
+    /** Used by {@code OrderService.deleteOrder} to check for a DELIVERED shipment on a PARTIALLY_SHIPPED order. */
+    boolean existsByOrderIdAndStatus(Long orderId, ShipmentStatus status);
+
+    /** Used by {@code VehicleService.deleteVehicle} to reject deleting a vehicle that still has shipments. */
+    boolean existsByVehicleId(Long vehicleId);
+
+    /** Used by {@code WarehouseService.deleteWarehouse} to reject deleting a warehouse that's still a shipment origin. */
+    boolean existsByWarehouseId(Long warehouseId);
 }

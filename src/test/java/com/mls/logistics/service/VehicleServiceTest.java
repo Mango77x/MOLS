@@ -3,7 +3,9 @@ package com.mls.logistics.service;
 import com.mls.logistics.domain.Vehicle;
 import com.mls.logistics.domain.VehicleStatus;
 import com.mls.logistics.dto.request.CreateVehicleRequest;
+import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
+import com.mls.logistics.repository.ShipmentRepository;
 import com.mls.logistics.repository.VehicleRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +34,9 @@ class VehicleServiceTest {
 
     @Mock
     private VehicleRepository vehicleRepository;
+
+    @Mock
+    private ShipmentRepository shipmentRepository;
 
     @InjectMocks
     private VehicleService vehicleService;
@@ -129,6 +134,20 @@ class VehicleServiceTest {
                 .hasMessageContaining("Vehicle not found with id: '999'");
 
         verify(vehicleRepository, times(1)).existsById(999L);
+        verify(vehicleRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void deleteVehicle_WithExistingShipments_ShouldThrowException() {
+        // Given
+        when(vehicleRepository.existsById(1L)).thenReturn(true);
+        when(shipmentRepository.existsByVehicleId(1L)).thenReturn(true);
+
+        // When & Then
+        assertThatThrownBy(() -> vehicleService.deleteVehicle(1L))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("existing shipments");
+
         verify(vehicleRepository, never()).deleteById(any());
     }
 }

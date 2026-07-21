@@ -2,6 +2,7 @@ package com.mls.logistics.service;
 
 import com.mls.logistics.domain.Order;
 import com.mls.logistics.domain.OrderStatus;
+import com.mls.logistics.domain.ShipmentStatus;
 import com.mls.logistics.domain.Unit;
 import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.CreateOrderRequest;
@@ -10,6 +11,7 @@ import com.mls.logistics.dto.request.UpdateOrderRequest;
 import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.OrderRepository;
+import com.mls.logistics.repository.ShipmentRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -49,14 +51,19 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final OrderItemService orderItemService;
+    private final ShipmentRepository shipmentRepository;
 
     /**
      * Constructor-based dependency injection.
      * This is the recommended approach in Spring.
      */
-    public OrderService(OrderRepository orderRepository, OrderItemService orderItemService) {
+    public OrderService(
+            OrderRepository orderRepository,
+            OrderItemService orderItemService,
+            ShipmentRepository shipmentRepository) {
         this.orderRepository = orderRepository;
         this.orderItemService = orderItemService;
+        this.shipmentRepository = shipmentRepository;
     }
 
     /**
@@ -208,7 +215,9 @@ public class OrderService {
      *
      * @param id order identifier
      * @throws ResourceNotFoundException if order doesn't exist
-     * @throws InvalidRequestException if the order is COMPLETED (its stock movements are part of the audit trail)
+     * @throws InvalidRequestException if the order is COMPLETED, or still has any shipments
+     *         (a DELIVERED one has stock movements that are part of the audit trail; any other
+     *         status must still be deleted/reassigned first — see {@link ShipmentService#deleteShipment})
      */
     @Transactional
     public void deleteOrder(Long id) {
@@ -216,17 +225,30 @@ public class OrderService {
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "id", id));
 
-        // A completed order was fulfilled: stock was deducted and movements were
-        // recorded against it. Deleting it would orphan that audit history.
+        // A completed order was fully fulfilled: stock was deducted and movements
+        // were recorded against it. Deleting it would orphan that audit history.
         if (order.getStatus() == OrderStatus.COMPLETED) {
             throw new InvalidRequestException(
                 "Cannot delete a COMPLETED order: its stock movements are part of the audit trail. Order id: " + id);
         }
+        // Shipments no longer cascade-delete with their order (see Order.shipments):
+        // a DELIVERED one is audit-relevant, and any other status still holds a
+        // required FK to this order, so either way the order can't be deleted out
+        // from under it. Delete the shipment(s) via ShipmentService first.
+        if (shipmentRepository.existsByOrderIdAndStatus(id, ShipmentStatus.DELIVERED)) {
+            throw new InvalidRequestException(
+                "Cannot delete an order with a DELIVERED shipment: "
+                    + "its stock movements are part of the audit trail. Order id: " + id);
+        }
+        if (!shipmentRepository.findByOrderId(id, Sort.unsorted()).isEmpty()) {
+            throw new InvalidRequestException(
+                "Cannot delete an order with existing shipments. Delete its shipments first. Order id: " + id);
+        }
 
         // Release any still-outstanding item reservations before the cascade
-        // delete removes the rows — deleteById cascades via JPA, bypassing
-        // OrderItemService, so this is the only chance to do it. A no-op for
-        // orders that were already CANCELLED (already released then).
+        // delete removes the order_items rows — deleteById cascades via JPA,
+        // bypassing OrderItemService, so this is the only chance to do it. A
+        // no-op for orders that were already CANCELLED (already released then).
         orderItemService.releaseReservationsForOrder(id);
 
         orderRepository.deleteById(id);

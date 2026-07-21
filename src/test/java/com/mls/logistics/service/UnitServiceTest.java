@@ -2,7 +2,9 @@ package com.mls.logistics.service;
 
 import com.mls.logistics.domain.Unit;
 import com.mls.logistics.dto.request.CreateUnitRequest;
+import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
+import com.mls.logistics.repository.OrderRepository;
 import com.mls.logistics.repository.UnitRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +33,9 @@ class UnitServiceTest {
 
     @Mock
     private UnitRepository unitRepository;
+
+    @Mock
+    private OrderRepository orderRepository;
 
     @InjectMocks
     private UnitService unitService;
@@ -127,6 +132,20 @@ class UnitServiceTest {
                 .hasMessageContaining("Unit not found with id: '999'");
 
         verify(unitRepository, times(1)).existsById(999L);
+        verify(unitRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void deleteUnit_WithExistingOrders_ShouldThrowException() {
+        // Given
+        when(unitRepository.existsById(1L)).thenReturn(true);
+        when(orderRepository.existsByUnitId(1L)).thenReturn(true);
+
+        // When & Then
+        assertThatThrownBy(() -> unitService.deleteUnit(1L))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("existing orders");
+
         verify(unitRepository, never()).deleteById(any());
     }
 }

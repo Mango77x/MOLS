@@ -3,8 +3,11 @@ package com.mls.logistics.service;
 import com.mls.logistics.domain.Resource;
 import com.mls.logistics.dto.request.CreateResourceRequest;
 import com.mls.logistics.dto.request.UpdateResourceRequest;
+import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
+import com.mls.logistics.repository.OrderItemRepository;
 import com.mls.logistics.repository.ResourceRepository;
+import com.mls.logistics.repository.StockRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -27,13 +30,20 @@ import java.util.Optional;
 public class ResourceService {
 
     private final ResourceRepository resourceRepository;
+    private final StockRepository stockRepository;
+    private final OrderItemRepository orderItemRepository;
 
     /**
      * Constructor-based dependency injection.
      * This is the recommended approach in Spring.
      */
-    public ResourceService(ResourceRepository resourceRepository) {
+    public ResourceService(
+            ResourceRepository resourceRepository,
+            StockRepository stockRepository,
+            OrderItemRepository orderItemRepository) {
         this.resourceRepository = resourceRepository;
+        this.stockRepository = stockRepository;
+        this.orderItemRepository = orderItemRepository;
     }
 
     /**
@@ -142,11 +152,22 @@ public class ResourceService {
      *
      * @param id resource identifier
      * @throws ResourceNotFoundException if resource doesn't exist
+     * @throws InvalidRequestException if the resource still has stock or order items referencing it
      */
     @Transactional
     public void deleteResource(Long id) {
         if (!resourceRepository.existsById(id)) {
             throw new ResourceNotFoundException("Resource", "id", id);
+        }
+        if (stockRepository.existsByResourceId(id)) {
+            throw new InvalidRequestException(
+                "Cannot delete resource with existing stock. Resource id: " + id);
+        }
+        // Order items reference their resource via a required FK, independently
+        // of whether stock for it still exists in any warehouse.
+        if (orderItemRepository.existsByResourceId(id)) {
+            throw new InvalidRequestException(
+                "Cannot delete resource referenced by order items. Resource id: " + id);
         }
         resourceRepository.deleteById(id);
     }

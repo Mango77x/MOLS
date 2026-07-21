@@ -26,8 +26,14 @@ public class Vehicle {
     @Column(name = "status", nullable = false)
     private VehicleStatus status;
 
-    /** Shipments assigned to this vehicle */
-    @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL)
+    /**
+     * Shipments assigned to this vehicle.
+     *
+     * No cascade: see {@code Order.shipments} for why. {@code
+     * VehicleService.deleteVehicle} rejects deletion while any shipment
+     * still references this vehicle.
+     */
+    @OneToMany(mappedBy = "vehicle")
     private List<Shipment> shipments;
 
     // Getters & Setters
