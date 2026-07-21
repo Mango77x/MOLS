@@ -37,11 +37,11 @@ Same workflow as prior sprints: one `sprint-N` branch per sprint, opened as a PR
 
 ### Sprint 10 — Frontend bug fixes
 
-- [ ] `SelectField` missing `defaultValue=""` in `ResourceFormPage`, `VehicleFormPage`, `OrderItemsManager` — required-select validation silently never fires.
-- [ ] Lock `OrderEditFormPage`/`OrderItemsManager` controls when the order is `COMPLETED`/`CANCELLED` (mirror `ShipmentFormPage`'s `itemsLocked` pattern).
-- [ ] Shared enum-label helper, replacing hardcoded/duplicated label lists across filter dropdowns and forms.
-- [ ] Catch-all 404 route (today an unmatched path like `/app/stock` renders a blank page).
-- [ ] Custom delete-confirmation modal replacing native `window.confirm()`.
+- [x] `SelectField` missing `defaultValue=""`. `OrderItemsManager` already had it correctly — the real instances were `ResourceFormPage` (criticality), `VehicleFormPage` (type, status), plus two not originally itemized but found by grepping every `<SelectField>` in the app: `StockAdjustFormPage` (operation) and `UserFormPage` (role). The last one was the most consequential — creating a user without touching the Role field silently defaulted to **ADMIN**.
+- [x] `OrderEditFormPage`/`OrderItemsManager` now lock when the order is `COMPLETED`/`CANCELLED`: the status `<select>` is disabled with an explanatory note, and `OrderItemsManager` (extended with a `locked` prop) hides the add form and the per-row Update/Remove actions, leaving a read-only items table — mirrors `ShipmentFormPage`'s `itemsLocked` pattern.
+- [x] Shared enum-label helper (`src/lib/enumLabels.ts`) for `OrderStatus`/`ShipmentStatus`/`VehicleStatus`/`VehicleType`, applied to every filter dropdown, status badge, and form select that was showing raw enum values or hardcoding its own label copy — including the vehicle-picker id inconsistency between the order wizard and shipment edit page.
+- [x] Catch-all 404 route (`NotFoundPage`) plus two redirect aliases for the specific guessable URLs found in the product audit: `/app/stock` → `/app/stocks`, `/app/audit-log` → `/app/movements`.
+- [x] Custom `ConfirmDialog` (styled, `alertdialog` role, closes on Escape/backdrop click) replacing every `window.confirm()` call in the app: row deletes (`RowActions`), order-item removal (`OrderItemsManager`), and the two confirmations on the Users page (role change, enable/disable).
 
 ### Sprint 11 — Frontend test infrastructure
 
@@ -67,4 +67,4 @@ Same workflow as prior sprints: one `sprint-N` branch per sprint, opened as a PR
 
 ---
 
-**Last updated**: 2026-07-21 (Sprint 9 complete)
+**Last updated**: 2026-07-21 (Sprint 10 complete)

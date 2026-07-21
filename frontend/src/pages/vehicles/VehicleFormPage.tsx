@@ -10,6 +10,7 @@ import { useEntity } from '../../api/useEntity'
 import { FormBanner, SecondaryButton, SelectField, SubmitButton, TextField } from '../../components/form/fields'
 import { FormPage } from '../../components/form/FormPage'
 import { positiveNumber } from '../../components/form/zodHelpers'
+import { VEHICLE_STATUS_LABELS, VEHICLE_TYPE_LABELS } from '../../lib/enumLabels'
 
 const schema = z.object({
   type: z.enum(['LAND', 'SEA', 'AIR'], { message: 'Select a type' }),
@@ -74,13 +75,21 @@ export default function VehicleFormPage() {
     <FormPage title={isEdit ? 'Edit vehicle' : 'New vehicle'} backTo="/vehicles">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <FormBanner message={banner} />
-        <SelectField label="Type" id="type" registration={register('type')} error={errors.type?.message}>
+        <SelectField
+          label="Type"
+          id="type"
+          registration={register('type')}
+          error={errors.type?.message}
+          defaultValue=""
+        >
           <option value="" disabled>
             Select a type
           </option>
-          <option value="LAND">Land</option>
-          <option value="SEA">Sea</option>
-          <option value="AIR">Air</option>
+          {Object.entries(VEHICLE_TYPE_LABELS).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
         </SelectField>
         <TextField
           label="Capacity (kg)"
@@ -96,13 +105,16 @@ export default function VehicleFormPage() {
           id="status"
           registration={register('status')}
           error={errors.status?.message}
+          defaultValue=""
         >
           <option value="" disabled>
             Select a status
           </option>
-          <option value="AVAILABLE">Available</option>
-          <option value="IN_USE">In use</option>
-          <option value="IN_REPAIR">In repair</option>
+          {Object.entries(VEHICLE_STATUS_LABELS).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
         </SelectField>
         <div className="flex gap-3">
           <SubmitButton submitting={isSubmitting}>{isSubmitting ? 'Saving…' : 'Save'}</SubmitButton>

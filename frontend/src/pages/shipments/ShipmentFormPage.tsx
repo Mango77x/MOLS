@@ -12,6 +12,7 @@ import type { PageResponse } from '../../components/table/useServerTable'
 import { FormBanner, SecondaryButton, SelectField, SubmitButton } from '../../components/form/fields'
 import { FormPage } from '../../components/form/FormPage'
 import { positiveId } from '../../components/form/zodHelpers'
+import { enumLabel, SHIPMENT_STATUS_LABELS, VEHICLE_STATUS_LABELS, VEHICLE_TYPE_LABELS } from '../../lib/enumLabels'
 
 const schema = z.object({
   orderId: positiveId('Select an order'),
@@ -197,7 +198,7 @@ export default function ShipmentFormPage() {
           </option>
           {Object.values(vehicles).map((v) => (
             <option key={v.id} value={v.id}>
-              Vehicle #{v.id} — {v.type} — {v.status}
+              Vehicle #{v.id} — {enumLabel(VEHICLE_TYPE_LABELS, v.type)} — {enumLabel(VEHICLE_STATUS_LABELS, v.status)}
             </option>
           ))}
         </SelectField>
@@ -268,9 +269,11 @@ export default function ShipmentFormPage() {
         )}
 
         <SelectField label="Status" id="status" registration={register('status')} error={errors.status?.message}>
-          <option value="PLANNED">Planned</option>
-          <option value="IN_TRANSIT">In transit</option>
-          <option value="DELIVERED">Delivered</option>
+          {Object.entries(SHIPMENT_STATUS_LABELS).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
         </SelectField>
         {isEdit && (
           <p className="text-xs text-gray-500 dark:text-gray-400">

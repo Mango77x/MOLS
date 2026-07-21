@@ -8,6 +8,7 @@ import Badge, { type BadgeTone } from '../../components/Badge'
 import DataTable from '../../components/table/DataTable'
 import { DeleteAction, RouteActionLink } from '../../components/table/RowActions'
 import { useServerTable } from '../../components/table/useServerTable'
+import { enumLabel, VEHICLE_STATUS_LABELS, VEHICLE_TYPE_LABELS } from '../../lib/enumLabels'
 
 const STATUS_TONE: Record<VehicleStatus, BadgeTone> = {
   AVAILABLE: 'ok',
@@ -30,7 +31,13 @@ export default function VehiclesPage() {
 
   const columns: ColumnDef<VehicleEntity, unknown>[] = [
     { id: 'id', header: 'ID', accessorKey: 'id', enableSorting: true },
-    { id: 'type', header: 'Type', accessorKey: 'type', enableSorting: true },
+    {
+      id: 'type',
+      header: 'Type',
+      accessorKey: 'type',
+      enableSorting: true,
+      cell: ({ getValue }) => enumLabel(VEHICLE_TYPE_LABELS, getValue<string>()),
+    },
     {
       id: 'capacity',
       header: 'Capacity',
@@ -45,7 +52,7 @@ export default function VehiclesPage() {
       enableSorting: true,
       cell: ({ getValue }) => {
         const value = getValue<VehicleStatus>()
-        return <Badge tone={STATUS_TONE[value] ?? 'neutral'}>{value}</Badge>
+        return <Badge tone={STATUS_TONE[value] ?? 'neutral'}>{enumLabel(VEHICLE_STATUS_LABELS, value)}</Badge>
       },
     },
   ]
@@ -89,9 +96,11 @@ export default function VehiclesPage() {
           className="rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
         >
           <option value="">All statuses</option>
-          <option value="AVAILABLE">AVAILABLE</option>
-          <option value="IN_USE">IN_USE</option>
-          <option value="IN_REPAIR">IN_REPAIR</option>
+          {Object.entries(VEHICLE_STATUS_LABELS).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
         </select>
       </div>
 
