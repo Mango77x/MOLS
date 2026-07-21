@@ -10,6 +10,7 @@ import { useLookup } from '../../api/lookups'
 import { useEntity } from '../../api/useEntity'
 import { FormBanner, SecondaryButton, SelectField, SubmitButton, TextField } from '../../components/form/fields'
 import { FormPage } from '../../components/form/FormPage'
+import { useToast } from '../../components/toast/toastContext'
 import { positiveId } from '../../components/form/zodHelpers'
 import { ORDER_STATUS_LABELS } from '../../lib/enumLabels'
 import OrderItemsManager from './OrderItemsManager'
@@ -25,6 +26,7 @@ type FormValues = z.infer<typeof schema>
 export default function OrderEditFormPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const { data: order, loading, notFound } = useEntity<OrderEntity>(`/orders/${id}`)
   const { byId: units } = useLookup<UnitEntity>('/units')
   const { byId: warehouses } = useLookup<WarehouseEntity>('/warehouses')
@@ -52,6 +54,7 @@ export default function OrderEditFormPage() {
     setBanner(null)
     try {
       await api.put(`/orders/${id}`, values)
+      showToast('Order updated.', 'success')
       navigate(`/orders/${id}`)
     } catch (error) {
       setBanner(applyApiError(extractApiError(error), setError))

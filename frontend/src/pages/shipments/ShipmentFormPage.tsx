@@ -11,6 +11,7 @@ import { useEntity } from '../../api/useEntity'
 import type { PageResponse } from '../../components/table/useServerTable'
 import { FormBanner, SecondaryButton, SelectField, SubmitButton } from '../../components/form/fields'
 import { FormPage } from '../../components/form/FormPage'
+import { useToast } from '../../components/toast/toastContext'
 import { positiveId } from '../../components/form/zodHelpers'
 import { enumLabel, SHIPMENT_STATUS_LABELS, VEHICLE_STATUS_LABELS, VEHICLE_TYPE_LABELS } from '../../lib/enumLabels'
 
@@ -27,6 +28,7 @@ export default function ShipmentFormPage() {
   const [searchParams] = useSearchParams()
   const isEdit = id !== undefined
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const { data: shipment, loading, notFound } = useEntity<ShipmentEntity>(isEdit ? `/shipments/${id}` : null)
   const { byId: orders } = useLookup<OrderEntity>('/orders')
   const { byId: vehicles } = useLookup<VehicleEntity>('/vehicles')
@@ -146,9 +148,11 @@ export default function ShipmentFormPage() {
       const payload = itemsLocked ? values : { ...values, items }
       if (isEdit) {
         await api.put(`/shipments/${id}`, payload)
+        showToast('Shipment updated.', 'success')
         navigate(`/shipments/${id}`)
       } else {
         const response = await api.post<ShipmentEntity>('/shipments', payload)
+        showToast('Shipment created.', 'success')
         navigate(`/shipments/${response.data.id}`)
       }
     } catch (error) {

@@ -91,6 +91,11 @@ Tailwind 4) and is served at `/app/**`:
   Stock/Movements/Orders/Shipments, client-side lookups against the
   plain-array reference endpoints to resolve foreign ids to names. Orders
   rows expand inline to their line items (`GET /api/order-items?orderId=`).
+  Below the `sm` breakpoint, `DataTable` swaps its `<table>` for a card list
+  driven by the same `columns`/`data` props (Sprint 12) — one labeled row per
+  column instead of a `<td>` — so the actions column (previously scrolled out
+  of view on narrow viewports) is always visible; every page using `DataTable`
+  picked this up automatically, no call-site changes needed.
   Users (`/app/users`, ADMIN-only) lists accounts, creates users, changes
   roles, resets passwords and enables/disables accounts against
   `/api/users/**` (Sprint 6). First-run setup (`/app/setup`) creates the
@@ -105,7 +110,10 @@ Tailwind 4) and is served at `/app/**`:
   "expected number, received NaN" — see the comment there for why).
   API errors are normalized by `api/errors.ts`: 400 validation failures map
   field-by-field onto the form via `setError`, 404/409 business conflicts
-  (e.g. insufficient stock) surface as a banner.
+  (e.g. insufficient stock) surface as a banner. On success, every form calls
+  `showToast(...)` (Sprint 12, e.g. `'Warehouse created.'`) right before
+  navigating away — previously a create/edit just redirected silently, unlike
+  `RowActions`'s delete flow which already toasted on both outcomes.
   - Warehouse/Resource/Vehicle/Unit/Stock (create + Stock's delta-based
     Adjust) are simple ADMIN-only forms; Warehouse/Unit include a
     click-to-place `LocationPicker` map (`src/components/map/`, reusing the
@@ -518,11 +526,12 @@ sprint if you need to reference the old server-rendered pages.
   fulfillment flow, the role authorization matrix, login lockout, audit
   immutability, and concurrent stock adjustments (optimistic locking).
 - **Frontend tests** (`frontend/src/**/*.test.{ts,tsx}`, Vitest + jsdom +
-  `@testing-library/react`) — 9 files / 35 tests covering pure helpers
+  `@testing-library/react`) — 17 files / 51 tests covering pure helpers
   (enum labels, roles) and DOM/behavior tests (form validation, the
   `ConfirmDialog`/`RowActions` delete flow including a failed-delete-shows-
-  a-toast regression guard, the order-edit terminal-state lock, and app
-  routing/redirects).
+  a-toast regression guard, the order-edit terminal-state lock, app
+  routing/redirects, the Sprint 12 success-toast-on-save for every form page,
+  and `DataTable`'s mobile card view).
 
 ## Implementation Notes
 
@@ -680,11 +689,12 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 
 - **Maintainer**: See `pom.xml` for project details
 
-**Last updated**: 2026-07-21 (Sprint 11: frontend test infrastructure —
-added jsdom + `@testing-library/react` to Vitest and wrote component/
-behavior tests for every Sprint 10 fix (role-select validation, the
-order-edit terminal-state lock, the `ConfirmDialog`/`RowActions` delete
-flow, and app routing/redirects), taking the frontend suite from 3 files
-of pure-function tests to 9 files / 35 tests covering real DOM behavior —
-see `docs/DEVELOPMENT_PLAN.md` for the full technical-debt and
+**Last updated**: 2026-07-21 (Sprint 12: feedback consistency & mobile
+tables — every create/edit form now shows a success toast via the existing
+`ToastProvider`/`useToast` right before navigating away (previously only
+`RowActions`'s delete flow did), and `DataTable` gained a `sm:hidden` card
+list alongside its `<table>` so the actions column no longer scrolls out
+of view on mobile, picked up automatically by every page that uses it.
+Frontend suite grew from 9 files / 35 tests to 17 files / 51 tests — see
+`docs/DEVELOPMENT_PLAN.md` for the full technical-debt and
 product-completion backlog)

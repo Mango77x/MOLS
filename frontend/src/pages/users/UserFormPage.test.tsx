@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi, afterEach } from 'vitest'
 import { api } from '../../api/client'
+import { ToastProvider } from '../../components/toast/ToastProvider'
 import UserFormPage from './UserFormPage'
 
 /**
@@ -21,9 +22,11 @@ describe('UserFormPage — role select', () => {
 
   it('shows "Select a role" as the initial selection, not the first real option', () => {
     render(
-      <MemoryRouter>
-        <UserFormPage />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <UserFormPage />
+        </MemoryRouter>
+      </ToastProvider>,
     )
 
     const roleSelect = screen.getByLabelText('Role') as HTMLSelectElement
@@ -35,9 +38,11 @@ describe('UserFormPage — role select', () => {
     const user = userEvent.setup()
 
     render(
-      <MemoryRouter>
-        <UserFormPage />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <UserFormPage />
+        </MemoryRouter>
+      </ToastProvider>,
     )
 
     await user.type(screen.getByLabelText('Username'), 'newoperator')
@@ -55,9 +60,11 @@ describe('UserFormPage — role select', () => {
     const user = userEvent.setup()
 
     render(
-      <MemoryRouter>
-        <UserFormPage />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter>
+          <UserFormPage />
+        </MemoryRouter>
+      </ToastProvider>,
     )
 
     await user.type(screen.getByLabelText('Username'), 'newoperator')
@@ -72,5 +79,32 @@ describe('UserFormPage — role select', () => {
         role: 'OPERATOR',
       }),
     )
+  })
+})
+
+/** Sprint 12: pins the create success toast (see WarehouseFormPage.test.tsx for context). */
+describe('UserFormPage — success toast', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('shows a toast after creating a user', async () => {
+    vi.spyOn(api, 'post').mockResolvedValue({ data: {} })
+    const user = userEvent.setup()
+
+    render(
+      <ToastProvider>
+        <MemoryRouter>
+          <UserFormPage />
+        </MemoryRouter>
+      </ToastProvider>,
+    )
+
+    await user.type(screen.getByLabelText('Username'), 'newoperator')
+    await user.type(screen.getByLabelText('Password'), 'a-long-enough-password')
+    await user.selectOptions(screen.getByLabelText('Role'), 'OPERATOR')
+    await user.click(screen.getByRole('button', { name: /save/i }))
+
+    expect(await screen.findByText('User created.')).toBeInTheDocument()
   })
 })

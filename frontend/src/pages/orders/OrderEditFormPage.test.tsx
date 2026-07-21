@@ -1,9 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { api } from '../../api/client'
 import type { OrderEntity, OrderItemEntity, OrderStatus, UnitEntity, WarehouseEntity } from '../../api/entities'
 import type { PageResponse } from '../../components/table/useServerTable'
+import { ToastProvider } from '../../components/toast/ToastProvider'
 import OrderEditFormPage from './OrderEditFormPage'
 
 const unit: UnitEntity = { id: 1, name: 'Test Unit', location: 'Barcelona', latitude: null, longitude: null }
@@ -47,11 +49,13 @@ function mockApiFor(status: OrderStatus) {
 
 function renderPage() {
   render(
-    <MemoryRouter initialEntries={['/orders/1/edit']}>
-      <Routes>
-        <Route path="/orders/:id/edit" element={<OrderEditFormPage />} />
-      </Routes>
-    </MemoryRouter>,
+    <ToastProvider>
+      <MemoryRouter initialEntries={['/orders/1/edit']}>
+        <Routes>
+          <Route path="/orders/:id/edit" element={<OrderEditFormPage />} />
+        </Routes>
+      </MemoryRouter>
+    </ToastProvider>,
   )
 }
 
@@ -104,5 +108,25 @@ describe('OrderEditFormPage — terminal-state lock', () => {
     expect(await screen.findByLabelText('Resource')).toBeInTheDocument()
     expect(await screen.findByRole('button', { name: 'Update' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Remove' })).toBeInTheDocument()
+  })
+})
+
+/** Sprint 12: pins the update success toast (see WarehouseFormPage.test.tsx for context). */
+describe('OrderEditFormPage — success toast', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('shows a toast after saving order changes', async () => {
+    mockApiFor('CREATED')
+    const putSpy = vi.spyOn(api, 'put').mockResolvedValue({ data: order('CREATED') })
+    const user = userEvent.setup()
+    renderPage()
+
+    await screen.findByLabelText('Status')
+    await user.click(screen.getByRole('button', { name: /save/i }))
+
+    await waitFor(() => expect(putSpy).toHaveBeenCalled())
+    expect(await screen.findByText('Order updated.')).toBeInTheDocument()
   })
 })
