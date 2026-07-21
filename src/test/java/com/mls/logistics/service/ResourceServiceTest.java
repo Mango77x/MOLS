@@ -2,8 +2,11 @@ package com.mls.logistics.service;
 
 import com.mls.logistics.domain.Resource;
 import com.mls.logistics.dto.request.CreateResourceRequest;
+import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
+import com.mls.logistics.repository.OrderItemRepository;
 import com.mls.logistics.repository.ResourceRepository;
+import com.mls.logistics.repository.StockRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +34,12 @@ class ResourceServiceTest {
 
     @Mock
     private ResourceRepository resourceRepository;
+
+    @Mock
+    private StockRepository stockRepository;
+
+    @Mock
+    private OrderItemRepository orderItemRepository;
 
     @InjectMocks
     private ResourceService resourceService;
@@ -128,6 +137,35 @@ class ResourceServiceTest {
                 .hasMessageContaining("Resource not found with id: '999'");
 
         verify(resourceRepository, times(1)).existsById(999L);
+        verify(resourceRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void deleteResource_WithExistingStock_ShouldThrowException() {
+        // Given
+        when(resourceRepository.existsById(1L)).thenReturn(true);
+        when(stockRepository.existsByResourceId(1L)).thenReturn(true);
+
+        // When & Then
+        assertThatThrownBy(() -> resourceService.deleteResource(1L))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("existing stock");
+
+        verify(resourceRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void deleteResource_WithExistingOrderItems_ShouldThrowException() {
+        // Given
+        when(resourceRepository.existsById(1L)).thenReturn(true);
+        when(stockRepository.existsByResourceId(1L)).thenReturn(false);
+        when(orderItemRepository.existsByResourceId(1L)).thenReturn(true);
+
+        // When & Then
+        assertThatThrownBy(() -> resourceService.deleteResource(1L))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("order items");
+
         verify(resourceRepository, never()).deleteById(any());
     }
 }

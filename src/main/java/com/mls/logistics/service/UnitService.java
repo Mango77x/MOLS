@@ -3,7 +3,9 @@ package com.mls.logistics.service;
 import com.mls.logistics.domain.Unit;
 import com.mls.logistics.dto.request.CreateUnitRequest;
 import com.mls.logistics.dto.request.UpdateUnitRequest;
+import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
+import com.mls.logistics.repository.OrderRepository;
 import com.mls.logistics.repository.UnitRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,13 +29,15 @@ import java.util.Optional;
 public class UnitService {
 
     private final UnitRepository unitRepository;
+    private final OrderRepository orderRepository;
 
     /**
      * Constructor-based dependency injection.
      * This is the recommended approach in Spring.
      */
-    public UnitService(UnitRepository unitRepository) {
+    public UnitService(UnitRepository unitRepository, OrderRepository orderRepository) {
         this.unitRepository = unitRepository;
+        this.orderRepository = orderRepository;
     }
 
     /**
@@ -141,11 +145,20 @@ public class UnitService {
      *
      * @param id unit identifier
      * @throws ResourceNotFoundException if unit doesn't exist
+     * @throws InvalidRequestException if the unit still has orders referencing it
      */
     @Transactional
     public void deleteUnit(Long id) {
         if (!unitRepository.existsById(id)) {
             throw new ResourceNotFoundException("Unit", "id", id);
+        }
+        // Orders reference their unit via a required FK; deleting a unit that
+        // still has orders (of any status) would either violate that
+        // constraint or, if cascaded, silently destroy audit-relevant order
+        // history. Reassign or delete the orders first.
+        if (orderRepository.existsByUnitId(id)) {
+            throw new InvalidRequestException(
+                "Cannot delete unit with existing orders. Unit id: " + id);
         }
         unitRepository.deleteById(id);
     }

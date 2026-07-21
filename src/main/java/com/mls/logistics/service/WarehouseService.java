@@ -2,7 +2,11 @@ package com.mls.logistics.service;
 
 import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.UpdateWarehouseRequest;
+import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
+import com.mls.logistics.repository.OrderRepository;
+import com.mls.logistics.repository.ShipmentRepository;
+import com.mls.logistics.repository.StockRepository;
 import com.mls.logistics.repository.WarehouseRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,13 +31,23 @@ import java.util.Optional;
 public class WarehouseService {
 
     private final WarehouseRepository warehouseRepository;
+    private final StockRepository stockRepository;
+    private final OrderRepository orderRepository;
+    private final ShipmentRepository shipmentRepository;
 
     /**
      * Constructor-based dependency injection.
      * This is the recommended approach in Spring.
      */
-    public WarehouseService(WarehouseRepository warehouseRepository) {
+    public WarehouseService(
+            WarehouseRepository warehouseRepository,
+            StockRepository stockRepository,
+            OrderRepository orderRepository,
+            ShipmentRepository shipmentRepository) {
         this.warehouseRepository = warehouseRepository;
+        this.stockRepository = stockRepository;
+        this.orderRepository = orderRepository;
+        this.shipmentRepository = shipmentRepository;
     }
 
     /**
@@ -141,11 +155,28 @@ public class WarehouseService {
      *
      * @param id warehouse identifier
      * @throws ResourceNotFoundException if warehouse doesn't exist
+     * @throws InvalidRequestException if the warehouse still has stock, orders, or shipments referencing it
      */
     @Transactional
     public void deleteWarehouse(Long id) {
         if (!warehouseRepository.existsById(id)) {
             throw new ResourceNotFoundException("Warehouse", "id", id);
+        }
+        // A warehouse is referenced by stock (audit-relevant once it has
+        // movement history), and, independently, by orders/shipments that
+        // use it as their origin — all three FKs are required (non-null),
+        // so any of them existing must block the delete rather than cascade.
+        if (stockRepository.existsByWarehouseId(id)) {
+            throw new InvalidRequestException(
+                "Cannot delete warehouse with existing stock. Warehouse id: " + id);
+        }
+        if (orderRepository.existsByWarehouseId(id)) {
+            throw new InvalidRequestException(
+                "Cannot delete warehouse with existing orders. Warehouse id: " + id);
+        }
+        if (shipmentRepository.existsByWarehouseId(id)) {
+            throw new InvalidRequestException(
+                "Cannot delete warehouse with existing shipments. Warehouse id: " + id);
         }
         warehouseRepository.deleteById(id);
     }

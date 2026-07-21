@@ -2,6 +2,7 @@ package com.mls.logistics.service;
 
 import com.mls.logistics.domain.Order;
 import com.mls.logistics.domain.OrderStatus;
+import com.mls.logistics.domain.ShipmentStatus;
 import com.mls.logistics.domain.Unit;
 import com.mls.logistics.dto.request.CreateOrderRequest;
 import com.mls.logistics.dto.request.CreateOrderItemRequest;
@@ -9,12 +10,14 @@ import com.mls.logistics.dto.request.UpdateOrderRequest;
 import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.OrderRepository;
+import com.mls.logistics.repository.ShipmentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Sort;
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -41,6 +44,9 @@ class OrderServiceTest {
 
     @Mock
     private OrderItemService orderItemService;
+
+    @Mock
+    private ShipmentRepository shipmentRepository;
 
     @InjectMocks
     private OrderService orderService;
@@ -149,6 +155,8 @@ class OrderServiceTest {
     void deleteOrder_WhenExists_ShouldDeleteSuccessfully() {
         // Given
         when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
+        when(shipmentRepository.existsByOrderIdAndStatus(1L, ShipmentStatus.DELIVERED)).thenReturn(false);
+        when(shipmentRepository.findByOrderId(1L, Sort.unsorted())).thenReturn(List.of());
         doNothing().when(orderRepository).deleteById(1L);
 
         // When
@@ -163,6 +171,8 @@ class OrderServiceTest {
         // Given: deleteById cascades via JPA and bypasses OrderItemService,
         // so deleteOrder must release reservations itself first.
         when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
+        when(shipmentRepository.existsByOrderIdAndStatus(1L, ShipmentStatus.DELIVERED)).thenReturn(false);
+        when(shipmentRepository.findByOrderId(1L, Sort.unsorted())).thenReturn(List.of());
         doNothing().when(orderRepository).deleteById(1L);
 
         // When
@@ -170,6 +180,40 @@ class OrderServiceTest {
 
         // Then
         verify(orderItemService, times(1)).releaseReservationsForOrder(1L);
+    }
+
+    @Test
+    void deleteOrder_WithDeliveredShipment_ShouldThrowException() {
+        // Given: even a non-COMPLETED order can have a DELIVERED shipment
+        // (partial fulfillment) whose stock movements are part of the audit trail
+        testOrder.setStatus(OrderStatus.PARTIALLY_SHIPPED);
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
+        when(shipmentRepository.existsByOrderIdAndStatus(1L, ShipmentStatus.DELIVERED)).thenReturn(true);
+
+        // When & Then
+        assertThatThrownBy(() -> orderService.deleteOrder(1L))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("audit trail");
+
+        verify(orderRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void deleteOrder_WithNonDeliveredShipment_ShouldThrowException() {
+        // Given: shipments no longer cascade-delete with their order (see
+        // Order.shipments) — a PLANNED/IN_TRANSIT shipment still holds a
+        // required FK to this order and must be deleted first.
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
+        when(shipmentRepository.existsByOrderIdAndStatus(1L, ShipmentStatus.DELIVERED)).thenReturn(false);
+        when(shipmentRepository.findByOrderId(1L, Sort.unsorted()))
+                .thenReturn(List.of(new com.mls.logistics.domain.Shipment()));
+
+        // When & Then
+        assertThatThrownBy(() -> orderService.deleteOrder(1L))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("existing shipments");
+
+        verify(orderRepository, never()).deleteById(any());
     }
 
     @Test
