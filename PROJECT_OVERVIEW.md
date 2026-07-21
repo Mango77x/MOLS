@@ -706,6 +706,7 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 Unit forms now show a non-blocking duplicate-name nudge on blur
 (`useDuplicateNameWarning`, no backend constraint added), and `DataTable`'s
 result-count caption no longer says "1 results". Frontend suite grew from
-19 files / 56 tests to 20 files / 71 tests — see `docs/DEVELOPMENT_PLAN.md`
-for the full technical-debt and product-completion backlog, which is now
-fully checked off through Sprint 14)
+19 files / 56 tests to 20 files / 71 tests. This closes out the technical-
+debt and product-completion backlog tracked in `docs/DEVELOPMENT_PLAN.md`
+(Sprints 8-14) — removed now that every item on it is done; see git
+history for that doc's content if it's ever needed again)
