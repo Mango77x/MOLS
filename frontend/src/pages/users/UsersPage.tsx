@@ -5,9 +5,14 @@ import { api } from '../../api/client'
 import type { UserEntity, UserRole } from '../../api/entities'
 import { extractApiError } from '../../api/errors'
 import Badge from '../../components/Badge'
+import ConfirmDialog from '../../components/ConfirmDialog'
 import { FormBanner } from '../../components/form/fields'
 import DataTable from '../../components/table/DataTable'
 import { RouteActionLink } from '../../components/table/RowActions'
+
+type PendingAction =
+  | { type: 'role'; user: UserEntity; role: UserRole }
+  | { type: 'toggle'; user: UserEntity }
 
 export default function UsersPage() {
   const [users, setUsers] = useState<UserEntity[]>([])
@@ -32,24 +37,28 @@ export default function UsersPage() {
     void loadUsers()
   }, [loadUsers])
 
-  async function handleRoleChange(user: UserEntity, role: UserRole) {
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
+
+  function handleRoleChange(user: UserEntity, role: UserRole) {
     if (role === user.role) return
-    if (!window.confirm(`Change ${user.username}'s role to ${role}?`)) return
-    setBanner(null)
-    try {
-      await api.patch(`/users/${user.id}/role`, { role })
-      await loadUsers()
-    } catch (err) {
-      setBanner(extractApiError(err).message)
-    }
+    setPendingAction({ type: 'role', user, role })
   }
 
-  async function handleToggleEnabled(user: UserEntity) {
-    const action = user.enabled ? 'Disable' : 'Enable'
-    if (!window.confirm(`${action} account '${user.username}'?`)) return
+  function handleToggleEnabled(user: UserEntity) {
+    setPendingAction({ type: 'toggle', user })
+  }
+
+  async function confirmPendingAction() {
+    if (!pendingAction) return
+    const action = pendingAction
+    setPendingAction(null)
     setBanner(null)
     try {
-      await api.patch(`/users/${user.id}/enabled`, { enabled: !user.enabled })
+      if (action.type === 'role') {
+        await api.patch(`/users/${action.user.id}/role`, { role: action.role })
+      } else {
+        await api.patch(`/users/${action.user.id}/enabled`, { enabled: !action.user.enabled })
+      }
       await loadUsers()
     } catch (err) {
       setBanner(extractApiError(err).message)
@@ -64,7 +73,11 @@ export default function UsersPage() {
       header: 'Role',
       cell: ({ row }) => (
         <select
-          value={row.original.role}
+          value={
+            pendingAction?.type === 'role' && pendingAction.user.id === row.original.id
+              ? pendingAction.role
+              : row.original.role
+          }
           onChange={(e) => handleRoleChange(row.original, e.target.value as UserRole)}
           className="rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
         >
@@ -129,6 +142,23 @@ export default function UsersPage() {
         totalElements={users.length}
         onPageChange={() => {}}
         onSizeChange={() => {}}
+      />
+
+      <ConfirmDialog
+        open={pendingAction !== null}
+        title={
+          pendingAction?.type === 'role'
+            ? `Change ${pendingAction.user.username}'s role?`
+            : `${pendingAction?.user.enabled ? 'Disable' : 'Enable'} this account?`
+        }
+        message={
+          pendingAction?.type === 'role'
+            ? `Change ${pendingAction.user.username}'s role to ${pendingAction.role}.`
+            : `${pendingAction?.user.enabled ? 'Disable' : 'Enable'} account '${pendingAction?.user.username}'.`
+        }
+        confirmLabel={pendingAction?.type === 'role' ? 'Change role' : pendingAction?.user.enabled ? 'Disable' : 'Enable'}
+        onConfirm={confirmPendingAction}
+        onCancel={() => setPendingAction(null)}
       />
     </div>
   )

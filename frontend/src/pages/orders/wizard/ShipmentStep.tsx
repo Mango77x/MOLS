@@ -5,6 +5,7 @@ import { z } from 'zod'
 import type { VehicleEntity, WarehouseEntity } from '../../../api/entities'
 import { useLookup } from '../../../api/lookups'
 import { SecondaryButton, SelectField, SubmitButton } from '../../../components/form/fields'
+import { enumLabel, SHIPMENT_STATUS_LABELS, VEHICLE_STATUS_LABELS, VEHICLE_TYPE_LABELS } from '../../../lib/enumLabels'
 import { positiveId, type DraftItem, type WizardShipment } from './shared'
 
 const schema = z
@@ -87,7 +88,7 @@ export default function ShipmentStep({
               </option>
               {Object.values(vehicles).map((v) => (
                 <option key={v.id} value={v.id}>
-                  {v.type} — {v.status}
+                  Vehicle #{v.id} — {enumLabel(VEHICLE_TYPE_LABELS, v.type)} — {enumLabel(VEHICLE_STATUS_LABELS, v.status)}
                 </option>
               ))}
             </SelectField>
@@ -99,9 +100,11 @@ export default function ShipmentStep({
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Fixed to the order's warehouse.</p>
             </div>
             <SelectField label="Status" id="shipmentStatus" registration={register('status')} error={undefined}>
-              <option value="PLANNED">Planned</option>
-              <option value="IN_TRANSIT">In transit</option>
-              <option value="DELIVERED">Delivered</option>
+              {Object.entries(SHIPMENT_STATUS_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
             </SelectField>
           </div>
 

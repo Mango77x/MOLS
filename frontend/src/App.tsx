@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import LoginPage from './auth/LoginPage'
 import RequireAuth from './auth/RequireAuth'
 import SetupPage from './auth/SetupPage'
@@ -7,6 +7,7 @@ import { useAuthStore } from './auth/store'
 import AppLayout from './layout/AppLayout'
 import DashboardPage from './pages/DashboardPage'
 import MovementsPage from './pages/movements/MovementsPage'
+import NotFoundPage from './pages/NotFoundPage'
 import OrderDetailPage from './pages/orders/OrderDetailPage'
 import OrderEditFormPage from './pages/orders/OrderEditFormPage'
 import OrderWizardPage from './pages/orders/OrderWizardPage'
@@ -130,6 +131,8 @@ export default function App() {
           />
 
           <Route path="stocks" element={<StocksPage />} />
+          {/* "Stock" is the sidebar label — alias the singular guess to the real (plural) route. */}
+          <Route path="stock" element={<Navigate to="/stocks" replace />} />
           <Route
             path="stocks/new"
             element={
@@ -186,6 +189,8 @@ export default function App() {
           />
 
           <Route path="movements" element={<MovementsPage />} />
+          {/* "Audit log" is the sidebar label — alias the guessable slug to the real route. */}
+          <Route path="audit-log" element={<Navigate to="/movements" replace />} />
 
           <Route
             path="users"
@@ -211,7 +216,14 @@ export default function App() {
               </RequireAuth>
             }
           />
+
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
+
+        {/* Outside the authenticated shell too, so a bad path while logged
+            out (or before the session restore resolves) still gets a real
+            page instead of a blank one. */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   )
