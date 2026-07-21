@@ -1,3 +1,5 @@
+import type { ResourceEntity, StockEntity, WarehouseEntity } from '../../api/entities'
+import { useLookup } from '../../api/lookups'
 import type { RecentMovement } from './types'
 
 function formatDateTime(value: string) {
@@ -13,6 +15,25 @@ const TYPE_BADGE: Record<string, string> = {
 }
 
 export default function RecentActivity({ movements }: { movements: RecentMovement[] }) {
+  const { byId: stocks } = useLookup<StockEntity>('/stocks')
+  const { byId: resources } = useLookup<ResourceEntity>('/resources')
+  const { byId: warehouses } = useLookup<WarehouseEntity>('/warehouses')
+
+  // Same resolution MovementsPage.tsx uses: a movement only carries a
+  // stockId, so its resource/warehouse names come from looking up that
+  // stock row first, then its resource/warehouse.
+  function resourceName(stockId: number) {
+    const stock = stocks[stockId]
+    if (!stock) return `stock #${stockId}`
+    return resources[stock.resourceId]?.name ?? `resource #${stock.resourceId}`
+  }
+
+  function warehouseName(stockId: number) {
+    const stock = stocks[stockId]
+    if (!stock) return '—'
+    return warehouses[stock.warehouseId]?.name ?? `warehouse #${stock.warehouseId}`
+  }
+
   return (
     <div className="rounded-xl bg-white p-4 shadow-sm dark:bg-gray-900">
       <h2 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-200">
@@ -27,7 +48,8 @@ export default function RecentActivity({ movements }: { movements: RecentMovemen
               <tr className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 <th className="pb-2 pr-4 font-medium">Time</th>
                 <th className="pb-2 pr-4 font-medium">Type</th>
-                <th className="pb-2 pr-4 font-medium">Stock</th>
+                <th className="pb-2 pr-4 font-medium">Resource</th>
+                <th className="pb-2 pr-4 font-medium">Warehouse</th>
                 <th className="pb-2 pr-4 font-medium">Quantity</th>
                 <th className="pb-2 font-medium">Reason</th>
               </tr>
@@ -46,7 +68,10 @@ export default function RecentActivity({ movements }: { movements: RecentMovemen
                     </span>
                   </td>
                   <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
-                    #{movement.stockId}
+                    {resourceName(movement.stockId)}
+                  </td>
+                  <td className="py-2 pr-4 text-gray-600 dark:text-gray-300">
+                    {warehouseName(movement.stockId)}
                   </td>
                   <td className="py-2 pr-4 font-medium">{movement.quantity}</td>
                   <td className="py-2 text-gray-500 dark:text-gray-400">

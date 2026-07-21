@@ -77,8 +77,12 @@ Tailwind 4) and is served at `/app/**`:
   matrix), light/dark theme, military-green design tokens in `src/index.css`.
 - **Pages**: the dashboard (fed by `GET /api/dashboard`) ships KPI cards,
   Recharts charts (stock by warehouse, movements by type, orders by status —
-  each with an empty-state fallback), a low-stock/stale-orders alerts panel
-  and a recent-activity table. Its hero section is the logistics map
+  each with an empty-state fallback; the two donut charts also carry a
+  custom text legend, Sprint 13, since a Recharts `<Tooltip>` alone only
+  reveals slice colors on hover), a low-stock/stale-orders alerts panel
+  and a recent-activity table (its Resource/Warehouse columns resolve
+  names client-side via `useLookup`, Sprint 13, mirroring `MovementsPage`'s
+  pattern — previously showed the raw `stockId`). Its hero section is the logistics map
   (`react-leaflet` + OpenStreetMap tiles, fed by `GET /api/map`): warehouse
   pins colored by stock status, unit pins, animated shipment routes, a
   details panel on pin click, and "active shipments only"/"low stock only"
@@ -526,12 +530,13 @@ sprint if you need to reference the old server-rendered pages.
   fulfillment flow, the role authorization matrix, login lockout, audit
   immutability, and concurrent stock adjustments (optimistic locking).
 - **Frontend tests** (`frontend/src/**/*.test.{ts,tsx}`, Vitest + jsdom +
-  `@testing-library/react`) — 17 files / 51 tests covering pure helpers
+  `@testing-library/react`) — 19 files / 56 tests covering pure helpers
   (enum labels, roles) and DOM/behavior tests (form validation, the
   `ConfirmDialog`/`RowActions` delete flow including a failed-delete-shows-
   a-toast regression guard, the order-edit terminal-state lock, app
   routing/redirects, the Sprint 12 success-toast-on-save for every form page,
-  and `DataTable`'s mobile card view).
+  `DataTable`'s mobile card view, and the Sprint 13 dashboard name-resolution/
+  donut-legend fixes).
 
 ## Implementation Notes
 
@@ -689,12 +694,11 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 
 - **Maintainer**: See `pom.xml` for project details
 
-**Last updated**: 2026-07-21 (Sprint 12: feedback consistency & mobile
-tables — every create/edit form now shows a success toast via the existing
-`ToastProvider`/`useToast` right before navigating away (previously only
-`RowActions`'s delete flow did), and `DataTable` gained a `sm:hidden` card
-list alongside its `<table>` so the actions column no longer scrolls out
-of view on mobile, picked up automatically by every page that uses it.
-Frontend suite grew from 9 files / 35 tests to 17 files / 51 tests — see
+**Last updated**: 2026-07-21 (Sprint 13: dashboard polish — `RecentActivity`
+now resolves stock ids to resource/warehouse names client-side (mirroring
+`MovementsPage`'s lookup pattern) instead of showing a raw `#id`, and both
+donut charts (`movements by type`, `orders by status`) gained a custom
+text legend so slice colors are readable without hovering. Frontend suite
+grew from 17 files / 51 tests to 19 files / 56 tests — see
 `docs/DEVELOPMENT_PLAN.md` for the full technical-debt and
 product-completion backlog)
