@@ -5,6 +5,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.List;
 
@@ -45,6 +47,15 @@ public class AppUser implements UserDetails {
     @Column
     private Boolean enabled;
 
+    /**
+     * When this user's password was last set. Used by JwtAuthFilter to
+     * reject a token issued before the most recent password change/reset,
+     * so a reset actually revokes any token issued under the old password
+     * instead of leaving it valid until it naturally expires.
+     */
+    @Column(nullable = false)
+    private LocalDateTime passwordChangedAt;
+
     public AppUser() {
     }
 
@@ -53,6 +64,12 @@ public class AppUser implements UserDetails {
         this.password = password;
         this.role = role;
         this.enabled = Boolean.TRUE;
+        // Truncated to seconds to match a JWT's `iat` claim precision (JWT
+        // NumericDate is whole seconds) — otherwise a token issued in the
+        // same second as this timestamp, but genuinely after it, would look
+        // like it predates it once `iat`'s sub-second part is lost, and
+        // JwtAuthFilter would wrongly treat a brand-new token as revoked.
+        this.passwordChangedAt = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
     }
 
     // UserDetails implementation
@@ -124,5 +141,13 @@ public class AppUser implements UserDetails {
 
     public void setEnabledFlag(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public LocalDateTime getPasswordChangedAt() {
+        return passwordChangedAt;
+    }
+
+    public void setPasswordChangedAt(LocalDateTime passwordChangedAt) {
+        this.passwordChangedAt = passwordChangedAt;
     }
 }

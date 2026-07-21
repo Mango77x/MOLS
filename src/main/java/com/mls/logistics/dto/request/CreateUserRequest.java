@@ -1,12 +1,16 @@
 package com.mls.logistics.dto.request;
 
-import com.mls.logistics.security.domain.Role;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 /**
  * Data Transfer Object for creating a new application user (admin-only).
+ *
+ * Role is kept as a raw String, like every other status/enum field in the
+ * API, and parsed via {@code Role.from(String)} — a plain enum-typed field
+ * would fail Jackson deserialization on an unknown value with a generic
+ * error instead of the app's usual friendly "Unknown X: valid values are…"
+ * message.
  */
 public class CreateUserRequest {
 
@@ -18,8 +22,8 @@ public class CreateUserRequest {
     @Size(min = 12, max = 128, message = "Password must be between 12 and 128 characters")
     private String password;
 
-    @NotNull(message = "Role is required")
-    private Role role;
+    @NotBlank(message = "Role is required")
+    private String role;
 
     public CreateUserRequest() {
     }
@@ -40,11 +44,11 @@ public class CreateUserRequest {
         this.password = password;
     }
 
-    public Role getRole() {
+    public String getRole() {
         return role;
     }
 
-    public void setRole(Role role) {
+    public void setRole(String role) {
         this.role = role;
     }
 }

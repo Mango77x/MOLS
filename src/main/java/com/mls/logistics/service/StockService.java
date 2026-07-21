@@ -7,6 +7,7 @@ import com.mls.logistics.domain.Stock;
 import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.dto.request.AdjustStockRequest;
 import com.mls.logistics.dto.request.CreateStockRequest;
+import com.mls.logistics.exception.DuplicateResourceException;
 import com.mls.logistics.exception.InsufficientStockException;
 import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
@@ -119,6 +120,7 @@ public class StockService {
      * @param request DTO containing stock creation data
      * @return created stock entity
      * @throws InvalidRequestException if initial quantity is negative
+     * @throws DuplicateResourceException if a stock row for this resource/warehouse pair already exists
      */
     @Transactional
     public Stock createStock(CreateStockRequest request) {
@@ -127,6 +129,15 @@ public class StockService {
             throw new InvalidRequestException(
                 "Initial stock quantity cannot be negative. Provided: " + request.getQuantity()
             );
+        }
+
+        // stocks has a UNIQUE(resource_id, warehouse_id) constraint (see V2)
+        // — check it up front so a duplicate returns a clean 409 instead of a
+        // raw DataIntegrityViolationException from the DB.
+        if (stockRepository.findByResourceIdAndWarehouseId(request.getResourceId(), request.getWarehouseId()).isPresent()) {
+            throw new DuplicateResourceException(
+                "Stock already exists for resource id " + request.getResourceId()
+                    + " in warehouse id " + request.getWarehouseId() + ". Use adjust instead.");
         }
 
         Stock stock = new Stock();

@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -65,6 +66,15 @@ class AppUserAdminServiceTest {
         assertThatThrownBy(() -> appUserAdminService.createUser("taken", "a-long-enough-password", Role.OPERATOR))
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("already exists");
+
+        verify(appUserRepository, never()).save(any());
+    }
+
+    @Test
+    void createUser_ShorterThanTwelveButAtLeastSix_ShouldThrow() {
+        assertThatThrownBy(() -> appUserAdminService.createUser("newuser", "eightchr", Role.OPERATOR))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("12 characters");
 
         verify(appUserRepository, never()).save(any());
     }
@@ -137,6 +147,34 @@ class AppUserAdminServiceTest {
                 .isInstanceOf(InvalidRequestException.class);
 
         verify(appUserRepository, never()).findById(any());
+    }
+
+    @Test
+    void resetPassword_ShorterThanTwelveButAtLeastSix_ShouldThrow() {
+        // This used to pass under a stale, unreachable-from-the-API 6-char
+        // floor here — confirms the service now matches the 12-character
+        // policy enforced everywhere else (CreateUserRequest/ResetPasswordRequest).
+        assertThatThrownBy(() -> appUserAdminService.resetPassword(1L, "eightchr"))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("12 characters");
+
+        verify(appUserRepository, never()).findById(any());
+    }
+
+    @Test
+    void resetPassword_ShouldBumpPasswordChangedAt_ToRevokeExistingTokens() {
+        // Given: an old password-changed-at, as if the user had logged in
+        // and been carrying a token from before this reset.
+        admin.setPasswordChangedAt(LocalDateTime.now().minusDays(1));
+        when(appUserRepository.findById(1L)).thenReturn(Optional.of(admin));
+        when(passwordEncoder.encode("a-new-long-password")).thenReturn("new-hash");
+        when(appUserRepository.save(any(AppUser.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        AppUser result = appUserAdminService.resetPassword(1L, "a-new-long-password");
+
+        // JwtAuthFilter rejects any token issued before this timestamp —
+        // bumping it is what actually revokes tokens minted under the old password.
+        assertThat(result.getPasswordChangedAt()).isAfter(LocalDateTime.now().minusMinutes(1));
     }
 
     @Test

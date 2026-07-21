@@ -201,4 +201,30 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
+
+    /**
+     * Handles DuplicateResourceException.
+     *
+     * Returns 409 Conflict when a request would violate a uniqueness
+     * constraint (e.g. a stock row for a resource/warehouse pair that
+     * already exists).
+     *
+     * @param ex      the exception that was thrown
+     * @param request the web request during which the exception occurred
+     * @return ResponseEntity with error details and 409 status
+     */
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateResourceException(
+            DuplicateResourceException ex,
+            WebRequest request) {
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.getReasonPhrase(),
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", "")
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
 }

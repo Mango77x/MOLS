@@ -80,17 +80,6 @@ public class UnitService {
     }
 
     /**
-     * Creates a new unit.
-     * 
-     * Business rules can be added here in the future
-     * (e.g. unique name validation).
-     */
-    @Transactional
-    public Unit createUnit(Unit unit) {
-        return unitRepository.save(unit);
-    }
-
-    /**
      * Creates a new unit from a DTO request.
      * 
      * This method separates API contracts from domain logic.

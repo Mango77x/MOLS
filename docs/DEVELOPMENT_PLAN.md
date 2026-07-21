@@ -23,12 +23,14 @@ Same workflow as prior sprints: one `sprint-N` branch per sprint, opened as a PR
 
 ### Sprint 9 — Backend correctness & security
 
-- [ ] `StockService.createStock` — guard against the `UNIQUE(resource_id, warehouse_id)` constraint before saving, returning 409 instead of a raw 500.
-- [ ] JWT revocation: reject a token if the user is disabled (`JwtAuthFilter` currently never checks `isEnabled()`).
-- [ ] JWT revocation: reject a token issued before the user's last password change (`app_users.password_changed_at`, new migration).
-- [ ] Fix stale Swagger docs claiming OPERATOR is read-only.
-- [ ] Remove dead code: 6 unused `createX(Entity)` service overloads + unused `UpdateStockRequest` DTO.
-- [ ] Align `CreateUserRequest.role`/`UpdateRoleRequest.role` validation with the `.from(String)` friendly-error pattern used by every other enum in the app.
+- [x] `StockService.createStock` — guards against the `UNIQUE(resource_id, warehouse_id)` constraint before saving (new `DuplicateResourceException` → 409) instead of a raw 500.
+- [x] JWT revocation: `JwtAuthFilter` now rejects a token if the user is disabled.
+- [x] JWT revocation: rejects a token issued before the user's last password change (`app_users.password_changed_at`, `V8` migration, set on user creation and bumped on every reset).
+  - Found and fixed a real bug while implementing this: JWT's `iat` claim is whole-seconds precision, so comparing it against a sub-second `passwordChangedAt` could reject a token issued in the same second as account creation. Both are now truncated to seconds at the source.
+- [x] Fixed stale Swagger docs claiming OPERATOR is read-only.
+- [x] Removed dead code: 6 unused `createX(Entity)` service overloads + unused `UpdateStockRequest` DTO.
+- [x] `CreateUserRequest.role`/`UpdateRoleRequest.role` now use the same `.from(String)` friendly-error pattern as every other enum in the app (`Role.from`, new).
+- [x] Bonus (found while touching this code, not originally itemized): `AppUserAdminService` was enforcing a stale, unreachable 6-character password minimum instead of the 12 enforced everywhere else — fixed to a shared `MIN_PASSWORD_LENGTH` constant.
 
 ### Sprint 10 — Frontend bug fixes
 
@@ -62,4 +64,4 @@ Same workflow as prior sprints: one `sprint-N` branch per sprint, opened as a PR
 
 ---
 
-**Last updated**: 2026-07-21 (Sprint 8 complete)
+**Last updated**: 2026-07-21 (Sprint 9 complete)
