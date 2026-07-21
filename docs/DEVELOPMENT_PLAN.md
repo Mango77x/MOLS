@@ -23,12 +23,17 @@ Same workflow as prior sprints: one `sprint-N` branch per sprint, opened as a PR
 
 ### Sprint 9 — Backend correctness & security
 
-- [ ] `StockService.createStock` — guard against the `UNIQUE(resource_id, warehouse_id)` constraint before saving, returning 409 instead of a raw 500.
-- [ ] JWT revocation: reject a token if the user is disabled (`JwtAuthFilter` currently never checks `isEnabled()`).
-- [ ] JWT revocation: reject a token issued before the user's last password change (`app_users.password_changed_at`, new migration).
-- [ ] Fix stale Swagger docs claiming OPERATOR is read-only.
-- [ ] Remove dead code: 6 unused `createX(Entity)` service overloads + unused `UpdateStockRequest` DTO.
-- [ ] Align `CreateUserRequest.role`/`UpdateRoleRequest.role` validation with the `.from(String)` friendly-error pattern used by every other enum in the app.
+- [x] `StockService.createStock` — guards against the `UNIQUE(resource_id, warehouse_id)` constraint before saving (new `DuplicateResourceException` → 409) instead of a raw 500.
+- [x] JWT revocation: `JwtAuthFilter` now rejects a token if the user is disabled.
+- [x] JWT revocation: rejects a token whose embedded `pwdVersion` claim no longer matches the user's current `app_users.password_version` (`V8` migration, integer counter starting at 0, bumped on every reset).
+  - This went through three iterations before landing correctly, worth recording for anyone touching this code later:
+    1. First attempt compared the token's `iat` (issued-at) against a `passwordChangedAt` timestamp. Broke a brand-new user's very first login when it happened in the same wall-clock second as account creation, because a JWT's `iat` is whole-seconds precision and truncation made the token look older than it was.
+    2. Second attempt truncated both sides to seconds and switched to an equality check instead of before/after. Passed locally, but CI caught it: truncating login and a same-second reset to the same value made them compare equal, so the reset silently failed to revoke anything.
+    3. Final design: an incrementing integer (`passwordVersion`) instead of any timestamp. Two password-set events can never produce the same version number no matter how close together they happen, so there's no precision to lose and no ordering ambiguity — closes the whole bug class rather than another edge case of it. Stress-tested locally with zero delay between create → login → reset → check, including two resets back to back.
+- [x] Fixed stale Swagger docs claiming OPERATOR is read-only.
+- [x] Removed dead code: 6 unused `createX(Entity)` service overloads + unused `UpdateStockRequest` DTO.
+- [x] `CreateUserRequest.role`/`UpdateRoleRequest.role` now use the same `.from(String)` friendly-error pattern as every other enum in the app (`Role.from`, new).
+- [x] Bonus (found while touching this code, not originally itemized): `AppUserAdminService` was enforcing a stale, unreachable 6-character password minimum instead of the 12 enforced everywhere else — fixed to a shared `MIN_PASSWORD_LENGTH` constant.
 
 ### Sprint 10 — Frontend bug fixes
 
@@ -62,4 +67,4 @@ Same workflow as prior sprints: one `sprint-N` branch per sprint, opened as a PR
 
 ---
 
-**Last updated**: 2026-07-21 (Sprint 8 complete)
+**Last updated**: 2026-07-21 (Sprint 9 complete)

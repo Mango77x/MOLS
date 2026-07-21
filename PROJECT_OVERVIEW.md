@@ -205,6 +205,15 @@ Implementation notes:
   - `V7` — backfills `shipment_items` for shipments that predate V6 (which didn't
     populate it for existing rows), fixing `deliveredQuantity` reading 0 on old
     delivered shipments even though their stock was genuinely deducted at the time
+  - `V8` — `app_users.password_version` (integer, default 0, bumped on every
+    reset), backing JWT revocation on password reset. Deliberately a counter
+    rather than a timestamp: a timestamp can only be compared at whatever
+    precision it's embedded in the token at (a JWT's `iat` is whole-seconds),
+    so two password-set events within the same second are indistinguishable
+    once that precision is lost — an incrementing integer can't collide like
+    that no matter how fast the events happen (two earlier timestamp-based
+    versions of this both broke under fast sequential requests, e.g. login
+    immediately followed by a reset)
 - **SQL Logging**: off by default (`SPRING_JPA_SHOW_SQL=true` to enable locally)
 - **Port**: Application runs on `8080`
 - **OpenAPI/Swagger**:
@@ -235,6 +244,14 @@ Implementation notes:
          order, mirroring the UI's inline item removal)
        - Deleting whole orders/shipments and every other write requires `ADMIN`
        - Anything not explicitly matched is denied (`denyAll` fallback)
+    - Token revocation (Sprint 9): a syntactically valid, unexpired token is
+      still rejected (401) by `JwtAuthFilter` if the account has since been
+      disabled, or if its embedded `pwdVersion` claim no longer matches the
+      user's current `app_users.password_version` (bumped on every reset) —
+      otherwise disabling a user or resetting their password wouldn't take
+      effect until the token's natural expiry (`SECURITY_JWT_EXPIRATION_MS`,
+      24h by default). A role change is already effectively immediate, since
+      authorities are re-derived from the DB on every request.
 - **Brute-force protection**: after `SECURITY_LOCKOUT_MAX_ATTEMPTS` (default 5)
   consecutive failed logins a username is locked for
   `SECURITY_LOCKOUT_DURATION_MS` (default 15 min); all auth events are logged (`SECURITY:` lines).
@@ -639,7 +656,8 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 
 - **Maintainer**: See `pom.xml` for project details
 
-**Last updated**: 2026-07-21 (Sprint 8: closed the cascade-delete gap around
-`Order`/`Unit`/`Vehicle`/`Warehouse`/`Resource`, and backfilled `shipment_items`
-for pre-Sprint-7 shipments — see `docs/DEVELOPMENT_PLAN.md` for the full
-technical-debt and product-completion backlog this sprint kicks off)
+**Last updated**: 2026-07-21 (Sprint 9: JWT revocation on user disable/password
+reset, `StockService.createStock` duplicate-conflict handling, dead-code
+cleanup, and aligned Role validation with the rest of the API's enum-parsing
+convention — see `docs/DEVELOPMENT_PLAN.md` for the full technical-debt and
+product-completion backlog)

@@ -1,24 +1,26 @@
 package com.mls.logistics.dto.request;
 
-import com.mls.logistics.security.domain.Role;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 
 /**
  * Data Transfer Object for changing a user's role (admin-only).
+ *
+ * Role is kept as a raw String and parsed via {@code Role.from(String)} —
+ * see CreateUserRequest for why.
  */
 public class UpdateRoleRequest {
 
-    @NotNull(message = "Role is required")
-    private Role role;
+    @NotBlank(message = "Role is required")
+    private String role;
 
     public UpdateRoleRequest() {
     }
 
-    public Role getRole() {
+    public String getRole() {
         return role;
     }
 
-    public void setRole(Role role) {
+    public void setRole(String role) {
         this.role = role;
     }
 }

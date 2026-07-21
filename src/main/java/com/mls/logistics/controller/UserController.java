@@ -7,6 +7,7 @@ import com.mls.logistics.dto.request.UpdateRoleRequest;
 import com.mls.logistics.dto.response.UserResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.security.domain.AppUser;
+import com.mls.logistics.security.domain.Role;
 import com.mls.logistics.security.service.AppUserAdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -101,7 +102,8 @@ public class UserController {
     })
     @PostMapping
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
-        AppUser created = appUserAdminService.createUser(request.getUsername(), request.getPassword(), request.getRole());
+        AppUser created = appUserAdminService.createUser(
+                request.getUsername(), request.getPassword(), Role.from(request.getRole()));
         return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.from(created));
     }
 
@@ -124,7 +126,7 @@ public class UserController {
             @Parameter(description = "User identifier", example = "1")
             @PathVariable Long id,
             @Valid @RequestBody UpdateRoleRequest request) {
-        AppUser updated = appUserAdminService.updateRole(id, request.getRole());
+        AppUser updated = appUserAdminService.updateRole(id, Role.from(request.getRole()));
         return ResponseEntity.ok(UserResponse.from(updated));
     }
 

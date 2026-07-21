@@ -35,7 +35,10 @@ public class OpenApiConfig {
                                 
                                 Roles:
                                 - ADMIN: full access (GET, POST, PUT, PATCH, DELETE)
-                                - OPERATOR: read only (GET)
+                                - OPERATOR: read access everywhere, plus write access
+                                  (POST, PUT, PATCH, and DELETE on order items) on
+                                  orders, order items and shipments — everything else
+                                  is ADMIN-only
                                 - AUDITOR: read only (GET)
                                 """)
                         .contact(new Contact()
