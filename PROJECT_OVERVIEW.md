@@ -118,6 +118,13 @@ Tailwind 4) and is served at `/app/**`:
   `showToast(...)` (Sprint 12, e.g. `'Warehouse created.'`) right before
   navigating away — previously a create/edit just redirected silently, unlike
   `RowActions`'s delete flow which already toasted on both outcomes.
+  Warehouse/Resource/Unit forms also carry a non-blocking duplicate-name nudge
+  (Sprint 14, `useDuplicateNameWarning`): on blurring the Name field, a
+  `?name=` fragment-filtered lookup checks for an existing case-insensitive
+  exact match (excluding the record's own id when editing) and shows an
+  inline warning via `TextField`'s `warning` prop — there's no uniqueness
+  constraint on these names in the database, so this is a courtesy nudge
+  only and never blocks submit.
   - Warehouse/Resource/Vehicle/Unit/Stock (create + Stock's delta-based
     Adjust) are simple ADMIN-only forms; Warehouse/Unit include a
     click-to-place `LocationPicker` map (`src/components/map/`, reusing the
@@ -530,13 +537,14 @@ sprint if you need to reference the old server-rendered pages.
   fulfillment flow, the role authorization matrix, login lockout, audit
   immutability, and concurrent stock adjustments (optimistic locking).
 - **Frontend tests** (`frontend/src/**/*.test.{ts,tsx}`, Vitest + jsdom +
-  `@testing-library/react`) — 19 files / 56 tests covering pure helpers
+  `@testing-library/react`) — 20 files / 71 tests covering pure helpers
   (enum labels, roles) and DOM/behavior tests (form validation, the
   `ConfirmDialog`/`RowActions` delete flow including a failed-delete-shows-
   a-toast regression guard, the order-edit terminal-state lock, app
   routing/redirects, the Sprint 12 success-toast-on-save for every form page,
-  `DataTable`'s mobile card view, and the Sprint 13 dashboard name-resolution/
-  donut-legend fixes).
+  `DataTable`'s mobile card view, the Sprint 13 dashboard name-resolution/
+  donut-legend fixes, and the Sprint 14 duplicate-name warning/result-count
+  singular-plural fixes).
 
 ## Implementation Notes
 
@@ -694,11 +702,10 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 
 - **Maintainer**: See `pom.xml` for project details
 
-**Last updated**: 2026-07-21 (Sprint 13: dashboard polish — `RecentActivity`
-now resolves stock ids to resource/warehouse names client-side (mirroring
-`MovementsPage`'s lookup pattern) instead of showing a raw `#id`, and both
-donut charts (`movements by type`, `orders by status`) gained a custom
-text legend so slice colors are readable without hovering. Frontend suite
-grew from 17 files / 51 tests to 19 files / 56 tests — see
-`docs/DEVELOPMENT_PLAN.md` for the full technical-debt and
-product-completion backlog)
+**Last updated**: 2026-07-21 (Sprint 14: stretch items — Warehouse/Resource/
+Unit forms now show a non-blocking duplicate-name nudge on blur
+(`useDuplicateNameWarning`, no backend constraint added), and `DataTable`'s
+result-count caption no longer says "1 results". Frontend suite grew from
+19 files / 56 tests to 20 files / 71 tests — see `docs/DEVELOPMENT_PLAN.md`
+for the full technical-debt and product-completion backlog, which is now
+fully checked off through Sprint 14)

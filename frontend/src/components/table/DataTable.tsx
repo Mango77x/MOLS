@@ -90,7 +90,11 @@ export default function DataTable<T>({
       <div className="hidden overflow-x-auto sm:block">
         <table className="w-full text-left text-sm">
           <caption className="sr-only" aria-live="polite">
-            {loading ? 'Loading…' : error ? 'Could not load data.' : `${totalElements} results`}
+            {loading
+              ? 'Loading…'
+              : error
+                ? 'Could not load data.'
+                : `${totalElements} ${totalElements === 1 ? 'result' : 'results'}`}
           </caption>
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (

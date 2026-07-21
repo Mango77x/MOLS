@@ -9,6 +9,7 @@ import { applyApiError, extractApiError } from '../../api/errors'
 import { useEntity } from '../../api/useEntity'
 import { FormBanner, SecondaryButton, SelectField, SubmitButton, TextField } from '../../components/form/fields'
 import { FormPage } from '../../components/form/FormPage'
+import { useDuplicateNameWarning } from '../../components/form/useDuplicateNameWarning'
 import { useToast } from '../../components/toast/toastContext'
 
 const schema = z.object({
@@ -34,6 +35,11 @@ export default function ResourceFormPage() {
     isEdit ? `/resources/${id}` : null,
   )
   const [banner, setBanner] = useState<string | null>(null)
+  const { warning: nameWarning, checkName } = useDuplicateNameWarning(
+    '/resources',
+    'resource',
+    isEdit ? Number(id) : undefined,
+  )
 
   const {
     register,
@@ -86,8 +92,9 @@ export default function ResourceFormPage() {
         <TextField
           label="Name"
           id="name"
-          registration={register('name')}
+          registration={register('name', { onBlur: (e) => checkName(e.target.value) })}
           error={errors.name?.message}
+          warning={nameWarning}
         />
         <TextField
           label="Type"
