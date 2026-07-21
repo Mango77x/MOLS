@@ -517,6 +517,12 @@ sprint if you need to reference the old server-rendered pages.
   `@ServiceConnection`, singleton container). They cover the end-to-end
   fulfillment flow, the role authorization matrix, login lockout, audit
   immutability, and concurrent stock adjustments (optimistic locking).
+- **Frontend tests** (`frontend/src/**/*.test.{ts,tsx}`, Vitest + jsdom +
+  `@testing-library/react`) — 9 files / 35 tests covering pure helpers
+  (enum labels, roles) and DOM/behavior tests (form validation, the
+  `ConfirmDialog`/`RowActions` delete flow including a failed-delete-shows-
+  a-toast regression guard, the order-edit terminal-state lock, and app
+  routing/redirects).
 
 ## Implementation Notes
 
@@ -674,11 +680,11 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 
 - **Maintainer**: See `pom.xml` for project details
 
-**Last updated**: 2026-07-21 (Sprint 10: frontend bug-fix pass — fixed every
-`SelectField` missing `defaultValue` (including one that let a new user
-silently default to ADMIN), locked the order edit page for
-COMPLETED/CANCELLED orders, unified enum-label display via
-`lib/enumLabels.ts`, added a catch-all 404 route, and replaced every
-`window.confirm()` with a themed `ConfirmDialog` — see
-`docs/DEVELOPMENT_PLAN.md` for the full technical-debt and
+**Last updated**: 2026-07-21 (Sprint 11: frontend test infrastructure —
+added jsdom + `@testing-library/react` to Vitest and wrote component/
+behavior tests for every Sprint 10 fix (role-select validation, the
+order-edit terminal-state lock, the `ConfirmDialog`/`RowActions` delete
+flow, and app routing/redirects), taking the frontend suite from 3 files
+of pure-function tests to 9 files / 35 tests covering real DOM behavior —
+see `docs/DEVELOPMENT_PLAN.md` for the full technical-debt and
 product-completion backlog)
