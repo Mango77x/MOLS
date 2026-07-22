@@ -106,6 +106,10 @@ export default function LoginPage() {
             {submitting ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
+
+        <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
+          Can't sign in? Contact your system administrator to reset your access.
+        </p>
       </div>
     </main>
   )

@@ -19,8 +19,11 @@ export function useDuplicateNameWarning(path: string, label: string, excludeId?:
       return
     }
     try {
+      // 100 matches the app's own "large page" convention (DataTable's own
+      // max page-size option) — large enough to cover realistic catalogs,
+      // without a second unpaginated backend contract just for this check.
       const response = await api.get<PageResponse<{ id: number; name: string }>>(path, {
-        params: { name: trimmed, page: 0, size: 20 },
+        params: { name: trimmed, page: 0, size: 100 },
       })
       const duplicate = response.data.content.some(
         (row) => row.id !== excludeId && row.name.toLowerCase() === trimmed.toLowerCase(),
