@@ -96,6 +96,19 @@
       "warehouse": "Warehouse",
       "quantity": "Quantity",
       "reason": "Reason"
+    },
+    "map": {
+      "title": "Logistics map",
+      "loadError": "The map could not be loaded. Please try again.",
+      "loading": "Loading map…",
+      "emptyDescription": "No warehouses or units have coordinates yet. Add latitude/longitude from their edit forms to see them here.",
+      "searchPlaceholder": "Search warehouse or unit…",
+      "activeShipmentsOnly": "Active shipments only",
+      "lowStockOnly": "Low stock only",
+      "clickPinForDetails": "Click a pin for details.",
+      "warehouse": "Warehouse",
+      "unit": "Unit",
+      "stockLabel": "Stock: {{status}}"
     }
   },
   "enums": {

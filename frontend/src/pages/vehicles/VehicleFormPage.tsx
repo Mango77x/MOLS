@@ -11,7 +11,7 @@ import { FormBanner, SecondaryButton, SelectField, SubmitButton, TextField } fro
 import { FormPage } from '../../components/form/FormPage'
 import { positiveNumber } from '../../components/form/zodHelpers'
 import { useToast } from '../../components/toast/toastContext'
-import { VEHICLE_STATUS_LABELS, VEHICLE_TYPE_LABELS } from '../../lib/enumLabels'
+import { enumLabel, VEHICLE_STATUS_LABELS, VEHICLE_TYPE_LABELS } from '../../lib/enumLabels'
 
 const schema = z.object({
   type: z.enum(['LAND', 'SEA', 'AIR'], { message: 'Select a type' }),
@@ -89,9 +89,9 @@ export default function VehicleFormPage() {
           <option value="" disabled>
             Select a type
           </option>
-          {Object.entries(VEHICLE_TYPE_LABELS).map(([value, label]) => (
+          {Object.entries(VEHICLE_TYPE_LABELS).map(([value]) => (
             <option key={value} value={value}>
-              {label}
+              {enumLabel(VEHICLE_TYPE_LABELS, value)}
             </option>
           ))}
         </SelectField>
@@ -114,9 +114,9 @@ export default function VehicleFormPage() {
           <option value="" disabled>
             Select a status
           </option>
-          {Object.entries(VEHICLE_STATUS_LABELS).map(([value, label]) => (
+          {Object.entries(VEHICLE_STATUS_LABELS).map(([value]) => (
             <option key={value} value={value}>
-              {label}
+              {enumLabel(VEHICLE_STATUS_LABELS, value)}
             </option>
           ))}
         </SelectField>

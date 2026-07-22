@@ -12,7 +12,7 @@ import { FormBanner, SecondaryButton, SelectField, SubmitButton, TextField } fro
 import { FormPage } from '../../components/form/FormPage'
 import { useToast } from '../../components/toast/toastContext'
 import { positiveId } from '../../components/form/zodHelpers'
-import { ORDER_STATUS_LABELS } from '../../lib/enumLabels'
+import { enumLabel, ORDER_STATUS_LABELS } from '../../lib/enumLabels'
 import OrderItemsManager from './OrderItemsManager'
 
 const schema = z.object({
@@ -121,9 +121,9 @@ export default function OrderEditFormPage() {
             error={errors.status?.message}
             disabled={isTerminal}
           >
-            {Object.entries(ORDER_STATUS_LABELS).map(([value, label]) => (
+            {Object.entries(ORDER_STATUS_LABELS).map(([value]) => (
               <option key={value} value={value}>
-                {label}
+                {enumLabel(ORDER_STATUS_LABELS, value)}
               </option>
             ))}
           </SelectField>
