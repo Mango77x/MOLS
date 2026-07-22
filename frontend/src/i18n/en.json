@@ -23,7 +23,10 @@
     "warehouse": "Warehouse",
     "quantity": "Quantity",
     "reason": "Reason",
-    "password": "Password"
+    "password": "Password",
+    "exportCsv": "Export CSV",
+    "exporting": "Exporting…",
+    "exportFailed": "Export failed."
   },
   "errors": {
     "STOCK_NO_RECORD_IN_WAREHOUSE": "Cannot reserve stock: this resource has no stock record in the order's warehouse. Requested: {{requested}}. Resource id: {{resourceId}}, warehouse id: {{warehouseId}}",
