@@ -96,6 +96,19 @@
       "warehouse": "Almacén",
       "quantity": "Cantidad",
       "reason": "Motivo"
+    },
+    "map": {
+      "title": "Mapa logístico",
+      "loadError": "No se pudo cargar el mapa. Inténtalo de nuevo.",
+      "loading": "Cargando mapa…",
+      "emptyDescription": "Todavía no hay almacenes ni unidades con coordenadas. Añade latitud/longitud desde sus formularios de edición para verlos aquí.",
+      "searchPlaceholder": "Buscar almacén o unidad…",
+      "activeShipmentsOnly": "Solo envíos activos",
+      "lowStockOnly": "Solo stock bajo",
+      "clickPinForDetails": "Haz clic en un pin para ver los detalles.",
+      "warehouse": "Almacén",
+      "unit": "Unidad",
+      "stockLabel": "Stock: {{status}}"
     }
   },
   "enums": {
