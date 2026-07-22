@@ -1,5 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useCurrentRole } from '../../auth/roles'
 import { api } from '../../api/client'
@@ -8,6 +9,7 @@ import Badge, { type BadgeTone } from '../../components/Badge'
 import DataTable from '../../components/table/DataTable'
 import { DeleteAction, RouteActionLink } from '../../components/table/RowActions'
 import { useServerTable } from '../../components/table/useServerTable'
+import { CRITICALITY_LABELS, enumLabel } from '../../lib/enumLabels'
 
 const CRITICALITY_TONE: Record<string, BadgeTone> = {
   HIGH: 'critical',
@@ -16,6 +18,7 @@ const CRITICALITY_TONE: Record<string, BadgeTone> = {
 }
 
 export default function ResourcesPage() {
+  const { t } = useTranslation()
   const role = useCurrentRole()
   const isAdmin = role === 'ADMIN'
   const [name, setName] = useState('')
@@ -29,28 +32,28 @@ export default function ResourcesPage() {
   }
 
   const columns: ColumnDef<ResourceEntity, unknown>[] = [
-    { id: 'id', header: 'ID', accessorKey: 'id', enableSorting: true },
-    { id: 'name', header: 'Name', accessorKey: 'name', enableSorting: true },
-    { id: 'type', header: 'Type', accessorKey: 'type', enableSorting: true },
+    { id: 'id', header: t('common.id'), accessorKey: 'id', enableSorting: true },
+    { id: 'name', header: t('common.name'), accessorKey: 'name', enableSorting: true },
+    { id: 'type', header: t('common.type'), accessorKey: 'type', enableSorting: true },
     {
       id: 'criticality',
-      header: 'Criticality',
+      header: t('resources.criticality'),
       accessorKey: 'criticality',
       enableSorting: true,
       cell: ({ getValue }) => {
         const value = getValue<string>()
-        return <Badge tone={CRITICALITY_TONE[value] ?? 'neutral'}>{value}</Badge>
+        return <Badge tone={CRITICALITY_TONE[value] ?? 'neutral'}>{enumLabel(CRITICALITY_LABELS, value)}</Badge>
       },
     },
   ]
   if (isAdmin) {
     columns.push({
       id: 'actions',
-      header: 'Actions',
+      header: t('common.actions'),
       cell: ({ row }) => (
         <div className="flex gap-3">
-          <RouteActionLink to={`/resources/${row.original.id}/edit`}>Edit</RouteActionLink>
-          <DeleteAction label="resource" onConfirm={() => handleDelete(row.original.id)} />
+          <RouteActionLink to={`/resources/${row.original.id}/edit`}>{t('common.edit')}</RouteActionLink>
+          <DeleteAction label={t('resources.entityName')} onConfirm={() => handleDelete(row.original.id)} />
         </div>
       ),
     })
@@ -59,13 +62,13 @@ export default function ResourcesPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold">Resources</h1>
+        <h1 className="text-xl font-bold">{t('resources.title')}</h1>
         {isAdmin && (
           <Link
             to="/resources/new"
             className="rounded bg-army-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-army-800"
           >
-            New resource
+            {t('resources.newResource')}
           </Link>
         )}
       </div>
@@ -74,13 +77,13 @@ export default function ResourcesPage() {
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Search by name…"
+          placeholder={t('resources.searchPlaceholder')}
           className="rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
         />
         <input
           value={type}
           onChange={(e) => setType(e.target.value)}
-          placeholder="Filter by type…"
+          placeholder={t('resources.typeFilterPlaceholder')}
           className="rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
         />
       </div>
@@ -90,7 +93,7 @@ export default function ResourcesPage() {
         data={table.rows}
         loading={table.loading}
         error={table.error}
-        emptyMessage="No resources to display"
+        emptyMessage={t('resources.emptyMessage')}
         sort={table.sort}
         onSortChange={table.toggleSort}
         page={table.page}

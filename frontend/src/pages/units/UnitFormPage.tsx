@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { api } from '../../api/client'
@@ -14,22 +16,25 @@ import { coordinate } from '../../components/form/zodHelpers'
 import LocationPicker from '../../components/map/LocationPicker'
 import { useToast } from '../../components/toast/toastContext'
 
-const schema = z.object({
-  name: z
-    .string()
-    .min(2, 'Unit name must be between 2 and 100 characters')
-    .max(100, 'Unit name must be between 2 and 100 characters'),
-  location: z
-    .string()
-    .min(2, 'Unit location must be between 2 and 200 characters')
-    .max(200, 'Unit location must be between 2 and 200 characters'),
-  latitude: coordinate(-90, 90, 'Latitude'),
-  longitude: coordinate(-180, 180, 'Longitude'),
-})
+function buildSchema(t: TFunction) {
+  return z.object({
+    name: z
+      .string()
+      .min(2, t('units.form.nameLength'))
+      .max(100, t('units.form.nameLength')),
+    location: z
+      .string()
+      .min(2, t('units.form.locationLength'))
+      .max(200, t('units.form.locationLength')),
+    latitude: coordinate(-90, 90, t('common.latitude')),
+    longitude: coordinate(-180, 180, t('common.longitude')),
+  })
+}
 
-type FormValues = z.infer<typeof schema>
+type FormValues = z.infer<ReturnType<typeof buildSchema>>
 
 export default function UnitFormPage() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const isEdit = id !== undefined
   const navigate = useNavigate()
@@ -38,7 +43,7 @@ export default function UnitFormPage() {
   const [banner, setBanner] = useState<string | null>(null)
   const { warning: nameWarning, checkName } = useDuplicateNameWarning(
     '/units',
-    'unit',
+    t('units.entityName'),
     isEdit ? Number(id) : undefined,
   )
 
@@ -51,7 +56,7 @@ export default function UnitFormPage() {
     setError,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(buildSchema(t)),
     defaultValues: { name: '', location: '', latitude: undefined, longitude: undefined },
   })
 
@@ -80,10 +85,10 @@ export default function UnitFormPage() {
     try {
       if (isEdit) {
         await api.put(`/units/${id}`, payload)
-        showToast('Unit updated.', 'success')
+        showToast(t('units.updated'), 'success')
       } else {
         await api.post('/units', payload)
-        showToast('Unit created.', 'success')
+        showToast(t('units.created'), 'success')
       }
       navigate('/units')
     } catch (error) {
@@ -92,32 +97,32 @@ export default function UnitFormPage() {
   }
 
   if (isEdit && loading) {
-    return <p className="text-sm text-gray-500 dark:text-gray-400">Loading unit…</p>
+    return <p className="text-sm text-gray-500 dark:text-gray-400">{t('units.loading')}</p>
   }
   if (isEdit && notFound) {
-    return <FormBanner message="Unit not found." />
+    return <FormBanner message={t('units.notFound')} />
   }
 
   return (
-    <FormPage title={isEdit ? 'Edit unit' : 'New unit'} backTo="/units" wide>
+    <FormPage title={isEdit ? t('units.editUnit') : t('units.newUnit')} backTo="/units" wide>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <FormBanner message={banner} />
         <TextField
-          label="Name"
+          label={t('common.name')}
           id="name"
           registration={register('name', { onBlur: (e) => checkName(e.target.value) })}
           error={errors.name?.message}
           warning={nameWarning}
         />
         <TextField
-          label="Location"
+          label={t('common.location')}
           id="location"
           registration={register('location')}
           error={errors.location?.message}
         />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <TextField
-            label="Latitude (optional)"
+            label={t('common.latitudeOptional')}
             id="latitude"
             type="number"
             step="any"
@@ -128,7 +133,7 @@ export default function UnitFormPage() {
             error={errors.latitude?.message}
           />
           <TextField
-            label="Longitude (optional)"
+            label={t('common.longitudeOptional')}
             id="longitude"
             type="number"
             step="any"
@@ -140,7 +145,7 @@ export default function UnitFormPage() {
           />
         </div>
         <div>
-          <p className="mb-1 text-sm font-medium">Pick on map (optional)</p>
+          <p className="mb-1 text-sm font-medium">{t('common.pickOnMap')}</p>
           <LocationPicker
             latitude={latitude ?? null}
             longitude={longitude ?? null}
@@ -151,8 +156,10 @@ export default function UnitFormPage() {
           />
         </div>
         <div className="flex gap-3">
-          <SubmitButton submitting={isSubmitting}>{isSubmitting ? 'Saving…' : 'Save'}</SubmitButton>
-          <SecondaryButton onClick={() => navigate('/units')}>Cancel</SecondaryButton>
+          <SubmitButton submitting={isSubmitting}>
+            {isSubmitting ? t('common.saving') : t('common.save')}
+          </SubmitButton>
+          <SecondaryButton onClick={() => navigate('/units')}>{t('common.cancel')}</SecondaryButton>
         </div>
       </form>
     </FormPage>

@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { z } from 'zod'
 import { api } from '../../api/client'
@@ -15,15 +17,18 @@ import { useToast } from '../../components/toast/toastContext'
 import { positiveId } from '../../components/form/zodHelpers'
 import { enumLabel, SHIPMENT_STATUS_LABELS, VEHICLE_STATUS_LABELS, VEHICLE_TYPE_LABELS } from '../../lib/enumLabels'
 
-const schema = z.object({
-  orderId: positiveId('Select an order'),
-  vehicleId: positiveId('Select a vehicle'),
-  status: z.enum(['PLANNED', 'IN_TRANSIT', 'DELIVERED'], { message: 'Select a status' }),
-})
+function buildSchema(t: TFunction) {
+  return z.object({
+    orderId: positiveId(t('shipments.form.selectOrder')),
+    vehicleId: positiveId(t('shipments.form.selectVehicle')),
+    status: z.enum(['PLANNED', 'IN_TRANSIT', 'DELIVERED'], { message: t('shipments.form.selectStatus') }),
+  })
+}
 
-type FormValues = z.infer<typeof schema>
+type FormValues = z.infer<ReturnType<typeof buildSchema>>
 
 export default function ShipmentFormPage() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const [searchParams] = useSearchParams()
   const isEdit = id !== undefined
@@ -60,7 +65,7 @@ export default function ShipmentFormPage() {
     watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(buildSchema(t)),
     defaultValues: {
       orderId: prefillOrderId,
       vehicleId: undefined,
@@ -140,7 +145,7 @@ export default function ShipmentFormPage() {
       .filter((line) => line.quantity > 0)
 
     if (!itemsLocked && items.length === 0) {
-      setItemsError('Select at least one item to ship.')
+      setItemsError(t('shipments.form.selectAtLeastOneItem'))
       return
     }
 
@@ -148,11 +153,11 @@ export default function ShipmentFormPage() {
       const payload = itemsLocked ? values : { ...values, items }
       if (isEdit) {
         await api.put(`/shipments/${id}`, payload)
-        showToast('Shipment updated.', 'success')
+        showToast(t('shipments.updated'), 'success')
         navigate(`/shipments/${id}`)
       } else {
         const response = await api.post<ShipmentEntity>('/shipments', payload)
-        showToast('Shipment created.', 'success')
+        showToast(t('shipments.created'), 'success')
         navigate(`/shipments/${response.data.id}`)
       }
     } catch (error) {
@@ -161,79 +166,87 @@ export default function ShipmentFormPage() {
   }
 
   if (isEdit && loading) {
-    return <p className="text-sm text-gray-500 dark:text-gray-400">Loading shipment…</p>
+    return <p className="text-sm text-gray-500 dark:text-gray-400">{t('shipments.loading')}</p>
   }
   if (isEdit && notFound) {
-    return <FormBanner message="Shipment not found." />
+    return <FormBanner message={t('shipments.notFound')} />
   }
 
   return (
     <FormPage
-      title={isEdit ? `Edit shipment #${id}` : 'New shipment'}
+      title={isEdit ? t('shipments.editShipment', { id }) : t('shipments.newShipment')}
       backTo={isEdit ? `/shipments/${id}` : '/shipments'}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <FormBanner message={banner} />
         <SelectField
-          label="Order"
+          label={t('shipments.order')}
           id="orderId"
           defaultValue=""
           registration={register('orderId', { valueAsNumber: true })}
           error={errors.orderId?.message}
         >
           <option value="" disabled>
-            Select an order
+            {t('shipments.form.selectOrder')}
           </option>
           {(isEdit ? Object.values(orders) : openOrders).map((o) => (
             <option key={o.id} value={o.id}>
-              Order #{o.id} — {o.dateCreated} — {o.status}
+              {t('shipments.form.orderOption', { id: o.id, date: o.dateCreated, status: o.status })}
             </option>
           ))}
         </SelectField>
         <SelectField
-          label="Vehicle"
+          label={t('shipments.vehicle')}
           id="vehicleId"
           defaultValue=""
           registration={register('vehicleId', { valueAsNumber: true })}
           error={errors.vehicleId?.message}
         >
           <option value="" disabled>
-            Select a vehicle
+            {t('shipments.form.selectVehicle')}
           </option>
           {Object.values(vehicles).map((v) => (
             <option key={v.id} value={v.id}>
-              Vehicle #{v.id} — {enumLabel(VEHICLE_TYPE_LABELS, v.type)} — {enumLabel(VEHICLE_STATUS_LABELS, v.status)}
+              {t('shipments.form.vehicleOption', {
+                id: v.id,
+                type: enumLabel(VEHICLE_TYPE_LABELS, v.type),
+                status: enumLabel(VEHICLE_STATUS_LABELS, v.status),
+              })}
             </option>
           ))}
         </SelectField>
         <div>
-          <span className="block text-sm font-medium text-gray-700 dark:text-gray-300">Warehouse (origin)</span>
+          <span className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            {t('shipments.form.originWarehouse')}
+          </span>
           <p className="mt-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-300">
             {originWarehouse
               ? `${originWarehouse.name}${originWarehouse.location ? ` — ${originWarehouse.location}` : ''}`
-              : 'Select an order first'}
+              : t('shipments.form.selectOrderFirst')}
           </p>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Fixed to the selected order's warehouse.</p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('shipments.form.originWarehouseHint')}</p>
         </div>
 
         {!itemsLocked && (
           <div>
-            <span className="block text-sm font-medium text-gray-700 dark:text-gray-300">Items to ship</span>
+            <span className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('shipments.form.itemsToShip')}
+            </span>
             {!selectedOrderId && (
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Select an order first.</p>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('shipments.form.selectOrderFirst')}</p>
             )}
-            {selectedOrderId && orderItems.length === 0 && (
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">This order has no items yet.</p>
+            {Boolean(selectedOrderId) && orderItems.length === 0 && (
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('shipments.form.orderNoItems')}</p>
             )}
             {orderItems.length > 0 && (
               <div className="mt-1 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:bg-gray-800/50 dark:text-gray-400">
                     <tr>
-                      <th className="px-3 py-2 font-medium">Resource</th>
-                      <th className="px-3 py-2 font-medium">Ordered</th>
-                      <th className="px-3 py-2 font-medium">Delivered</th>
-                      <th className="px-3 py-2 font-medium">Ship now</th>
+                      <th className="px-3 py-2 font-medium">{t('common.resource')}</th>
+                      <th className="px-3 py-2 font-medium">{t('shipments.form.ordered')}</th>
+                      <th className="px-3 py-2 font-medium">{t('shipments.form.delivered')}</th>
+                      <th className="px-3 py-2 font-medium">{t('shipments.form.shipNow')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -248,14 +261,18 @@ export default function ShipmentFormPage() {
                           <td className="px-3 py-2">
                             <input
                               type="number"
-                              aria-label={`Quantity to ship for ${resources[item.resourceId]?.name ?? `resource #${item.resourceId}`}`}
+                              aria-label={t('shipments.form.shipNowAriaLabel', {
+                                name: resources[item.resourceId]?.name ?? `resource #${item.resourceId}`,
+                              })}
                               min={0}
                               max={max}
                               value={itemQuantities[item.id] ?? 0}
                               onChange={(e) => setItemQuantity(item.id, Number(e.target.value))}
                               className="w-24 rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
                             />
-                            <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">/ {max} left</span>
+                            <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">
+                              {t('shipments.form.leftSuffix', { max })}
+                            </span>
                           </td>
                         </tr>
                       )
@@ -272,7 +289,7 @@ export default function ShipmentFormPage() {
           </div>
         )}
 
-        <SelectField label="Status" id="status" registration={register('status')} error={errors.status?.message}>
+        <SelectField label={t('common.status')} id="status" registration={register('status')} error={errors.status?.message}>
           {Object.entries(SHIPMENT_STATUS_LABELS).map(([value]) => (
             <option key={value} value={value}>
               {enumLabel(SHIPMENT_STATUS_LABELS, value)}
@@ -280,15 +297,12 @@ export default function ShipmentFormPage() {
           ))}
         </SelectField>
         {isEdit && (
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Transitioning to Delivered deducts stock from the origin warehouse for this shipment's own items and
-            records the movements — it will be rejected if stock is insufficient.
-          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{t('shipments.form.deliveredHint')}</p>
         )}
         <div className="flex gap-3">
-          <SubmitButton submitting={isSubmitting}>{isSubmitting ? 'Saving…' : 'Save'}</SubmitButton>
+          <SubmitButton submitting={isSubmitting}>{isSubmitting ? t('common.saving') : t('common.save')}</SubmitButton>
           <SecondaryButton onClick={() => navigate(isEdit ? `/shipments/${id}` : '/shipments')}>
-            Cancel
+            {t('common.cancel')}
           </SecondaryButton>
         </div>
       </form>

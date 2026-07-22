@@ -1,5 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useCurrentRole } from '../../auth/roles'
 import { api } from '../../api/client'
@@ -11,6 +12,7 @@ import { DeleteAction, RouteActionLink } from '../../components/table/RowActions
 import { useServerTable } from '../../components/table/useServerTable'
 
 export default function StocksPage() {
+  const { t } = useTranslation()
   const role = useCurrentRole()
   const isAdmin = role === 'ADMIN'
   const [warehouseId, setWarehouseId] = useState('')
@@ -31,20 +33,20 @@ export default function StocksPage() {
   }
 
   const columns: ColumnDef<StockEntity, unknown>[] = [
-    { id: 'id', header: 'ID', accessorKey: 'id', enableSorting: true },
+    { id: 'id', header: t('common.id'), accessorKey: 'id', enableSorting: true },
     {
       id: 'resource',
-      header: 'Resource',
+      header: t('common.resource'),
       cell: ({ row }) => resources[row.original.resourceId]?.name ?? `#${row.original.resourceId}`,
     },
     {
       id: 'warehouse',
-      header: 'Warehouse',
+      header: t('common.warehouse'),
       cell: ({ row }) => warehouses[row.original.warehouseId]?.name ?? `#${row.original.warehouseId}`,
     },
     {
       id: 'quantity',
-      header: 'Qty',
+      header: t('common.quantity'),
       accessorKey: 'quantity',
       enableSorting: true,
       cell: ({ getValue }) => {
@@ -54,12 +56,12 @@ export default function StocksPage() {
     },
     {
       id: 'reservedQuantity',
-      header: 'Reserved',
+      header: t('stocks.reserved'),
       cell: ({ row }) => row.original.reservedQuantity,
     },
     {
       id: 'available',
-      header: 'Available',
+      header: t('stocks.available'),
       cell: ({ row }) => {
         const available = row.original.quantity - row.original.reservedQuantity
         return <Badge tone={available === 0 ? 'critical' : 'ok'}>{available}</Badge>
@@ -69,11 +71,11 @@ export default function StocksPage() {
   if (isAdmin) {
     columns.push({
       id: 'actions',
-      header: 'Actions',
+      header: t('common.actions'),
       cell: ({ row }) => (
         <div className="flex gap-3">
-          <RouteActionLink to={`/stocks/${row.original.id}/adjust`}>Adjust</RouteActionLink>
-          <DeleteAction label="stock record" onConfirm={() => handleDelete(row.original.id)} />
+          <RouteActionLink to={`/stocks/${row.original.id}/adjust`}>{t('stocks.adjust')}</RouteActionLink>
+          <DeleteAction label={t('stocks.entityName')} onConfirm={() => handleDelete(row.original.id)} />
         </div>
       ),
     })
@@ -82,13 +84,13 @@ export default function StocksPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold">Stock</h1>
+        <h1 className="text-xl font-bold">{t('stocks.title')}</h1>
         {isAdmin && (
           <Link
             to="/stocks/new"
             className="rounded bg-army-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-army-800"
           >
-            New stock record
+            {t('stocks.newStock')}
           </Link>
         )}
       </div>
@@ -99,7 +101,7 @@ export default function StocksPage() {
           onChange={(e) => setWarehouseId(e.target.value)}
           className="rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
         >
-          <option value="">All warehouses</option>
+          <option value="">{t('stocks.allWarehouses')}</option>
           {Object.values(warehouses).map((w) => (
             <option key={w.id} value={w.id}>
               {w.name}
@@ -111,7 +113,7 @@ export default function StocksPage() {
           onChange={(e) => setResourceId(e.target.value)}
           className="rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
         >
-          <option value="">All resources</option>
+          <option value="">{t('stocks.allResources')}</option>
           {Object.values(resources).map((r) => (
             <option key={r.id} value={r.id}>
               {r.name}
@@ -120,16 +122,14 @@ export default function StocksPage() {
         </select>
       </div>
 
-      <p className="text-xs text-gray-400 dark:text-gray-500">
-        Use Adjust to change a quantity — it always keeps the movement audit trail intact.
-      </p>
+      <p className="text-xs text-gray-400 dark:text-gray-500">{t('stocks.hint')}</p>
 
       <DataTable
         columns={columns}
         data={table.rows}
         loading={table.loading}
         error={table.error}
-        emptyMessage="No stock records to display"
+        emptyMessage={t('stocks.emptyMessage')}
         sort={table.sort}
         onSortChange={table.toggleSort}
         page={table.page}

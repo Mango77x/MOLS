@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -157,14 +158,20 @@ public class WarehouseService {
         // so any of them existing must block the delete rather than cascade.
         if (stockRepository.existsByWarehouseId(id)) {
             throw new InvalidRequestException(
+                "WAREHOUSE_DELETE_HAS_STOCK",
+                Map.of("warehouseId", id),
                 "Cannot delete warehouse with existing stock. Warehouse id: " + id);
         }
         if (orderRepository.existsByWarehouseId(id)) {
             throw new InvalidRequestException(
+                "WAREHOUSE_DELETE_HAS_ORDERS",
+                Map.of("warehouseId", id),
                 "Cannot delete warehouse with existing orders. Warehouse id: " + id);
         }
         if (shipmentRepository.existsByWarehouseId(id)) {
             throw new InvalidRequestException(
+                "WAREHOUSE_DELETE_HAS_SHIPMENTS",
+                Map.of("warehouseId", id),
                 "Cannot delete warehouse with existing shipments. Warehouse id: " + id);
         }
         warehouseRepository.deleteById(id);
