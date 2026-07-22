@@ -5,6 +5,25 @@
     "deleting": "Suppression…",
     "save": "Enregistrer"
   },
+  "errors": {
+    "STOCK_NO_RECORD_IN_WAREHOUSE": "Impossible de réserver le stock : cette ressource n'a aucun stock enregistré dans l'entrepôt de la commande. Demandé : {{requested}}. Ressource id : {{resourceId}}, entrepôt id : {{warehouseId}}",
+    "STOCK_INSUFFICIENT_RESERVE": "Impossible de réserver le stock. Demandé : {{requested}}, disponible dans cet entrepôt (stock physique moins les réservations existantes) : {{available}}. Ressource id : {{resourceId}}, entrepôt id : {{warehouseId}}",
+    "STOCK_DUPLICATE": "Un stock existe déjà pour la ressource {{resourceId}} dans l'entrepôt {{warehouseId}}. Utilisez plutôt l'ajustement.",
+    "STOCK_INSUFFICIENT_ADJUST": "Stock insuffisant. Disponible : {{available}}, réduction demandée : {{requested}}. Stock id : {{stockId}}",
+    "STOCK_DELETE_HAS_MOVEMENTS": "Impossible de supprimer un stock avec un historique de mouvements : le journal d'audit est en ajout seul. Ajustez plutôt la quantité à zéro. Stock id : {{stockId}}",
+    "WAREHOUSE_DELETE_HAS_STOCK": "Impossible de supprimer un entrepôt avec du stock existant. Entrepôt id : {{warehouseId}}",
+    "WAREHOUSE_DELETE_HAS_ORDERS": "Impossible de supprimer un entrepôt avec des commandes existantes. Entrepôt id : {{warehouseId}}",
+    "WAREHOUSE_DELETE_HAS_SHIPMENTS": "Impossible de supprimer un entrepôt avec des expéditions existantes. Entrepôt id : {{warehouseId}}",
+    "RESOURCE_DELETE_HAS_STOCK": "Impossible de supprimer une ressource avec du stock existant. Ressource id : {{resourceId}}",
+    "RESOURCE_DELETE_REFERENCED": "Impossible de supprimer une ressource référencée par des articles de commande. Ressource id : {{resourceId}}",
+    "UNIT_DELETE_HAS_ORDERS": "Impossible de supprimer une unité avec des commandes existantes. Unité id : {{unitId}}",
+    "VEHICLE_DELETE_HAS_SHIPMENTS": "Impossible de supprimer un véhicule avec des expéditions existantes. Véhicule id : {{vehicleId}}",
+    "ORDER_DELETE_COMPLETED": "Impossible de supprimer une commande TERMINÉE : ses mouvements de stock font partie du journal d'audit. Commande id : {{orderId}}",
+    "ORDER_DELETE_HAS_DELIVERED_SHIPMENT": "Impossible de supprimer une commande avec une expédition LIVRÉE : ses mouvements de stock font partie du journal d'audit. Commande id : {{orderId}}",
+    "ORDER_DELETE_HAS_SHIPMENTS": "Impossible de supprimer une commande avec des expéditions existantes. Supprimez d'abord ses expéditions. Commande id : {{orderId}}",
+    "USER_LAST_ADMIN_REMOVE": "Vous ne pouvez pas retirer le rôle du dernier administrateur actif.",
+    "USER_LAST_ADMIN_DISABLE": "Vous ne pouvez pas désactiver le dernier administrateur actif."
+  },
   "nav": {
     "dashboard": "Tableau de bord",
     "warehouses": "Entrepôts",

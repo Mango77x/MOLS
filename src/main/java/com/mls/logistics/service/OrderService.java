@@ -24,6 +24,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -221,6 +222,8 @@ public class OrderService {
         // were recorded against it. Deleting it would orphan that audit history.
         if (order.getStatus() == OrderStatus.COMPLETED) {
             throw new InvalidRequestException(
+                "ORDER_DELETE_COMPLETED",
+                Map.of("orderId", id),
                 "Cannot delete a COMPLETED order: its stock movements are part of the audit trail. Order id: " + id);
         }
         // Shipments no longer cascade-delete with their order (see Order.shipments):
@@ -229,11 +232,15 @@ public class OrderService {
         // from under it. Delete the shipment(s) via ShipmentService first.
         if (shipmentRepository.existsByOrderIdAndStatus(id, ShipmentStatus.DELIVERED)) {
             throw new InvalidRequestException(
+                "ORDER_DELETE_HAS_DELIVERED_SHIPMENT",
+                Map.of("orderId", id),
                 "Cannot delete an order with a DELIVERED shipment: "
                     + "its stock movements are part of the audit trail. Order id: " + id);
         }
         if (!shipmentRepository.findByOrderId(id, Sort.unsorted()).isEmpty()) {
             throw new InvalidRequestException(
+                "ORDER_DELETE_HAS_SHIPMENTS",
+                Map.of("orderId", id),
                 "Cannot delete an order with existing shipments. Delete its shipments first. Order id: " + id);
         }
 

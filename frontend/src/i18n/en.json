@@ -5,6 +5,25 @@
     "deleting": "Deleting…",
     "save": "Save"
   },
+  "errors": {
+    "STOCK_NO_RECORD_IN_WAREHOUSE": "Cannot reserve stock: this resource has no stock record in the order's warehouse. Requested: {{requested}}. Resource id: {{resourceId}}, warehouse id: {{warehouseId}}",
+    "STOCK_INSUFFICIENT_RESERVE": "Cannot reserve stock. Requested: {{requested}}, available in this warehouse (physical stock minus existing reservations): {{available}}. Resource id: {{resourceId}}, warehouse id: {{warehouseId}}",
+    "STOCK_DUPLICATE": "Stock already exists for resource id {{resourceId}} in warehouse id {{warehouseId}}. Use adjust instead.",
+    "STOCK_INSUFFICIENT_ADJUST": "Insufficient stock. Available: {{available}}, requested reduction: {{requested}}. Stock id: {{stockId}}",
+    "STOCK_DELETE_HAS_MOVEMENTS": "Cannot delete stock with movement history: the audit trail is append-only. Adjust the quantity to zero instead. Stock id: {{stockId}}",
+    "WAREHOUSE_DELETE_HAS_STOCK": "Cannot delete warehouse with existing stock. Warehouse id: {{warehouseId}}",
+    "WAREHOUSE_DELETE_HAS_ORDERS": "Cannot delete warehouse with existing orders. Warehouse id: {{warehouseId}}",
+    "WAREHOUSE_DELETE_HAS_SHIPMENTS": "Cannot delete warehouse with existing shipments. Warehouse id: {{warehouseId}}",
+    "RESOURCE_DELETE_HAS_STOCK": "Cannot delete resource with existing stock. Resource id: {{resourceId}}",
+    "RESOURCE_DELETE_REFERENCED": "Cannot delete resource referenced by order items. Resource id: {{resourceId}}",
+    "UNIT_DELETE_HAS_ORDERS": "Cannot delete unit with existing orders. Unit id: {{unitId}}",
+    "VEHICLE_DELETE_HAS_SHIPMENTS": "Cannot delete vehicle with existing shipments. Vehicle id: {{vehicleId}}",
+    "ORDER_DELETE_COMPLETED": "Cannot delete a COMPLETED order: its stock movements are part of the audit trail. Order id: {{orderId}}",
+    "ORDER_DELETE_HAS_DELIVERED_SHIPMENT": "Cannot delete an order with a DELIVERED shipment: its stock movements are part of the audit trail. Order id: {{orderId}}",
+    "ORDER_DELETE_HAS_SHIPMENTS": "Cannot delete an order with existing shipments. Delete its shipments first. Order id: {{orderId}}",
+    "USER_LAST_ADMIN_REMOVE": "You can't remove the last enabled ADMIN user.",
+    "USER_LAST_ADMIN_DISABLE": "You can't disable the last enabled ADMIN user."
+  },
   "nav": {
     "dashboard": "Dashboard",
     "warehouses": "Warehouses",
