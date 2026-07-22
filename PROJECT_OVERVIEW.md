@@ -702,13 +702,13 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 
 - **Maintainer**: See `pom.xml` for project details
 
-**Last updated**: 2026-07-22 (Sprint 15: two small fixes found during a
-hands-on product re-audit of `main`. `LoginPage` now shows a static
-"contact your system administrator" hint — previously a user who lost
-access and wasn't the one first-run admin had zero path forward beyond a
-generic "Invalid username or password.", since `/app/setup` only stays
-reachable while zero application users exist at all. Also,
-`useDuplicateNameWarning`'s lookup only checked the first 20 fragment
-matches for an exact duplicate; bumped to 100 (the app's own established
-"large page" convention) so the nudge holds up on realistic catalog sizes.
-Frontend suite grew from 20 files / 71 tests to 21 files / 74 tests.)
+**Last updated**: 2026-07-22 (Sprint 15 merged: two small fixes found
+during a hands-on product re-audit of `main` — a "contact your system
+administrator" hint on `LoginPage` for users with no path forward after
+losing access, and `useDuplicateNameWarning`'s lookup bumped from the
+first 20 fragment matches to 100. Frontend suite grew from 20 files / 71
+tests to 21 files / 74 tests. That same audit's broader findings turned
+into a new `docs/DEVELOPMENT_PLAN.md` covering internationalization, data
+export, notifications, and bulk import as the next sprints — plus a
+longer-term backlog for commercial-ERP and multi-tenant-SaaS scope if
+either is ever decided on)
