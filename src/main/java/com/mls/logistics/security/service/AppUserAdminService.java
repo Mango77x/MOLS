@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -87,7 +88,8 @@ public class AppUserAdminService {
         if (user.getRole() == Role.ADMIN && newRole != Role.ADMIN && user.isEnabled()) {
             long enabledAdmins = appUserRepository.countByRoleAndEnabledTrue(Role.ADMIN);
             if (enabledAdmins <= 1) {
-                throw new InvalidRequestException("You can't remove the last enabled ADMIN user.");
+                throw new InvalidRequestException(
+                    "USER_LAST_ADMIN_REMOVE", null, "You can't remove the last enabled ADMIN user.");
             }
         }
 
@@ -123,7 +125,8 @@ public class AppUserAdminService {
         if (user.getRole() == Role.ADMIN && user.isEnabled() && !enabled) {
             long enabledAdmins = appUserRepository.countByRoleAndEnabledTrue(Role.ADMIN);
             if (enabledAdmins <= 1) {
-                throw new InvalidRequestException("You can't disable the last enabled ADMIN user.");
+                throw new InvalidRequestException(
+                    "USER_LAST_ADMIN_DISABLE", null, "You can't disable the last enabled ADMIN user.");
             }
         }
 

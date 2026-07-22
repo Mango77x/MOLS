@@ -136,6 +136,8 @@ public class StockService {
         // raw DataIntegrityViolationException from the DB.
         if (stockRepository.findByResourceIdAndWarehouseId(request.getResourceId(), request.getWarehouseId()).isPresent()) {
             throw new DuplicateResourceException(
+                "STOCK_DUPLICATE",
+                Map.of("resourceId", request.getResourceId(), "warehouseId", request.getWarehouseId()),
                 "Stock already exists for resource id " + request.getResourceId()
                     + " in warehouse id " + request.getWarehouseId() + ". Use adjust instead.");
         }
@@ -199,6 +201,8 @@ public class StockService {
         // Rule 1: stock quantity can never go negative
         if (newQuantity < 0) {
             throw new InsufficientStockException(
+                "STOCK_INSUFFICIENT_ADJUST",
+                Map.of("available", stock.getQuantity(), "requested", Math.abs(delta), "stockId", id),
                 "Insufficient stock. Available: " + stock.getQuantity() +
                 ", requested reduction: " + Math.abs(delta) +
                 ". Stock id: " + id
@@ -273,6 +277,8 @@ public class StockService {
         }
         if (movementRepository.existsByStockId(id)) {
             throw new InvalidRequestException(
+                "STOCK_DELETE_HAS_MOVEMENTS",
+                Map.of("stockId", id),
                 "Cannot delete stock with movement history: the audit trail is append-only. " +
                 "Adjust the quantity to zero instead. Stock id: " + id);
         }

@@ -5,6 +5,25 @@
     "deleting": "Eliminando…",
     "save": "Guardar"
   },
+  "errors": {
+    "STOCK_NO_RECORD_IN_WAREHOUSE": "No se puede reservar stock: este recurso no tiene stock registrado en el almacén del pedido. Solicitado: {{requested}}. Recurso id: {{resourceId}}, almacén id: {{warehouseId}}",
+    "STOCK_INSUFFICIENT_RESERVE": "No se puede reservar stock. Solicitado: {{requested}}, disponible en este almacén (stock físico menos reservas existentes): {{available}}. Recurso id: {{resourceId}}, almacén id: {{warehouseId}}",
+    "STOCK_DUPLICATE": "Ya existe stock para el recurso {{resourceId}} en el almacén {{warehouseId}}. Usa ajustar en su lugar.",
+    "STOCK_INSUFFICIENT_ADJUST": "Stock insuficiente. Disponible: {{available}}, reducción solicitada: {{requested}}. Stock id: {{stockId}}",
+    "STOCK_DELETE_HAS_MOVEMENTS": "No se puede eliminar un stock con historial de movimientos: el registro de auditoría es de solo adición. Ajusta la cantidad a cero en su lugar. Stock id: {{stockId}}",
+    "WAREHOUSE_DELETE_HAS_STOCK": "No se puede eliminar un almacén con stock existente. Almacén id: {{warehouseId}}",
+    "WAREHOUSE_DELETE_HAS_ORDERS": "No se puede eliminar un almacén con pedidos existentes. Almacén id: {{warehouseId}}",
+    "WAREHOUSE_DELETE_HAS_SHIPMENTS": "No se puede eliminar un almacén con envíos existentes. Almacén id: {{warehouseId}}",
+    "RESOURCE_DELETE_HAS_STOCK": "No se puede eliminar un recurso con stock existente. Recurso id: {{resourceId}}",
+    "RESOURCE_DELETE_REFERENCED": "No se puede eliminar un recurso referenciado por artículos de pedido. Recurso id: {{resourceId}}",
+    "UNIT_DELETE_HAS_ORDERS": "No se puede eliminar una unidad con pedidos existentes. Unidad id: {{unitId}}",
+    "VEHICLE_DELETE_HAS_SHIPMENTS": "No se puede eliminar un vehículo con envíos existentes. Vehículo id: {{vehicleId}}",
+    "ORDER_DELETE_COMPLETED": "No se puede eliminar un pedido COMPLETADO: sus movimientos de stock forman parte del registro de auditoría. Pedido id: {{orderId}}",
+    "ORDER_DELETE_HAS_DELIVERED_SHIPMENT": "No se puede eliminar un pedido con un envío ENTREGADO: sus movimientos de stock forman parte del registro de auditoría. Pedido id: {{orderId}}",
+    "ORDER_DELETE_HAS_SHIPMENTS": "No se puede eliminar un pedido con envíos existentes. Elimina primero sus envíos. Pedido id: {{orderId}}",
+    "USER_LAST_ADMIN_REMOVE": "No puedes quitar el rol al último usuario ADMIN habilitado.",
+    "USER_LAST_ADMIN_DISABLE": "No puedes deshabilitar al último usuario ADMIN habilitado."
+  },
   "nav": {
     "dashboard": "Panel",
     "warehouses": "Almacenes",

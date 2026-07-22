@@ -393,6 +393,8 @@ public class OrderItemService {
         Stock stock = stockRepository
                 .findByResourceIdAndWarehouseIdForUpdate(resourceId, warehouseId)
                 .orElseThrow(() -> new InsufficientStockException(
+                    "STOCK_NO_RECORD_IN_WAREHOUSE",
+                    Map.of("requested", quantity, "resourceId", resourceId, "warehouseId", warehouseId),
                     "Cannot reserve stock: this resource has no stock record in the order's warehouse. " +
                     "Requested: " + quantity + ". Resource id: " + resourceId + ", warehouse id: " + warehouseId
                 ));
@@ -400,6 +402,8 @@ public class OrderItemService {
         int trulyAvailable = stock.getQuantity() - stock.getReservedQuantity();
         if (quantity > trulyAvailable) {
             throw new InsufficientStockException(
+                "STOCK_INSUFFICIENT_RESERVE",
+                Map.of("requested", quantity, "available", trulyAvailable, "resourceId", resourceId, "warehouseId", warehouseId),
                 "Cannot reserve stock. Requested: " + quantity +
                 ", available in this warehouse (physical stock minus existing reservations): " + trulyAvailable +
                 ". Resource id: " + resourceId + ", warehouse id: " + warehouseId
