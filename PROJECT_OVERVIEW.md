@@ -702,11 +702,13 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 
 - **Maintainer**: See `pom.xml` for project details
 
-**Last updated**: 2026-07-21 (Sprint 14: stretch items — Warehouse/Resource/
-Unit forms now show a non-blocking duplicate-name nudge on blur
-(`useDuplicateNameWarning`, no backend constraint added), and `DataTable`'s
-result-count caption no longer says "1 results". Frontend suite grew from
-19 files / 56 tests to 20 files / 71 tests. This closes out the technical-
-debt and product-completion backlog tracked in `docs/DEVELOPMENT_PLAN.md`
-(Sprints 8-14) — removed now that every item on it is done; see git
-history for that doc's content if it's ever needed again)
+**Last updated**: 2026-07-22 (Sprint 15: two small fixes found during a
+hands-on product re-audit of `main`. `LoginPage` now shows a static
+"contact your system administrator" hint — previously a user who lost
+access and wasn't the one first-run admin had zero path forward beyond a
+generic "Invalid username or password.", since `/app/setup` only stays
+reachable while zero application users exist at all. Also,
+`useDuplicateNameWarning`'s lookup only checked the first 20 fragment
+matches for an exact duplicate; bumped to 100 (the app's own established
+"large page" convention) so the nudge holds up on realistic catalog sizes.
+Frontend suite grew from 20 files / 71 tests to 21 files / 74 tests.)
