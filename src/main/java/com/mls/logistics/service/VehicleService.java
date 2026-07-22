@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -149,6 +150,8 @@ public class VehicleService {
         // audit-relevant shipment history.
         if (shipmentRepository.existsByVehicleId(id)) {
             throw new InvalidRequestException(
+                "VEHICLE_DELETE_HAS_SHIPMENTS",
+                Map.of("vehicleId", id),
                 "Cannot delete vehicle with existing shipments. Vehicle id: " + id);
         }
         vehicleRepository.deleteById(id);

@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -147,6 +148,8 @@ public class UnitService {
         // history. Reassign or delete the orders first.
         if (orderRepository.existsByUnitId(id)) {
             throw new InvalidRequestException(
+                "UNIT_DELETE_HAS_ORDERS",
+                Map.of("unitId", id),
                 "Cannot delete unit with existing orders. Unit id: " + id);
         }
         unitRepository.deleteById(id);

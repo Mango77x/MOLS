@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -150,12 +151,16 @@ public class ResourceService {
         }
         if (stockRepository.existsByResourceId(id)) {
             throw new InvalidRequestException(
+                "RESOURCE_DELETE_HAS_STOCK",
+                Map.of("resourceId", id),
                 "Cannot delete resource with existing stock. Resource id: " + id);
         }
         // Order items reference their resource via a required FK, independently
         // of whether stock for it still exists in any warehouse.
         if (orderItemRepository.existsByResourceId(id)) {
             throw new InvalidRequestException(
+                "RESOURCE_DELETE_REFERENCED",
+                Map.of("resourceId", id),
                 "Cannot delete resource referenced by order items. Resource id: " + id);
         }
         resourceRepository.deleteById(id);

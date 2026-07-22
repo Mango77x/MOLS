@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../../api/client'
 import { hasAnyRole, useCurrentRole } from '../../auth/roles'
@@ -18,6 +19,13 @@ import { useLookup } from '../../api/lookups'
 import Badge, { type BadgeTone } from '../../components/Badge'
 import { FormBanner } from '../../components/form/fields'
 import type { PageResponse } from '../../components/table/useServerTable'
+import {
+  enumLabel,
+  MOVEMENT_TYPE_LABELS,
+  SHIPMENT_STATUS_LABELS,
+  VEHICLE_STATUS_LABELS,
+  VEHICLE_TYPE_LABELS,
+} from '../../lib/enumLabels'
 
 const STATUS_TONE: Record<ShipmentStatus, BadgeTone> = {
   PLANNED: 'neutral',
@@ -31,6 +39,7 @@ async function fetchAll<T>(path: string, params: Record<string, string | number>
 }
 
 export default function ShipmentDetailPage() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const role = useCurrentRole()
   const canEdit = hasAnyRole(role, ['ADMIN', 'OPERATOR'])
@@ -63,32 +72,32 @@ export default function ShipmentDetailPage() {
   }, [shipment, order])
 
   if (loading) {
-    return <p className="text-sm text-gray-500 dark:text-gray-400">Loading shipment…</p>
+    return <p className="text-sm text-gray-500 dark:text-gray-400">{t('shipments.loading')}</p>
   }
   if (notFound || !shipment) {
-    return <FormBanner message="Shipment not found." />
+    return <FormBanner message={t('shipments.notFound')} />
   }
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold">Shipment #{shipment.id}</h1>
+          <h1 className="text-xl font-bold">{t('shipments.shipmentNumber', { id: shipment.id })}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            <Badge tone={STATUS_TONE[shipment.status]}>{shipment.status}</Badge>
-            {order && ` • Order #${order.id}`}
+            <Badge tone={STATUS_TONE[shipment.status]}>{enumLabel(SHIPMENT_STATUS_LABELS, shipment.status)}</Badge>
+            {order && ` • ${t('orders.orderNumber', { id: order.id })}`}
           </p>
         </div>
         <div className="flex gap-3">
           <Link to="/shipments" className="text-sm font-medium text-army-700 underline dark:text-army-300">
-            Back
+            {t('common.back')}
           </Link>
           {canEdit && (
             <Link
               to={`/shipments/${shipment.id}/edit`}
               className="text-sm font-medium text-army-700 underline dark:text-army-300"
             >
-              Edit
+              {t('common.edit')}
             </Link>
           )}
         </div>
@@ -96,45 +105,45 @@ export default function ShipmentDetailPage() {
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-900 xl:col-span-1">
-          <h2 className="mb-3 text-lg font-semibold">Context</h2>
+          <h2 className="mb-3 text-lg font-semibold">{t('shipments.detail.context')}</h2>
           <div>
-            <p className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Order</p>
-            <p className="font-medium">{order ? `Order #${order.id}` : '—'}</p>
+            <p className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">{t('shipments.order')}</p>
+            <p className="font-medium">{order ? t('orders.orderNumber', { id: order.id }) : '—'}</p>
             {unit && <p className="text-xs text-gray-500 dark:text-gray-400">{unit.name}</p>}
           </div>
           <div className="mt-3">
             <p className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
-              Warehouse (origin)
+              {t('shipments.detail.warehouseOrigin')}
             </p>
             <p className="font-medium">{warehouse?.name ?? '—'}</p>
             {warehouse && <p className="text-xs text-gray-500 dark:text-gray-400">{warehouse.location}</p>}
           </div>
           <div className="mt-3">
-            <p className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Vehicle</p>
-            <p className="font-medium">{vehicle ? `Vehicle #${vehicle.id}` : '—'}</p>
+            <p className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">{t('shipments.vehicle')}</p>
+            <p className="font-medium">{vehicle ? `#${vehicle.id}` : '—'}</p>
             {vehicle && (
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {vehicle.type} • {vehicle.status}
+                {enumLabel(VEHICLE_TYPE_LABELS, vehicle.type)} • {enumLabel(VEHICLE_STATUS_LABELS, vehicle.status)}
               </p>
             )}
           </div>
         </div>
 
         <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-900">
-          <h2 className="mb-3 text-lg font-semibold">Items (this shipment)</h2>
+          <h2 className="mb-3 text-lg font-semibold">{t('shipments.detail.itemsTitle')}</h2>
           <table className="w-full text-left text-sm">
             <thead className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
               <tr>
-                <th className="py-2 pr-3 font-medium">Resource</th>
-                <th className="py-2 text-right font-medium">Ordered</th>
-                <th className="py-2 text-right font-medium">This shipment</th>
+                <th className="py-2 pr-3 font-medium">{t('common.resource')}</th>
+                <th className="py-2 text-right font-medium">{t('shipments.form.ordered')}</th>
+                <th className="py-2 text-right font-medium">{t('shipments.detail.thisShipment')}</th>
               </tr>
             </thead>
             <tbody>
               {shipment.items.length === 0 && (
                 <tr>
                   <td colSpan={3} className="py-3 text-center text-gray-400 dark:text-gray-500">
-                    No items.
+                    {t('shipments.detail.noItems')}
                   </td>
                 </tr>
               )}
@@ -157,25 +166,23 @@ export default function ShipmentDetailPage() {
         </div>
 
         <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-900 xl:col-span-2">
-          <h2 className="mb-1 text-lg font-semibold">Movements (linked)</h2>
-          <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
-            Only movements explicitly linked to this shipment are shown.
-          </p>
+          <h2 className="mb-1 text-lg font-semibold">{t('shipments.detail.movementsTitle')}</h2>
+          <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">{t('shipments.detail.movementsHint')}</p>
           <table className="w-full text-left text-sm">
             <thead className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
               <tr>
-                <th className="py-2 pr-3 font-medium">Date</th>
-                <th className="py-2 pr-3 font-medium">Action</th>
-                <th className="py-2 pr-3 text-right font-medium">Amount</th>
-                <th className="py-2 pr-3 font-medium">Reason</th>
-                <th className="py-2 text-right font-medium">Stock</th>
+                <th className="py-2 pr-3 font-medium">{t('orders.date')}</th>
+                <th className="py-2 pr-3 font-medium">{t('orders.action')}</th>
+                <th className="py-2 pr-3 text-right font-medium">{t('orders.amount')}</th>
+                <th className="py-2 pr-3 font-medium">{t('common.reason')}</th>
+                <th className="py-2 text-right font-medium">{t('shipments.detail.stock')}</th>
               </tr>
             </thead>
             <tbody>
               {movements.length === 0 && (
                 <tr>
                   <td colSpan={5} className="py-3 text-center text-gray-400 dark:text-gray-500">
-                    No linked movements.
+                    {t('shipments.detail.noLinkedMovements')}
                   </td>
                 </tr>
               )}
@@ -183,7 +190,9 @@ export default function ShipmentDetailPage() {
                 <tr key={movement.id} className="border-t border-gray-100 dark:border-gray-800">
                   <td className="py-2 pr-3">{movement.dateTime.replace('T', ' ').slice(0, 16)}</td>
                   <td className="py-2 pr-3">
-                    <Badge tone={movement.type === 'ENTRY' ? 'ok' : 'warn'}>{movement.type}</Badge>
+                    <Badge tone={movement.type === 'ENTRY' ? 'ok' : 'warn'}>
+                      {enumLabel(MOVEMENT_TYPE_LABELS, movement.type)}
+                    </Badge>
                   </td>
                   <td className="py-2 pr-3 text-right font-medium">{movement.quantity}</td>
                   <td className="py-2 pr-3">{movement.reason ?? '—'}</td>

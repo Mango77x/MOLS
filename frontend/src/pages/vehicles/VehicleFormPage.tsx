@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { api } from '../../api/client'
@@ -13,15 +15,18 @@ import { positiveNumber } from '../../components/form/zodHelpers'
 import { useToast } from '../../components/toast/toastContext'
 import { enumLabel, VEHICLE_STATUS_LABELS, VEHICLE_TYPE_LABELS } from '../../lib/enumLabels'
 
-const schema = z.object({
-  type: z.enum(['LAND', 'SEA', 'AIR'], { message: 'Select a type' }),
-  capacity: positiveNumber('Vehicle capacity must be greater than 0'),
-  status: z.enum(['AVAILABLE', 'IN_USE', 'IN_REPAIR'], { message: 'Select a status' }),
-})
+function buildSchema(t: TFunction) {
+  return z.object({
+    type: z.enum(['LAND', 'SEA', 'AIR'], { message: t('vehicles.form.selectType') }),
+    capacity: positiveNumber(t('vehicles.form.capacityPositive')),
+    status: z.enum(['AVAILABLE', 'IN_USE', 'IN_REPAIR'], { message: t('vehicles.form.selectStatus') }),
+  })
+}
 
-type FormValues = z.infer<typeof schema>
+type FormValues = z.infer<ReturnType<typeof buildSchema>>
 
 export default function VehicleFormPage() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const isEdit = id !== undefined
   const navigate = useNavigate()
@@ -38,7 +43,7 @@ export default function VehicleFormPage() {
     setError,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(buildSchema(t)),
     defaultValues: { type: undefined, capacity: undefined, status: undefined },
   })
 
@@ -57,10 +62,10 @@ export default function VehicleFormPage() {
     try {
       if (isEdit) {
         await api.put(`/vehicles/${id}`, values)
-        showToast('Vehicle updated.', 'success')
+        showToast(t('vehicles.updated'), 'success')
       } else {
         await api.post('/vehicles', values)
-        showToast('Vehicle created.', 'success')
+        showToast(t('vehicles.created'), 'success')
       }
       navigate('/vehicles')
     } catch (error) {
@@ -69,25 +74,25 @@ export default function VehicleFormPage() {
   }
 
   if (isEdit && loading) {
-    return <p className="text-sm text-gray-500 dark:text-gray-400">Loading vehicle…</p>
+    return <p className="text-sm text-gray-500 dark:text-gray-400">{t('vehicles.loading')}</p>
   }
   if (isEdit && notFound) {
-    return <FormBanner message="Vehicle not found." />
+    return <FormBanner message={t('vehicles.notFound')} />
   }
 
   return (
-    <FormPage title={isEdit ? 'Edit vehicle' : 'New vehicle'} backTo="/vehicles">
+    <FormPage title={isEdit ? t('vehicles.editVehicle') : t('vehicles.newVehicle')} backTo="/vehicles">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <FormBanner message={banner} />
         <SelectField
-          label="Type"
+          label={t('common.type')}
           id="type"
           registration={register('type')}
           error={errors.type?.message}
           defaultValue=""
         >
           <option value="" disabled>
-            Select a type
+            {t('vehicles.form.selectType')}
           </option>
           {Object.entries(VEHICLE_TYPE_LABELS).map(([value]) => (
             <option key={value} value={value}>
@@ -96,7 +101,7 @@ export default function VehicleFormPage() {
           ))}
         </SelectField>
         <TextField
-          label="Capacity (kg)"
+          label={t('vehicles.capacityKg')}
           id="capacity"
           type="number"
           min={1}
@@ -105,14 +110,14 @@ export default function VehicleFormPage() {
           error={errors.capacity?.message}
         />
         <SelectField
-          label="Status"
+          label={t('common.status')}
           id="status"
           registration={register('status')}
           error={errors.status?.message}
           defaultValue=""
         >
           <option value="" disabled>
-            Select a status
+            {t('vehicles.form.selectStatus')}
           </option>
           {Object.entries(VEHICLE_STATUS_LABELS).map(([value]) => (
             <option key={value} value={value}>
@@ -121,8 +126,10 @@ export default function VehicleFormPage() {
           ))}
         </SelectField>
         <div className="flex gap-3">
-          <SubmitButton submitting={isSubmitting}>{isSubmitting ? 'Saving…' : 'Save'}</SubmitButton>
-          <SecondaryButton onClick={() => navigate('/vehicles')}>Cancel</SecondaryButton>
+          <SubmitButton submitting={isSubmitting}>
+            {isSubmitting ? t('common.saving') : t('common.save')}
+          </SubmitButton>
+          <SecondaryButton onClick={() => navigate('/vehicles')}>{t('common.cancel')}</SecondaryButton>
         </div>
       </form>
     </FormPage>

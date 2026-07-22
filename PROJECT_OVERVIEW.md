@@ -83,10 +83,17 @@ Tailwind 4) and is served at `/app/**`:
   result count) go through i18next's `count`-based plural keys rather than
   hand-rolled singular/plural ternaries, since languages don't all share
   English's singular/plural boundary (French treats 0 as singular).
-  Currently covers shell chrome and the Dashboard; per-page content is
-  Sprint 17. `npm run i18n:status`/`i18n:extract` (`i18next-cli`,
-  configured in `frontend/i18next.config.ts`) track key coverage across
-  the three languages going forward.
+  Covers the shell chrome, the Dashboard (Sprint 16) and, as of Sprint 17,
+  every remaining page module — Warehouses, Resources, Vehicles, Units,
+  Stock, Orders (list/wizard/edit/detail/items manager), Shipments,
+  Movements and Users — 100% ES/FR key coverage. `npm run i18n:status`/
+  `i18n:extract` (`i18next-cli`, configured in `frontend/i18next.config.ts`)
+  track key coverage across the three languages going forward. Backend
+  errors also carry a machine-readable `code` (+ optional `params`) on the
+  four custom exception types (`CodedException` base class); `extractApiError`
+  translates recognized codes via `errors.<code>` and falls back to the raw
+  English `message` for anything not yet migrated, so error-message coverage
+  can keep rolling out incrementally without a hard cutover.
 - **Pages**: the dashboard (fed by `GET /api/dashboard`) ships KPI cards,
   Recharts charts (stock by warehouse, movements by type, orders by status —
   each with an empty-state fallback; the two donut charts also carry a
@@ -714,22 +721,25 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 
 - **Maintainer**: See `pom.xml` for project details
 
-**Last updated**: 2026-07-22 (Sprint 16 + fixup: internationalization
-infrastructure — `react-i18next`, EN/ES/FR resources, a `useLocale` hook
-mirroring the theme toggle's pattern, and a language switcher in
-`AppLayout`. Translated the shared UI surface (nav, `ConfirmDialog`,
-`DataTable` chrome, `RowActions`, `LoginPage`, 404 page, the Dashboard
-including `LogisticsMap`); per-page content is Sprint 17. Fixed two
-correctness gaps found along the way: `DataTable`'s result-count
-pluralization now uses i18next's CLDR-backed plural rules instead of an
-English-only ternary (French treats 0 as grammatically singular, unlike
-English), and two `toLocaleString` call sites now pass the active UI
-locale explicitly instead of trusting the browser's. Also fixed a stale
-pre-React-migration `/ui/...` link found in `AlertsPanel` while already
-touching that line. A same-day fixup then closed a real regression the
-maintainer caught testing the merged build: 8 call sites that populated
-status/type `<select>` options from the label maps were rendering the
-destructured `label` directly instead of resolving it through
-`enumLabel()`, so those dropdowns briefly showed raw keys like
-`enums.shipmentStatus.PLANNED` instead of "Planned". Frontend suite grew
-from 21 files / 74 tests to 23 files / 86 tests.)
+**Last updated**: 2026-07-22 (Sprint 17: finished the i18n rollout started
+in Sprint 16. Backend gained a `CodedException` base class + `code`/`params`
+on `ErrorResponse`, covering 17 throw sites across `StockService`,
+`OrderItemService`, `WarehouseService`, `ResourceService`, `UnitService`,
+`VehicleService`, `OrderService` and `AppUserAdminService`; the frontend's
+`extractApiError` translates recognized codes and falls back to the raw
+English `message` otherwise. Translated the 9 remaining page modules —
+Warehouses, Resources, Vehicles, Units, Stock, Orders (list, wizard,
+edit, detail, items manager), Shipments, Movements, Users — reaching 100%
+ES/FR key coverage (340/340 keys) and adding a `MOVEMENT_TYPE_LABELS` map
+so movement-type badges resolve through `enumLabel()` like every other
+status/type badge instead of showing the raw `ENTRY`/`EXIT` value. Found
+and fixed three real bugs during the mandatory live-Docker verification
+pass (none caught by tests): an untranslated literal "from" in
+`OrderDetailPage`; `FormPage`'s shared `backLabel` default was hardcoded
+English, silently affecting the "Back" link on every one of the app's
+create/edit forms in every locale; and a pre-existing (not
+Sprint-17-introduced) stray `NaN` text node on the new-shipment form,
+caused by `selectedOrderId && ...` short-circuiting on a
+React-Hook-Form-produced `NaN` instead of `false` when a numeric
+`<select>` is left unselected. Frontend suite: 23 files / 86 tests → 24
+files / 94 tests.)

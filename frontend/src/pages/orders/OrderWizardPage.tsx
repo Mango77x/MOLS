@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../api/client'
 import type { OrderItemEntity } from '../../api/entities'
@@ -11,12 +12,12 @@ import ItemsStep from './wizard/ItemsStep'
 import ShipmentStep from './wizard/ShipmentStep'
 import type { DraftItem, WizardHeader, WizardShipment } from './wizard/shared'
 
-const STEPS = ['Header', 'Items', 'Shipment'] as const
-
 function Stepper({ current }: { current: 1 | 2 | 3 }) {
+  const { t } = useTranslation()
+  const steps = [t('orders.wizard.stepHeader'), t('orders.wizard.stepItems'), t('orders.wizard.stepShipment')]
   return (
     <div className="mb-4 flex gap-4 text-sm">
-      {STEPS.map((label, index) => {
+      {steps.map((label, index) => {
         const stepNumber = (index + 1) as 1 | 2 | 3
         const active = stepNumber === current
         const done = stepNumber < current
@@ -46,6 +47,7 @@ function Stepper({ current }: { current: 1 | 2 | 3 }) {
  * is a separate call afterwards, since it targets a different resource.
  */
 export default function OrderWizardPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [header, setHeader] = useState<WizardHeader>({
@@ -95,7 +97,9 @@ export default function OrderWizardPage() {
         } catch (shipmentError) {
           navigate(`/orders/${orderId}`, {
             state: {
-              banner: `Order created, but the shipment could not be created: ${extractApiError(shipmentError).message}`,
+              banner: t('orders.wizard.shipmentCreateFailed', {
+                message: extractApiError(shipmentError).message,
+              }),
             },
           })
           return
@@ -111,7 +115,7 @@ export default function OrderWizardPage() {
   }
 
   return (
-    <FormPage title="New order" backTo="/orders" wide>
+    <FormPage title={t('orders.wizard.title')} backTo="/orders" wide>
       <Stepper current={step} />
       <FormBanner message={banner} />
       <div className={banner ? 'mt-4' : ''}>

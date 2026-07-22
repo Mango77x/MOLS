@@ -46,7 +46,9 @@ public class GlobalExceptionHandler {
                 HttpStatus.NOT_FOUND.value(),
                 HttpStatus.NOT_FOUND.getReasonPhrase(),
                 ex.getMessage(),
-                request.getDescription(false).replace("uri=", "")
+                request.getDescription(false).replace("uri=", ""),
+                ex.getCode(),
+                ex.getParams()
         );
 
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
@@ -70,7 +72,9 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
                 ex.getMessage(),
-                request.getDescription(false).replace("uri=", "")
+                request.getDescription(false).replace("uri=", ""),
+                ex.getCode(),
+                ex.getParams()
         );
 
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
@@ -196,7 +200,9 @@ public class GlobalExceptionHandler {
                 HttpStatus.CONFLICT.value(),
                 HttpStatus.CONFLICT.getReasonPhrase(),
                 ex.getMessage(),
-                request.getDescription(false).replace("uri=", "")
+                request.getDescription(false).replace("uri=", ""),
+                ex.getCode(),
+                ex.getParams()
         );
 
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
@@ -222,7 +228,9 @@ public class GlobalExceptionHandler {
                 HttpStatus.CONFLICT.value(),
                 HttpStatus.CONFLICT.getReasonPhrase(),
                 ex.getMessage(),
-                request.getDescription(false).replace("uri=", "")
+                request.getDescription(false).replace("uri=", ""),
+                ex.getCode(),
+                ex.getParams()
         );
 
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);

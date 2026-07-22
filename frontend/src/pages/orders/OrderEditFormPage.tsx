@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { api } from '../../api/client'
@@ -15,15 +17,20 @@ import { positiveId } from '../../components/form/zodHelpers'
 import { enumLabel, ORDER_STATUS_LABELS } from '../../lib/enumLabels'
 import OrderItemsManager from './OrderItemsManager'
 
-const schema = z.object({
-  unitId: positiveId('Select a unit'),
-  dateCreated: z.string().min(1, 'Order creation date is required'),
-  status: z.enum(['CREATED', 'VALIDATED', 'PARTIALLY_SHIPPED', 'COMPLETED', 'CANCELLED'], { message: 'Select a status' }),
-})
+function buildSchema(t: TFunction) {
+  return z.object({
+    unitId: positiveId(t('orders.wizard.header.selectUnit')),
+    dateCreated: z.string().min(1, t('orders.wizard.header.dateRequired')),
+    status: z.enum(['CREATED', 'VALIDATED', 'PARTIALLY_SHIPPED', 'COMPLETED', 'CANCELLED'], {
+      message: t('orders.wizard.header.selectStatus'),
+    }),
+  })
+}
 
-type FormValues = z.infer<typeof schema>
+type FormValues = z.infer<ReturnType<typeof buildSchema>>
 
 export default function OrderEditFormPage() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const navigate = useNavigate()
   const { showToast } = useToast()
@@ -38,7 +45,7 @@ export default function OrderEditFormPage() {
     reset,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) })
+  } = useForm<FormValues>({ resolver: zodResolver(buildSchema(t)) })
 
   // Re-applies whenever the units lookup finishes loading too: the <select>'s
   // value only "sticks" once the matching <option> exists in the DOM, so
@@ -54,7 +61,7 @@ export default function OrderEditFormPage() {
     setBanner(null)
     try {
       await api.put(`/orders/${id}`, values)
-      showToast('Order updated.', 'success')
+      showToast(t('orders.updated'), 'success')
       navigate(`/orders/${id}`)
     } catch (error) {
       setBanner(applyApiError(extractApiError(error), setError))
@@ -62,10 +69,10 @@ export default function OrderEditFormPage() {
   }
 
   if (loading) {
-    return <p className="text-sm text-gray-500 dark:text-gray-400">Loading order…</p>
+    return <p className="text-sm text-gray-500 dark:text-gray-400">{t('orders.loading')}</p>
   }
   if (notFound || !order) {
-    return <FormBanner message="Order not found." />
+    return <FormBanner message={t('orders.notFound')} />
   }
 
   // COMPLETED and CANCELLED are terminal (see OrderStatus): the API rejects
@@ -75,18 +82,18 @@ export default function OrderEditFormPage() {
   const isTerminal = order.status === 'COMPLETED' || order.status === 'CANCELLED'
 
   return (
-    <FormPage title={`Edit order #${order.id}`} backTo={`/orders/${order.id}`} wide>
+    <FormPage title={t('orders.edit.title', { id: order.id })} backTo={`/orders/${order.id}`} wide>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <FormBanner message={banner} />
         <SelectField
-          label="Unit"
+          label={t('orders.unit')}
           id="unitId"
           defaultValue=""
           registration={register('unitId', { valueAsNumber: true })}
           error={errors.unitId?.message}
         >
           <option value="" disabled>
-            Select a unit
+            {t('orders.wizard.header.selectUnit')}
           </option>
           {Object.values(units).map((u) => (
             <option key={u.id} value={u.id}>
@@ -96,26 +103,26 @@ export default function OrderEditFormPage() {
           ))}
         </SelectField>
         <div>
-          <span className="block text-sm font-medium text-gray-700 dark:text-gray-300">Origin warehouse</span>
+          <span className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            {t('orders.originWarehouse')}
+          </span>
           <p className="mt-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-300">
             {warehouses[order.warehouseId]
               ? `${warehouses[order.warehouseId].name}${warehouses[order.warehouseId].location ? ` — ${warehouses[order.warehouseId].location}` : ''}`
               : '…'}
           </p>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Fixed at creation — every item reserves stock from this warehouse.
-          </p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('orders.edit.fixedAtCreation')}</p>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <TextField
-            label="Date created"
+            label={t('orders.dateCreated')}
             id="dateCreated"
             type="date"
             registration={register('dateCreated')}
             error={errors.dateCreated?.message}
           />
           <SelectField
-            label="Status"
+            label={t('common.status')}
             id="status"
             registration={register('status')}
             error={errors.status?.message}
@@ -130,18 +137,21 @@ export default function OrderEditFormPage() {
         </div>
         {isTerminal && (
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            This order is {order.status === 'COMPLETED' ? 'completed' : 'cancelled'} — its status can no longer
-            change.
+            {order.status === 'COMPLETED'
+              ? t('orders.edit.statusLockedCompleted')
+              : t('orders.edit.statusLockedCancelled')}
           </p>
         )}
         <div className="flex gap-3">
-          <SubmitButton submitting={isSubmitting}>{isSubmitting ? 'Saving…' : 'Save'}</SubmitButton>
-          <SecondaryButton onClick={() => navigate(`/orders/${order.id}`)}>Cancel</SecondaryButton>
+          <SubmitButton submitting={isSubmitting}>
+            {isSubmitting ? t('common.saving') : t('common.save')}
+          </SubmitButton>
+          <SecondaryButton onClick={() => navigate(`/orders/${order.id}`)}>{t('common.cancel')}</SecondaryButton>
         </div>
       </form>
 
       <div className="mt-8 border-t border-gray-200 pt-6 dark:border-gray-800">
-        <h2 className="mb-3 text-lg font-semibold">Items</h2>
+        <h2 className="mb-3 text-lg font-semibold">{t('orders.itemsTitle')}</h2>
         <OrderItemsManager orderId={order.id} locked={isTerminal} />
       </div>
     </FormPage>
