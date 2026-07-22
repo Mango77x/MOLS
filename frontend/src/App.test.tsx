@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { api } from './api/client'
+import { ToastProvider } from './components/toast/ToastProvider'
 
 function mockAuthenticatedApi() {
   vi.spyOn(api, 'get').mockImplementation((url: string) => {
@@ -17,7 +18,11 @@ function mockAuthenticatedApi() {
 
 function renderAppAt(path: string) {
   window.history.pushState({}, '', path)
-  return render(<App />)
+  return render(
+    <ToastProvider>
+      <App />
+    </ToastProvider>,
+  )
 }
 
 /**

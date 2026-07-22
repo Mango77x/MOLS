@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { fetchAllPages } from '../../api/fetchAllPages'
 import { useLookup } from '../../api/lookups'
 import type {
   MovementEntity,
@@ -11,7 +12,9 @@ import type {
 } from '../../api/entities'
 import Badge, { type BadgeTone } from '../../components/Badge'
 import DataTable from '../../components/table/DataTable'
+import ExportCsvButton from '../../components/table/ExportCsvButton'
 import { useServerTable } from '../../components/table/useServerTable'
+import { downloadCsv, toCsv } from '../../lib/csv'
 import { enumLabel, MOVEMENT_TYPE_LABELS } from '../../lib/enumLabels'
 
 const TYPE_TONE: Record<MovementType, BadgeTone> = {
@@ -55,6 +58,35 @@ export default function MovementsPage() {
     return warehouses[stock.warehouseId]?.name ?? `warehouse #${stock.warehouseId}`
   }
 
+  async function handleExport() {
+    const rows = await fetchAllPages<MovementEntity>('/movements', { type, orderId, shipmentId }, table.sort)
+    const csv = toCsv(
+      [
+        t('movements.date'),
+        t('movements.type'),
+        t('movements.amount'),
+        t('common.resource'),
+        t('common.warehouse'),
+        t('common.reason'),
+        t('movements.by'),
+        t('shipments.order'),
+        t('orders.shipment'),
+      ],
+      rows.map((m) => [
+        formatDateTime(m.dateTime, i18n.language),
+        enumLabel(MOVEMENT_TYPE_LABELS, m.type),
+        String(m.quantity),
+        resourceName(m.stockId),
+        warehouseName(m.stockId),
+        m.reason ?? '',
+        m.createdBy ?? '',
+        m.orderId ? `#${m.orderId}` : '',
+        m.shipmentId ? `#${m.shipmentId}` : '',
+      ]),
+    )
+    downloadCsv(`movements-${new Date().toISOString().slice(0, 10)}.csv`, csv)
+  }
+
   const columns: ColumnDef<MovementEntity, unknown>[] = [
     {
       id: 'dateTime',
@@ -87,7 +119,10 @@ export default function MovementsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold">{t('movements.title')}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl font-bold">{t('movements.title')}</h1>
+        <ExportCsvButton onExport={handleExport} />
+      </div>
 
       <div className="flex flex-wrap gap-3">
         <select

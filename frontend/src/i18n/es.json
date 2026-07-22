@@ -23,7 +23,10 @@
     "warehouse": "Almacén",
     "quantity": "Cantidad",
     "reason": "Motivo",
-    "password": "Contraseña"
+    "password": "Contraseña",
+    "exportCsv": "Exportar CSV",
+    "exporting": "Exportando…",
+    "exportFailed": "No se pudo exportar."
   },
   "errors": {
     "STOCK_NO_RECORD_IN_WAREHOUSE": "No se puede reservar stock: este recurso no tiene stock registrado en el almacén del pedido. Solicitado: {{requested}}. Recurso id: {{resourceId}}, almacén id: {{warehouseId}}",

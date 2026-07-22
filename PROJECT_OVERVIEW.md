@@ -114,6 +114,13 @@ Tailwind 4) and is served at `/app/**`:
   Stock/Movements/Orders/Shipments, client-side lookups against the
   plain-array reference endpoints to resolve foreign ids to names. Orders
   rows expand inline to their line items (`GET /api/order-items?orderId=`).
+  Stock, Movements and Orders (Sprint 18) each have an "Export CSV" action
+  next to their page title: `fetchAllPages()` (`api/fetchAllPages.ts`) loops
+  the same paginated endpoint at the server's own page-size cap
+  (`PageQuery.MAX_SIZE` = 100) honoring the page's current filters/sort, and
+  `lib/csv.ts` builds the file client-side (RFC-4180-ish escaping, UTF-8 BOM
+  so Excel renders accented ES/FR text correctly) — no new backend endpoint.
+  A shared `ExportCsvButton` owns the loading state and an error toast.
   Below the `sm` breakpoint, `DataTable` swaps its `<table>` for a card list
   driven by the same `columns`/`data` props (Sprint 12) — one labeled row per
   column instead of a `<td>` — so the actions column (previously scrolled out
@@ -721,7 +728,19 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 
 - **Maintainer**: See `pom.xml` for project details
 
-**Last updated**: 2026-07-22 (Sprint 17: finished the i18n rollout started
+**Last updated**: 2026-07-22 (Sprint 18: CSV export on Stock/Movements/
+Orders — `fetchAllPages()` loops the existing paginated endpoints at the
+server's own 100-row page-size cap instead of adding an uncapped export
+endpoint, honoring each page's current filters/sort; `lib/csv.ts` builds
+the file client-side with a UTF-8 BOM so Excel renders accented ES/FR text
+correctly. A shared `ExportCsvButton` owns the loading state and an error
+toast. Verified live against real French-locale data on all three pages
+by intercepting the download Blob in-browser. Also fixed a test gap
+`ExportCsvButton` exposed: `App.test.tsx` rendered `<App />` without the
+`<ToastProvider>` `main.tsx` always wraps it in for real, invisible until
+a component on a tested route called `useToast()` unconditionally.
+
+Sprint 17: finished the i18n rollout started
 in Sprint 16. Backend gained a `CodedException` base class + `code`/`params`
 on `ErrorResponse`, covering 17 throw sites across `StockService`,
 `OrderItemService`, `WarehouseService`, `ResourceService`, `UnitService`,
