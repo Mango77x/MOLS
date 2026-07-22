@@ -1,0 +1,130 @@
+{
+  "common": {
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "deleting": "Suppression…",
+    "save": "Enregistrer"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "warehouses": "Entrepôts",
+    "resources": "Ressources",
+    "vehicles": "Véhicules",
+    "stock": "Stock",
+    "orders": "Commandes",
+    "shipments": "Expéditions",
+    "units": "Unités",
+    "movements": "Journal d'audit",
+    "users": "Utilisateurs"
+  },
+  "layout": {
+    "toggleTheme": "Changer de thème",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu",
+    "navigationMenu": "Menu de navigation",
+    "signOut": "Se déconnecter",
+    "switchLanguage": "Changer de langue"
+  },
+  "rowActions": {
+    "deleteThis": "Supprimer ce/cette {{label}} ?",
+    "cannotBeUndone": "Cette action est irréversible.",
+    "deleted": "{{label}} supprimé(e)."
+  },
+  "dataTable": {
+    "loading": "Chargement…",
+    "error": "Impossible de charger les données.",
+    "errorRetry": "Impossible de charger les données. Veuillez réessayer.",
+    "noRecords": "Aucun enregistrement à afficher",
+    "rowsPerPage": "Lignes par page",
+    "prev": "Précédent",
+    "next": "Suivant",
+    "results_one": "{{count}} résultat",
+    "results_other": "{{count}} résultats",
+    "paginationRange": "{{from}}–{{to}} sur {{total}}"
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "prefix": "Aucune page n'existe à",
+    "backToDashboard": "Retour au tableau de bord"
+  },
+  "login": {
+    "title": "MOLS",
+    "subtitle": "Système de Logistique Opérationnelle Multimodale",
+    "username": "Nom d'utilisateur",
+    "password": "Mot de passe",
+    "signIn": "Se connecter",
+    "signingIn": "Connexion…",
+    "invalidCredentials": "Nom d'utilisateur ou mot de passe incorrect.",
+    "adminCreated": "Compte administrateur créé — connectez-vous pour continuer.",
+    "lostAccessHint": "Impossible de vous connecter ? Contactez votre administrateur système pour récupérer l'accès."
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "loadError": "Impossible de charger le tableau de bord. Veuillez réessayer.",
+    "loading": "Chargement du tableau de bord…",
+    "kpi": {
+      "totalOrders": "Commandes totales",
+      "pendingOrders": "Commandes en attente",
+      "activeShipments": "Expéditions actives",
+      "stockOnHand": "Stock disponible",
+      "lowStockAlerts": "Alertes de stock bas",
+      "movements24h": "Mouvements (24h)",
+      "fulfillmentRate": "Taux d'exécution",
+      "target": "objectif {{percent}}%"
+    },
+    "alerts": {
+      "lowStockTitle": "Stock bas",
+      "noLowStock": "Aucune alerte de stock bas",
+      "adjust": "Ajuster",
+      "pendingOrdersTitle": "Commandes en attente (>{{days}}j)",
+      "noStaleOrders": "Aucune commande en retard",
+      "orderNumber": "Commande n° {{id}}"
+    },
+    "charts": {
+      "stockByWarehouse": "Stock par entrepôt",
+      "movementsByType": "Mouvements par type",
+      "ordersByStatus": "Commandes par statut",
+      "noData": "Aucune donnée à afficher",
+      "total": "{{value}} au total"
+    },
+    "recentActivity": {
+      "title": "Activité récente",
+      "empty": "Aucune activité récente à afficher",
+      "time": "Heure",
+      "type": "Type",
+      "resource": "Ressource",
+      "warehouse": "Entrepôt",
+      "quantity": "Quantité",
+      "reason": "Motif"
+    }
+  },
+  "enums": {
+    "orderStatus": {
+      "CREATED": "Créée",
+      "VALIDATED": "Validée",
+      "PARTIALLY_SHIPPED": "Partiellement expédiée",
+      "COMPLETED": "Terminée",
+      "CANCELLED": "Annulée"
+    },
+    "shipmentStatus": {
+      "PLANNED": "Planifiée",
+      "IN_TRANSIT": "En transit",
+      "DELIVERED": "Livrée"
+    },
+    "vehicleStatus": {
+      "AVAILABLE": "Disponible",
+      "IN_USE": "En service",
+      "IN_REPAIR": "En réparation"
+    },
+    "vehicleType": {
+      "LAND": "Terrestre",
+      "SEA": "Maritime",
+      "AIR": "Aérien"
+    },
+    "role": {
+      "ADMIN": "Administrateur",
+      "OPERATOR": "Opérateur",
+      "AUDITOR": "Auditeur"
+    }
+  }
+}

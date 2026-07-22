@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from './store'
 import { useSetupStatus } from './useSetupStatus'
@@ -9,6 +10,7 @@ import { useSetupStatus } from './useSetupStatus'
  * the user back to where they came from.
  */
 export default function LoginPage() {
+  const { t } = useTranslation()
   const status = useAuthStore((state) => state.status)
   const login = useAuthStore((state) => state.login)
   const location = useLocation()
@@ -42,7 +44,7 @@ export default function LoginPage() {
     try {
       await login(username, password)
     } catch {
-      setError('Invalid username or password.')
+      setError(t('login.invalidCredentials'))
     } finally {
       setSubmitting(false)
     }
@@ -51,20 +53,16 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-full items-center justify-center p-4">
       <div className="w-full max-w-sm rounded-xl bg-white p-8 shadow-lg dark:bg-gray-900">
-        <h1 className="mb-1 text-2xl font-bold text-army-800 dark:text-army-200">MOLS</h1>
-        <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">
-          Multimodal Operative Logistics System
-        </p>
+        <h1 className="mb-1 text-2xl font-bold text-army-800 dark:text-army-200">{t('login.title')}</h1>
+        <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">{t('login.subtitle')}</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {justCreated && (
-            <output className="block text-sm text-status-ok">
-              Administrator account created — sign in to continue.
-            </output>
+            <output className="block text-sm text-status-ok">{t('login.adminCreated')}</output>
           )}
           <div>
             <label htmlFor="username" className="mb-1 block text-sm font-medium">
-              Username
+              {t('login.username')}
             </label>
             <input
               id="username"
@@ -79,7 +77,7 @@ export default function LoginPage() {
 
           <div>
             <label htmlFor="password" className="mb-1 block text-sm font-medium">
-              Password
+              {t('login.password')}
             </label>
             <input
               id="password"
@@ -103,13 +101,11 @@ export default function LoginPage() {
             disabled={submitting}
             className="w-full rounded-lg bg-army-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-army-600 disabled:opacity-60"
           >
-            {submitting ? 'Signing in…' : 'Sign in'}
+            {submitting ? t('login.signingIn') : t('login.signIn')}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
-          Can't sign in? Contact your system administrator to reset your access.
-        </p>
+        <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">{t('login.lostAccessHint')}</p>
       </div>
     </main>
   )

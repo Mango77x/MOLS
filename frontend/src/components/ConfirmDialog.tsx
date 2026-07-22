@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
 
 /**
  * Styled confirmation modal, replacing native `window.confirm()` for
@@ -10,7 +11,7 @@ export default function ConfirmDialog({
   open,
   title,
   message,
-  confirmLabel = 'Delete',
+  confirmLabel,
   onConfirm,
   onCancel,
 }: {
@@ -21,6 +22,7 @@ export default function ConfirmDialog({
   onConfirm: () => void
   onCancel: () => void
 }) {
+  const { t } = useTranslation()
   const confirmRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -62,7 +64,7 @@ export default function ConfirmDialog({
             onClick={onCancel}
             className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             ref={confirmRef}
@@ -70,7 +72,7 @@ export default function ConfirmDialog({
             onClick={onConfirm}
             className="rounded-lg bg-status-critical px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
           >
-            {confirmLabel}
+            {confirmLabel ?? t('common.delete')}
           </button>
         </div>
       </div>

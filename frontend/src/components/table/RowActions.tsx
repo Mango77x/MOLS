@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { extractApiError } from '../../api/errors'
 import ConfirmDialog from '../ConfirmDialog'
@@ -27,6 +28,7 @@ export function DeleteAction({
   label: string
   onConfirm: () => Promise<void> | void
 }) {
+  const { t } = useTranslation()
   const { showToast } = useToast()
   const [pending, setPending] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -36,7 +38,10 @@ export function DeleteAction({
     setPending(true)
     try {
       await onConfirm()
-      showToast(`${label.charAt(0).toUpperCase()}${label.slice(1)} deleted.`, 'success')
+      showToast(
+        t('rowActions.deleted', { label: label.charAt(0).toUpperCase() + label.slice(1) }),
+        'success',
+      )
     } catch (error) {
       showToast(extractApiError(error).message, 'error')
     } finally {
@@ -52,12 +57,12 @@ export function DeleteAction({
         disabled={pending}
         className="text-status-critical underline disabled:opacity-60"
       >
-        {pending ? 'Deleting…' : 'Delete'}
+        {pending ? t('common.deleting') : t('common.delete')}
       </button>
       <ConfirmDialog
         open={confirmOpen}
-        title={`Delete this ${label}?`}
-        message="This cannot be undone."
+        title={t('rowActions.deleteThis', { label })}
+        message={t('rowActions.cannotBeUndone')}
         onConfirm={handleConfirm}
         onCancel={() => setConfirmOpen(false)}
       />

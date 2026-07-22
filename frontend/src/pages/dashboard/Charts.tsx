@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Bar,
   BarChart,
@@ -37,9 +38,10 @@ function ChartCard({ title, children }: { title: string; children: ReactNode }) 
 }
 
 function EmptyState() {
+  const { t } = useTranslation()
   return (
     <p className="flex h-56 items-center justify-center text-sm text-gray-400 dark:text-gray-500">
-      No data to display
+      {t('dashboard.charts.noData')}
     </p>
   )
 }
@@ -69,6 +71,10 @@ const STATUS_COLORS: Record<string, string> = {
 }
 const FALLBACK_COLORS = [ARMY_GREEN, STATUS_WARN, STATUS_CRITICAL, STATUS_OK]
 
+// NOTE: row.label here is the raw series label the backend sends (movement
+// type / order status grouping), not translated — the dashboard's chart
+// series contracts need their own look before extending enumLabels.ts to
+// cover them, tracked as Sprint 17 scope, not this sprint's shared-chrome pass.
 function DonutLegend({ series }: { series: ChartSeries }) {
   const rows = toRows(series)
   return (
@@ -92,6 +98,7 @@ function DonutLegend({ series }: { series: ChartSeries }) {
 }
 
 function DonutChart({ series }: { series: ChartSeries }) {
+  const { t } = useTranslation()
   if (!hasData(series)) return <EmptyState />
   const rows = toRows(series)
   const total = rows.reduce((sum, row) => sum + row.value, 0)
@@ -114,7 +121,11 @@ function DonutChart({ series }: { series: ChartSeries }) {
                 fill={STATUS_COLORS[row.label] ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length]}
               />
             ))}
-            <Label value={`${total} total`} position="center" className="fill-gray-500 text-xs dark:fill-gray-400" />
+            <Label
+              value={t('dashboard.charts.total', { value: total })}
+              position="center"
+              className="fill-gray-500 text-xs dark:fill-gray-400"
+            />
           </Pie>
           <Tooltip />
         </PieChart>
@@ -125,15 +136,16 @@ function DonutChart({ series }: { series: ChartSeries }) {
 }
 
 export default function Charts({ charts }: { charts: DashboardCharts }) {
+  const { t } = useTranslation()
   return (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-      <ChartCard title="Stock by warehouse">
+      <ChartCard title={t('dashboard.charts.stockByWarehouse')}>
         <StockByWarehouseChart series={charts.stockByWarehouse} />
       </ChartCard>
-      <ChartCard title="Movements by type">
+      <ChartCard title={t('dashboard.charts.movementsByType')}>
         <DonutChart series={charts.movementsByType} />
       </ChartCard>
-      <ChartCard title="Orders by status">
+      <ChartCard title={t('dashboard.charts.ordersByStatus')}>
         <DonutChart series={charts.ordersByStatus} />
       </ChartCard>
     </div>

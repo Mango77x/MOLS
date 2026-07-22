@@ -1,5 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useLookup } from '../../api/lookups'
 import type {
   MovementEntity,
@@ -17,11 +18,16 @@ const TYPE_TONE: Record<MovementType, BadgeTone> = {
   EXIT: 'warn',
 }
 
-function formatDateTime(value: string) {
-  return new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+// Locale passed explicitly (the active i18next language) so the date
+// format always matches the UI language, rather than silently following
+// whatever the browser happens to report — see RecentActivity.tsx's
+// identical fix for the same underlying gap.
+function formatDateTime(value: string, locale: string) {
+  return new Date(value).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' })
 }
 
 export default function MovementsPage() {
+  const { i18n } = useTranslation()
   const [type, setType] = useState('')
   const [orderId, setOrderId] = useState('')
   const [shipmentId, setShipmentId] = useState('')
@@ -53,7 +59,7 @@ export default function MovementsPage() {
       id: 'dateTime',
       header: 'Date',
       enableSorting: true,
-      cell: ({ row }) => formatDateTime(row.original.dateTime),
+      cell: ({ row }) => formatDateTime(row.original.dateTime, i18n.language),
     },
     {
       id: 'type',
