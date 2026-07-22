@@ -1,9 +1,13 @@
+import { useTranslation } from 'react-i18next'
 import type { ResourceEntity, StockEntity, WarehouseEntity } from '../../api/entities'
 import { useLookup } from '../../api/lookups'
 import type { RecentMovement } from './types'
 
-function formatDateTime(value: string) {
-  return new Date(value).toLocaleString(undefined, {
+// Locale passed explicitly (the active i18next language, not `undefined`)
+// so the date format always matches the UI language the user picked,
+// instead of silently following whatever the browser happens to report.
+function formatDateTime(value: string, locale: string) {
+  return new Date(value).toLocaleString(locale, {
     dateStyle: 'medium',
     timeStyle: 'short',
   })
@@ -15,6 +19,7 @@ const TYPE_BADGE: Record<string, string> = {
 }
 
 export default function RecentActivity({ movements }: { movements: RecentMovement[] }) {
+  const { t, i18n } = useTranslation()
   const { byId: stocks } = useLookup<StockEntity>('/stocks')
   const { byId: resources } = useLookup<ResourceEntity>('/resources')
   const { byId: warehouses } = useLookup<WarehouseEntity>('/warehouses')
@@ -37,28 +42,28 @@ export default function RecentActivity({ movements }: { movements: RecentMovemen
   return (
     <div className="rounded-xl bg-white p-4 shadow-sm dark:bg-gray-900">
       <h2 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-200">
-        Recent activity
+        {t('dashboard.recentActivity.title')}
       </h2>
       {movements.length === 0 ? (
-        <p className="text-sm text-gray-400 dark:text-gray-500">No recent activity to display</p>
+        <p className="text-sm text-gray-400 dark:text-gray-500">{t('dashboard.recentActivity.empty')}</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                <th className="pb-2 pr-4 font-medium">Time</th>
-                <th className="pb-2 pr-4 font-medium">Type</th>
-                <th className="pb-2 pr-4 font-medium">Resource</th>
-                <th className="pb-2 pr-4 font-medium">Warehouse</th>
-                <th className="pb-2 pr-4 font-medium">Quantity</th>
-                <th className="pb-2 font-medium">Reason</th>
+                <th className="pb-2 pr-4 font-medium">{t('dashboard.recentActivity.time')}</th>
+                <th className="pb-2 pr-4 font-medium">{t('dashboard.recentActivity.type')}</th>
+                <th className="pb-2 pr-4 font-medium">{t('dashboard.recentActivity.resource')}</th>
+                <th className="pb-2 pr-4 font-medium">{t('dashboard.recentActivity.warehouse')}</th>
+                <th className="pb-2 pr-4 font-medium">{t('dashboard.recentActivity.quantity')}</th>
+                <th className="pb-2 font-medium">{t('dashboard.recentActivity.reason')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {movements.map((movement) => (
                 <tr key={movement.id}>
                   <td className="py-2 pr-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
-                    {formatDateTime(movement.dateTime)}
+                    {formatDateTime(movement.dateTime, i18n.language)}
                   </td>
                   <td className="py-2 pr-4">
                     <span

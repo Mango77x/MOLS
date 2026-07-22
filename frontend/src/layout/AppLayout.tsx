@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuthStore } from '../auth/store'
+import { LOCALE_LABELS, SUPPORTED_LOCALES, type Locale } from '../i18n'
+import { enumLabel, ROLE_LABELS } from '../lib/enumLabels'
 import { visibleNavItems } from './nav'
+import { useLocale } from './useLocale'
 import { useTheme } from './useTheme'
 
 /**
@@ -9,9 +13,11 @@ import { useTheme } from './useTheme'
  * topbar with theme toggle and session controls, and the routed content.
  */
 export default function AppLayout() {
+  const { t } = useTranslation()
   const user = useAuthStore((state) => state.user)
   const logout = useAuthStore((state) => state.logout)
   const { theme, toggleTheme } = useTheme()
+  const { locale, setLocale } = useLocale()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -60,7 +66,7 @@ export default function AppLayout() {
             }`
           }
         >
-          {item.label}
+          {t(item.labelKey)}
         </NavLink>
       ))}
     </nav>
@@ -85,14 +91,14 @@ export default function AppLayout() {
         ref={dialogRef}
         onClose={handleDialogClose}
         onClick={handleBackdropClick}
-        aria-label="Navigation menu"
+        aria-label={t('layout.navigationMenu')}
         className="fixed inset-y-0 left-0 m-0 h-full max-h-full w-64 max-w-none border-none bg-army-900 p-0 backdrop:bg-black/50 lg:hidden dark:bg-army-950"
       >
         <div className="flex h-14 items-center justify-between px-4 text-lg font-bold tracking-wide text-white">
           MOLS
           <button
             type="button"
-            aria-label="Close menu"
+            aria-label={t('layout.closeMenu')}
             onClick={() => setSidebarOpen(false)}
             className="rounded-lg p-1 text-army-100 hover:bg-army-800 hover:text-white"
           >
@@ -108,7 +114,7 @@ export default function AppLayout() {
           <button
             ref={menuButtonRef}
             type="button"
-            aria-label="Open menu"
+            aria-label={t('layout.openMenu')}
             className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 lg:hidden dark:text-gray-300 dark:hover:bg-gray-800"
             onClick={() => setSidebarOpen(true)}
           >
@@ -116,10 +122,26 @@ export default function AppLayout() {
           </button>
 
           <div className="ml-auto flex items-center gap-3">
+            <span id="locale-select-label" className="sr-only">
+              {t('layout.switchLanguage')}
+            </span>
+            <select
+              value={locale}
+              onChange={(e) => setLocale(e.target.value as Locale)}
+              aria-labelledby="locale-select-label"
+              className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
+              {SUPPORTED_LOCALES.map((code) => (
+                <option key={code} value={code}>
+                  {LOCALE_LABELS[code]}
+                </option>
+              ))}
+            </select>
+
             <button
               type="button"
               onClick={toggleTheme}
-              aria-label="Toggle theme"
+              aria-label={t('layout.toggleTheme')}
               className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               {theme === 'dark' ? '🌙' : '☀️'}
@@ -129,7 +151,7 @@ export default function AppLayout() {
               <span className="text-sm text-gray-600 dark:text-gray-300">
                 {user.username}
                 <span className="ml-2 rounded-full bg-army-100 px-2 py-0.5 text-xs font-semibold text-army-800 dark:bg-army-900 dark:text-army-200">
-                  {user.role}
+                  {enumLabel(ROLE_LABELS, user.role)}
                 </span>
               </span>
             )}
@@ -139,7 +161,7 @@ export default function AppLayout() {
               onClick={() => void logout()}
               className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
             >
-              Sign out
+              {t('layout.signOut')}
             </button>
           </div>
         </header>

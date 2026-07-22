@@ -1,5 +1,6 @@
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from '@tanstack/react-table'
 import { Fragment, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { SortState } from './useServerTable'
 
 interface DataTableProps<T> {
@@ -27,7 +28,7 @@ export default function DataTable<T>({
   data,
   loading,
   error,
-  emptyMessage = 'No records to display',
+  emptyMessage,
   sort,
   onSortChange,
   page,
@@ -38,6 +39,8 @@ export default function DataTable<T>({
   onSizeChange,
   renderRowExtra,
 }: DataTableProps<T>) {
+  const { t } = useTranslation()
+  const resolvedEmptyMessage = emptyMessage ?? t('dataTable.noRecords')
   const table = useReactTable({
     data,
     columns,
@@ -61,10 +64,10 @@ export default function DataTable<T>({
             </div>
           ))}
         {!loading && error && (
-          <p className="px-3 py-6 text-center text-status-critical">Could not load data. Please try again.</p>
+          <p className="px-3 py-6 text-center text-status-critical">{t('dataTable.errorRetry')}</p>
         )}
         {!loading && !error && data.length === 0 && (
-          <p className="px-3 py-6 text-center text-gray-400 dark:text-gray-500">{emptyMessage}</p>
+          <p className="px-3 py-6 text-center text-gray-400 dark:text-gray-500">{resolvedEmptyMessage}</p>
         )}
         {!loading &&
           !error &&
@@ -91,10 +94,10 @@ export default function DataTable<T>({
         <table className="w-full text-left text-sm">
           <caption className="sr-only" aria-live="polite">
             {loading
-              ? 'Loading…'
+              ? t('dataTable.loading')
               : error
-                ? 'Could not load data.'
-                : `${totalElements} ${totalElements === 1 ? 'result' : 'results'}`}
+                ? t('dataTable.error')
+                : t('dataTable.results', { count: totalElements })}
           </caption>
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -144,14 +147,14 @@ export default function DataTable<T>({
             {!loading && error && (
               <tr>
                 <td colSpan={columns.length} className="px-3 py-6 text-center text-status-critical">
-                  Could not load data. Please try again.
+                  {t('dataTable.errorRetry')}
                 </td>
               </tr>
             )}
             {!loading && !error && data.length === 0 && (
               <tr>
                 <td colSpan={columns.length} className="px-3 py-6 text-center text-gray-400 dark:text-gray-500">
-                  {emptyMessage}
+                  {resolvedEmptyMessage}
                 </td>
               </tr>
             )}
@@ -175,7 +178,7 @@ export default function DataTable<T>({
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 px-3 py-2 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
         <div className="flex items-center gap-2">
-          <span id="rows-per-page-label">Rows per page</span>
+          <span id="rows-per-page-label">{t('dataTable.rowsPerPage')}</span>
           <select
             aria-labelledby="rows-per-page-label"
             value={size}
@@ -192,8 +195,12 @@ export default function DataTable<T>({
         <div className="flex items-center gap-3">
           <span>
             {totalElements === 0
-              ? '0 results'
-              : `${page * size + 1}–${Math.min((page + 1) * size, totalElements)} of ${totalElements}`}
+              ? t('dataTable.results', { count: 0 })
+              : t('dataTable.paginationRange', {
+                  from: page * size + 1,
+                  to: Math.min((page + 1) * size, totalElements),
+                  total: totalElements,
+                })}
           </span>
           <div className="flex gap-1">
             <button
@@ -202,7 +209,7 @@ export default function DataTable<T>({
               onClick={() => onPageChange(page - 1)}
               className="rounded border border-gray-300 px-2 py-0.5 disabled:opacity-40 dark:border-gray-700"
             >
-              Prev
+              {t('dataTable.prev')}
             </button>
             <button
               type="button"
@@ -210,7 +217,7 @@ export default function DataTable<T>({
               onClick={() => onPageChange(page + 1)}
               className="rounded border border-gray-300 px-2 py-0.5 disabled:opacity-40 dark:border-gray-700"
             >
-              Next
+              {t('dataTable.next')}
             </button>
           </div>
         </div>
