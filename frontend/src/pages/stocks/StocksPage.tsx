@@ -4,12 +4,15 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useCurrentRole } from '../../auth/roles'
 import { api } from '../../api/client'
+import { fetchAllPages } from '../../api/fetchAllPages'
 import { useLookup } from '../../api/lookups'
 import type { ResourceEntity, StockEntity, WarehouseEntity } from '../../api/entities'
 import Badge from '../../components/Badge'
 import DataTable from '../../components/table/DataTable'
+import ExportCsvButton from '../../components/table/ExportCsvButton'
 import { DeleteAction, RouteActionLink } from '../../components/table/RowActions'
 import { useServerTable } from '../../components/table/useServerTable'
+import { downloadCsv, toCsv } from '../../lib/csv'
 
 export default function StocksPage() {
   const { t } = useTranslation()
@@ -30,6 +33,22 @@ export default function StocksPage() {
   async function handleDelete(id: number) {
     await api.delete(`/stocks/${id}`)
     table.reload()
+  }
+
+  async function handleExport() {
+    const rows = await fetchAllPages<StockEntity>('/stocks', { warehouseId, resourceId }, table.sort)
+    const csv = toCsv(
+      [t('common.id'), t('common.resource'), t('common.warehouse'), t('common.quantity'), t('stocks.reserved'), t('stocks.available')],
+      rows.map((s) => [
+        String(s.id),
+        resources[s.resourceId]?.name ?? `#${s.resourceId}`,
+        warehouses[s.warehouseId]?.name ?? `#${s.warehouseId}`,
+        String(s.quantity),
+        String(s.reservedQuantity),
+        String(s.quantity - s.reservedQuantity),
+      ]),
+    )
+    downloadCsv(`stock-${new Date().toISOString().slice(0, 10)}.csv`, csv)
   }
 
   const columns: ColumnDef<StockEntity, unknown>[] = [
@@ -85,14 +104,17 @@ export default function StocksPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold">{t('stocks.title')}</h1>
-        {isAdmin && (
-          <Link
-            to="/stocks/new"
-            className="rounded bg-army-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-army-800"
-          >
-            {t('stocks.newStock')}
-          </Link>
-        )}
+        <div className="flex gap-3">
+          <ExportCsvButton onExport={handleExport} />
+          {isAdmin && (
+            <Link
+              to="/stocks/new"
+              className="rounded bg-army-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-army-800"
+            >
+              {t('stocks.newStock')}
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-3">

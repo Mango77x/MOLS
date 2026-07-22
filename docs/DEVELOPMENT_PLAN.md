@@ -67,8 +67,12 @@ Scoped from a real count against the current codebase, not a guess: ~35-40 of 69
 
 ### Sprint 18 — CSV/Excel export
 
-- [ ] Export action on `DataTable`-backed list pages, hitting the existing paginated endpoints without the page/size cap (or a dedicated `?export=true` full-result path) and generating a CSV client-side or via a small backend endpoint per resource.
-- [ ] Scope: start with the pages an operator actually needs for reporting/backup — Stock, Movements, Orders — rather than all nine at once; extend to the rest once the pattern is proven.
+- [x] Export action on `DataTable`-backed list pages: client-side CSV generation, reusing the existing paginated endpoints rather than adding an uncapped backend export path. `fetchAllPages()` (`frontend/src/api/fetchAllPages.ts`) loops at the server's own `PageQuery.MAX_SIZE` (100) cap, honoring the page's current filters/sort so the export matches what the operator has filtered to, not just the page on screen. `frontend/src/lib/csv.ts` handles RFC-4180-ish escaping (quotes/commas/newlines) and triggers the browser download with a UTF-8 BOM (Excel mis-renders accented ES/FR text without it). A shared `ExportCsvButton` (`components/table/ExportCsvButton.tsx`) owns the loading state and an error toast.
+- [x] Scope: Stock, Movements, Orders — the three pages an operator actually needs for reporting/backup — rather than all nine at once, per the plan. Each page's CSV columns mirror its on-screen table (plain-text values, not the `<Badge>`/JSX cells), translated via the active locale's `t()` and `enumLabel()`.
+- [x] Tests: `csv.test.ts` (escaping rules), `fetchAllPages.test.ts` (pagination loop termination, filter/sort forwarding, the size=100 cap, defensive stop on an inconsistent empty-page response).
+- [x] Docs: `PROJECT_OVERVIEW.md`.
+
+**Found during this sprint's own test run (not a live-verification bug like Sprint 17's):** `App.test.tsx` rendered `<App />` without the `<ToastProvider>` that `main.tsx` always wraps it in for real; that gap was invisible until `ExportCsvButton` (which calls `useToast()` unconditionally, not just on error) landed on a route the test visits. Fixed by wrapping the test's render in `ToastProvider`, matching the real composition instead of special-casing the new button.
 
 ### Sprint 19 — Email notifications
 
@@ -111,4 +115,4 @@ Only worth starting if the goal shifts from "run MOLS for one organization" to "
 - Frontend: `npm run lint`, `npm test`, `npx tsc -b --noEmit` inside `frontend/`.
 - Any sprint touching UI: rebuild and run the real Docker stack, verify manually in the browser — passing tests alone isn't sufficient sign-off for this plan (this is exactly how the login-hint and duplicate-name-warning gaps in Sprint 15 were found in the first place: neither broke a test, both broke real usage).
 
-**Last updated**: 2026-07-22 (Sprint 17 complete — backend translatable error codes, ES/FR translation of the remaining 9 page modules, and three real bugs found/fixed during live verification; Sprint 18 next)
+**Last updated**: 2026-07-22 (Sprint 18 complete — client-side CSV export on Stock/Movements/Orders; Sprint 19 next)

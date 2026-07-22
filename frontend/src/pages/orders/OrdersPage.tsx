@@ -4,12 +4,15 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { hasAnyRole, useCurrentRole } from '../../auth/roles'
 import { api } from '../../api/client'
+import { fetchAllPages } from '../../api/fetchAllPages'
 import { useLookup } from '../../api/lookups'
 import type { OrderEntity, OrderStatus, ResourceEntity, UnitEntity, WarehouseEntity } from '../../api/entities'
 import Badge, { type BadgeTone } from '../../components/Badge'
 import DataTable from '../../components/table/DataTable'
+import ExportCsvButton from '../../components/table/ExportCsvButton'
 import { DeleteAction, RouteActionLink } from '../../components/table/RowActions'
 import { useServerTable } from '../../components/table/useServerTable'
+import { downloadCsv, toCsv } from '../../lib/csv'
 import { enumLabel, ORDER_STATUS_LABELS } from '../../lib/enumLabels'
 import OrderItemsRow from './OrderItemsRow'
 
@@ -39,6 +42,21 @@ export default function OrdersPage() {
   async function handleDelete(id: number) {
     await api.delete(`/orders/${id}`)
     table.reload()
+  }
+
+  async function handleExport() {
+    const rows = await fetchAllPages<OrderEntity>('/orders', { status, unitId }, table.sort)
+    const csv = toCsv(
+      [t('common.id'), t('orders.unit'), t('common.warehouse'), t('orders.dateCreated'), t('common.status')],
+      rows.map((o) => [
+        String(o.id),
+        units[o.unitId]?.name ?? `#${o.unitId}`,
+        warehouses[o.warehouseId]?.name ?? `#${o.warehouseId}`,
+        o.dateCreated,
+        enumLabel(ORDER_STATUS_LABELS, o.status),
+      ]),
+    )
+    downloadCsv(`orders-${new Date().toISOString().slice(0, 10)}.csv`, csv)
   }
 
   function toggleExpanded(id: number) {
@@ -105,14 +123,17 @@ export default function OrdersPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold">{t('orders.title')}</h1>
-        {canEdit && (
-          <Link
-            to="/orders/new"
-            className="rounded bg-army-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-army-800"
-          >
-            {t('orders.newOrder')}
-          </Link>
-        )}
+        <div className="flex gap-3">
+          <ExportCsvButton onExport={handleExport} />
+          {canEdit && (
+            <Link
+              to="/orders/new"
+              className="rounded bg-army-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-army-800"
+            >
+              {t('orders.newOrder')}
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-3">
