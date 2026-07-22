@@ -1,0 +1,130 @@
+{
+  "common": {
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "deleting": "Eliminando…",
+    "save": "Guardar"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "warehouses": "Almacenes",
+    "resources": "Recursos",
+    "vehicles": "Vehículos",
+    "stock": "Stock",
+    "orders": "Pedidos",
+    "shipments": "Envíos",
+    "units": "Unidades",
+    "movements": "Registro de auditoría",
+    "users": "Usuarios"
+  },
+  "layout": {
+    "toggleTheme": "Cambiar tema",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú",
+    "navigationMenu": "Menú de navegación",
+    "signOut": "Cerrar sesión",
+    "switchLanguage": "Cambiar idioma"
+  },
+  "rowActions": {
+    "deleteThis": "¿Eliminar este/a {{label}}?",
+    "cannotBeUndone": "Esta acción no se puede deshacer.",
+    "deleted": "{{label}} eliminado/a."
+  },
+  "dataTable": {
+    "loading": "Cargando…",
+    "error": "No se pudieron cargar los datos.",
+    "errorRetry": "No se pudieron cargar los datos. Inténtalo de nuevo.",
+    "noRecords": "No hay registros que mostrar",
+    "rowsPerPage": "Filas por página",
+    "prev": "Anterior",
+    "next": "Siguiente",
+    "results_one": "{{count}} resultado",
+    "results_other": "{{count}} resultados",
+    "paginationRange": "{{from}}–{{to}} de {{total}}"
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "prefix": "No existe ninguna página en",
+    "backToDashboard": "Volver al panel"
+  },
+  "login": {
+    "title": "MOLS",
+    "subtitle": "Sistema de Logística Operativa Multimodal",
+    "username": "Usuario",
+    "password": "Contraseña",
+    "signIn": "Iniciar sesión",
+    "signingIn": "Iniciando sesión…",
+    "invalidCredentials": "Usuario o contraseña incorrectos.",
+    "adminCreated": "Cuenta de administrador creada — inicia sesión para continuar.",
+    "lostAccessHint": "¿No puedes iniciar sesión? Contacta con el administrador del sistema para recuperar el acceso."
+  },
+  "dashboard": {
+    "title": "Panel",
+    "loadError": "No se pudo cargar el panel. Inténtalo de nuevo.",
+    "loading": "Cargando panel…",
+    "kpi": {
+      "totalOrders": "Pedidos totales",
+      "pendingOrders": "Pedidos pendientes",
+      "activeShipments": "Envíos activos",
+      "stockOnHand": "Stock disponible",
+      "lowStockAlerts": "Alertas de stock bajo",
+      "movements24h": "Movimientos (24h)",
+      "fulfillmentRate": "Tasa de cumplimiento",
+      "target": "objetivo {{percent}}%"
+    },
+    "alerts": {
+      "lowStockTitle": "Stock bajo",
+      "noLowStock": "No hay alertas de stock bajo",
+      "adjust": "Ajustar",
+      "pendingOrdersTitle": "Pedidos pendientes (>{{days}}d)",
+      "noStaleOrders": "No hay pedidos estancados",
+      "orderNumber": "Pedido n.º {{id}}"
+    },
+    "charts": {
+      "stockByWarehouse": "Stock por almacén",
+      "movementsByType": "Movimientos por tipo",
+      "ordersByStatus": "Pedidos por estado",
+      "noData": "No hay datos que mostrar",
+      "total": "{{value}} en total"
+    },
+    "recentActivity": {
+      "title": "Actividad reciente",
+      "empty": "No hay actividad reciente que mostrar",
+      "time": "Hora",
+      "type": "Tipo",
+      "resource": "Recurso",
+      "warehouse": "Almacén",
+      "quantity": "Cantidad",
+      "reason": "Motivo"
+    }
+  },
+  "enums": {
+    "orderStatus": {
+      "CREATED": "Creado",
+      "VALIDATED": "Validado",
+      "PARTIALLY_SHIPPED": "Parcialmente enviado",
+      "COMPLETED": "Completado",
+      "CANCELLED": "Cancelado"
+    },
+    "shipmentStatus": {
+      "PLANNED": "Planificado",
+      "IN_TRANSIT": "En tránsito",
+      "DELIVERED": "Entregado"
+    },
+    "vehicleStatus": {
+      "AVAILABLE": "Disponible",
+      "IN_USE": "En uso",
+      "IN_REPAIR": "En reparación"
+    },
+    "vehicleType": {
+      "LAND": "Terrestre",
+      "SEA": "Marítimo",
+      "AIR": "Aéreo"
+    },
+    "role": {
+      "ADMIN": "Administrador",
+      "OPERATOR": "Operador",
+      "AUDITOR": "Auditor"
+    }
+  }
+}

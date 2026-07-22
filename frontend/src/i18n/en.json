@@ -1,0 +1,130 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleting": "Deleting…",
+    "save": "Save"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "warehouses": "Warehouses",
+    "resources": "Resources",
+    "vehicles": "Vehicles",
+    "stock": "Stock",
+    "orders": "Orders",
+    "shipments": "Shipments",
+    "units": "Units",
+    "movements": "Audit log",
+    "users": "Users"
+  },
+  "layout": {
+    "toggleTheme": "Toggle theme",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "navigationMenu": "Navigation menu",
+    "signOut": "Sign out",
+    "switchLanguage": "Switch language"
+  },
+  "rowActions": {
+    "deleteThis": "Delete this {{label}}?",
+    "cannotBeUndone": "This cannot be undone.",
+    "deleted": "{{label}} deleted."
+  },
+  "dataTable": {
+    "loading": "Loading…",
+    "error": "Could not load data.",
+    "errorRetry": "Could not load data. Please try again.",
+    "noRecords": "No records to display",
+    "rowsPerPage": "Rows per page",
+    "prev": "Prev",
+    "next": "Next",
+    "results_one": "{{count}} result",
+    "results_other": "{{count}} results",
+    "paginationRange": "{{from}}–{{to}} of {{total}}"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "prefix": "There's no page at",
+    "backToDashboard": "Back to dashboard"
+  },
+  "login": {
+    "title": "MOLS",
+    "subtitle": "Multimodal Operative Logistics System",
+    "username": "Username",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "invalidCredentials": "Invalid username or password.",
+    "adminCreated": "Administrator account created — sign in to continue.",
+    "lostAccessHint": "Can't sign in? Contact your system administrator to reset your access."
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "loadError": "The dashboard could not be loaded. Please try again.",
+    "loading": "Loading dashboard…",
+    "kpi": {
+      "totalOrders": "Total orders",
+      "pendingOrders": "Pending orders",
+      "activeShipments": "Active shipments",
+      "stockOnHand": "Stock on hand",
+      "lowStockAlerts": "Low stock alerts",
+      "movements24h": "Movements (24h)",
+      "fulfillmentRate": "Fulfillment rate",
+      "target": "target {{percent}}%"
+    },
+    "alerts": {
+      "lowStockTitle": "Low stock",
+      "noLowStock": "No low stock alerts",
+      "adjust": "Adjust",
+      "pendingOrdersTitle": "Pending orders (>{{days}}d)",
+      "noStaleOrders": "No stale orders",
+      "orderNumber": "Order #{{id}}"
+    },
+    "charts": {
+      "stockByWarehouse": "Stock by warehouse",
+      "movementsByType": "Movements by type",
+      "ordersByStatus": "Orders by status",
+      "noData": "No data to display",
+      "total": "{{value}} total"
+    },
+    "recentActivity": {
+      "title": "Recent activity",
+      "empty": "No recent activity to display",
+      "time": "Time",
+      "type": "Type",
+      "resource": "Resource",
+      "warehouse": "Warehouse",
+      "quantity": "Quantity",
+      "reason": "Reason"
+    }
+  },
+  "enums": {
+    "orderStatus": {
+      "CREATED": "Created",
+      "VALIDATED": "Validated",
+      "PARTIALLY_SHIPPED": "Partially shipped",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled"
+    },
+    "shipmentStatus": {
+      "PLANNED": "Planned",
+      "IN_TRANSIT": "In transit",
+      "DELIVERED": "Delivered"
+    },
+    "vehicleStatus": {
+      "AVAILABLE": "Available",
+      "IN_USE": "In use",
+      "IN_REPAIR": "In repair"
+    },
+    "vehicleType": {
+      "LAND": "Land",
+      "SEA": "Sea",
+      "AIR": "Air"
+    },
+    "role": {
+      "ADMIN": "Admin",
+      "OPERATOR": "Operator",
+      "AUDITOR": "Auditor"
+    }
+  }
+}

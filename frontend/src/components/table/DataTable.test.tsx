@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
+import i18n from '../../i18n'
 import DataTable from './DataTable'
 
 interface Row {
@@ -96,5 +97,39 @@ describe('DataTable — result count caption', () => {
     // specifically so this test only pins the caption's own behavior.
     const { container } = renderTable({ data: [], totalElements: 0 })
     expect(container.querySelector('caption')).toHaveTextContent('0 results')
+  })
+})
+
+/**
+ * Sprint 16: the Sprint 14 fix above is itself only correct for languages
+ * that share English's singular/plural boundary (1 vs. everything else).
+ * French doesn't: 0 is grammatically singular ("0 résultat"), not plural
+ * — a hand-rolled `count === 1 ? singular : plural` ternary would get this
+ * wrong. Routing through i18next's `count`-based plural keys (CLDR plural
+ * rules under the hood) gets it right without hand-writing per-locale
+ * logic, which is the whole reason that mechanism was adopted here instead
+ * of just translating the words in the old ternary.
+ */
+describe('DataTable — result count caption across locales', () => {
+  afterEach(() => {
+    void i18n.changeLanguage('en')
+  })
+
+  it('treats 0 as singular in French, unlike English', async () => {
+    await i18n.changeLanguage('fr')
+    const { container } = renderTable({ data: [], totalElements: 0 })
+    expect(container.querySelector('caption')).toHaveTextContent('0 résultat')
+  })
+
+  it('treats 1 as singular in French too', async () => {
+    await i18n.changeLanguage('fr')
+    const { container } = renderTable({ data: [rows[0]], totalElements: 1 })
+    expect(container.querySelector('caption')).toHaveTextContent('1 résultat')
+  })
+
+  it('treats 2+ as plural in French', async () => {
+    await i18n.changeLanguage('fr')
+    const { container } = renderTable()
+    expect(container.querySelector('caption')).toHaveTextContent('2 résultats')
   })
 })

@@ -75,6 +75,18 @@ Tailwind 4) and is served at `/app/**`:
 - **Shell**: sidebar/topbar layout, role-aware navigation (ADMIN-only entries
   hidden and route-guarded client-side; real enforcement is the API role
   matrix), light/dark theme, military-green design tokens in `src/index.css`.
+- **Language** (Sprint 16): `react-i18next`, resources in `src/i18n/`
+  (`en`/`es`/`fr`, single namespace). `useLocale.ts` mirrors the theme
+  hook's pattern — persists to `localStorage` (`mols-locale`), falls back
+  to the browser's language, sets `<html lang>`/`dir`; switcher lives next
+  to the theme toggle in `AppLayout`. Pluralized strings (e.g. `DataTable`'s
+  result count) go through i18next's `count`-based plural keys rather than
+  hand-rolled singular/plural ternaries, since languages don't all share
+  English's singular/plural boundary (French treats 0 as singular).
+  Currently covers shell chrome and the Dashboard; per-page content is
+  Sprint 17. `npm run i18n:status`/`i18n:extract` (`i18next-cli`,
+  configured in `frontend/i18next.config.ts`) track key coverage across
+  the three languages going forward.
 - **Pages**: the dashboard (fed by `GET /api/dashboard`) ships KPI cards,
   Recharts charts (stock by warehouse, movements by type, orders by status —
   each with an empty-state fallback; the two donut charts also carry a
@@ -702,13 +714,16 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 
 - **Maintainer**: See `pom.xml` for project details
 
-**Last updated**: 2026-07-22 (Sprint 15 merged: two small fixes found
-during a hands-on product re-audit of `main` — a "contact your system
-administrator" hint on `LoginPage` for users with no path forward after
-losing access, and `useDuplicateNameWarning`'s lookup bumped from the
-first 20 fragment matches to 100. Frontend suite grew from 20 files / 71
-tests to 21 files / 74 tests. That same audit's broader findings turned
-into a new `docs/DEVELOPMENT_PLAN.md` covering internationalization, data
-export, notifications, and bulk import as the next sprints — plus a
-longer-term backlog for commercial-ERP and multi-tenant-SaaS scope if
-either is ever decided on)
+**Last updated**: 2026-07-22 (Sprint 16: internationalization
+infrastructure — `react-i18next`, EN/ES/FR resources, a `useLocale` hook
+mirroring the theme toggle's pattern, and a language switcher in
+`AppLayout`. Translated the shared UI surface (nav, `ConfirmDialog`,
+`DataTable` chrome, `RowActions`, `LoginPage`, 404 page, the Dashboard);
+per-page content is Sprint 17. Fixed two correctness gaps found along the
+way: `DataTable`'s result-count pluralization now uses i18next's
+CLDR-backed plural rules instead of an English-only ternary (French
+treats 0 as grammatically singular, unlike English), and two
+`toLocaleString` call sites now pass the active UI locale explicitly
+instead of trusting the browser's. Also fixed a stale pre-React-migration
+`/ui/...` link found in `AlertsPanel` while already touching that line.
+Frontend suite grew from 21 files / 74 tests to 23 files / 86 tests.)
