@@ -66,4 +66,20 @@ describe('useDuplicateNameWarning', () => {
 
     expect(result.current.warning).toBeNull()
   })
+
+  /**
+   * Regression guard: this used to request only the first 20 fragment
+   * matches, so an exact duplicate past that page went undetected on
+   * larger catalogs. 100 matches the app's own "large page" convention.
+   */
+  it('requests a large enough page to cover realistic catalogs, not just the first 20', async () => {
+    const getSpy = mockNameLookup([])
+    const { result } = renderHook(() => useDuplicateNameWarning('/warehouses', 'warehouse', undefined))
+
+    await act(() => result.current.checkName('Almacén Alpha'))
+
+    expect(getSpy).toHaveBeenCalledWith('/warehouses', {
+      params: { name: 'Almacén Alpha', page: 0, size: 100 },
+    })
+  })
 })
