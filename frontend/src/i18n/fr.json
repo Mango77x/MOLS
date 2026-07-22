@@ -3,7 +3,27 @@
     "cancel": "Annuler",
     "delete": "Supprimer",
     "deleting": "Suppression…",
-    "save": "Enregistrer"
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "id": "ID",
+    "name": "Nom",
+    "actions": "Actions",
+    "edit": "Modifier",
+    "back": "Retour",
+    "location": "Emplacement",
+    "type": "Type",
+    "status": "Statut",
+    "allStatuses": "Tous les statuts",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "latitudeOptional": "Latitude (facultatif)",
+    "longitudeOptional": "Longitude (facultatif)",
+    "pickOnMap": "Choisir sur la carte (facultatif)",
+    "resource": "Ressource",
+    "warehouse": "Entrepôt",
+    "quantity": "Quantité",
+    "reason": "Motif",
+    "password": "Mot de passe"
   },
   "errors": {
     "STOCK_NO_RECORD_IN_WAREHOUSE": "Impossible de réserver le stock : cette ressource n'a aucun stock enregistré dans l'entrepôt de la commande. Demandé : {{requested}}. Ressource id : {{resourceId}}, entrepôt id : {{warehouseId}}",
@@ -130,6 +150,300 @@
       "stockLabel": "Stock : {{status}}"
     }
   },
+  "warehouses": {
+    "title": "Entrepôts",
+    "newWarehouse": "Nouvel entrepôt",
+    "editWarehouse": "Modifier l'entrepôt",
+    "searchPlaceholder": "Rechercher par nom…",
+    "emptyMessage": "Aucun entrepôt à afficher",
+    "entityName": "entrepôt",
+    "loading": "Chargement de l'entrepôt…",
+    "notFound": "Entrepôt introuvable.",
+    "created": "Entrepôt créé.",
+    "updated": "Entrepôt mis à jour.",
+    "form": {
+      "nameLength": "Le nom de l'entrepôt doit comporter entre 2 et 100 caractères",
+      "locationLength": "L'emplacement de l'entrepôt doit comporter entre 2 et 200 caractères"
+    }
+  },
+  "resources": {
+    "title": "Ressources",
+    "newResource": "Nouvelle ressource",
+    "editResource": "Modifier la ressource",
+    "searchPlaceholder": "Rechercher par nom…",
+    "typeFilterPlaceholder": "Filtrer par type…",
+    "emptyMessage": "Aucune ressource à afficher",
+    "entityName": "ressource",
+    "loading": "Chargement de la ressource…",
+    "notFound": "Ressource introuvable.",
+    "created": "Ressource créée.",
+    "updated": "Ressource mise à jour.",
+    "criticality": "Criticité",
+    "form": {
+      "nameLength": "Le nom de la ressource doit comporter entre 2 et 100 caractères",
+      "typeLength": "Le type de ressource doit comporter entre 2 et 50 caractères",
+      "typePlaceholder": "p. ex. Équipement, Matériel",
+      "selectCriticality": "Sélectionnez un niveau de criticité",
+      "selectLevel": "Sélectionnez un niveau"
+    }
+  },
+  "vehicles": {
+    "title": "Véhicules",
+    "newVehicle": "Nouveau véhicule",
+    "editVehicle": "Modifier le véhicule",
+    "typeFilterPlaceholder": "Filtrer par type…",
+    "emptyMessage": "Aucun véhicule à afficher",
+    "entityName": "véhicule",
+    "loading": "Chargement du véhicule…",
+    "notFound": "Véhicule introuvable.",
+    "created": "Véhicule créé.",
+    "updated": "Véhicule mis à jour.",
+    "capacity": "Capacité",
+    "capacityKg": "Capacité (kg)",
+    "capacityUnit": "{{value}} kg",
+    "form": {
+      "selectType": "Sélectionnez un type",
+      "selectStatus": "Sélectionnez un statut",
+      "capacityPositive": "La capacité du véhicule doit être supérieure à 0"
+    }
+  },
+  "units": {
+    "title": "Unités",
+    "newUnit": "Nouvelle unité",
+    "editUnit": "Modifier l'unité",
+    "searchPlaceholder": "Rechercher par nom…",
+    "emptyMessage": "Aucune unité à afficher",
+    "entityName": "unité",
+    "loading": "Chargement de l'unité…",
+    "notFound": "Unité introuvable.",
+    "created": "Unité créée.",
+    "updated": "Unité mise à jour.",
+    "form": {
+      "nameLength": "Le nom de l'unité doit comporter entre 2 et 100 caractères",
+      "locationLength": "L'emplacement de l'unité doit comporter entre 2 et 200 caractères"
+    }
+  },
+  "stocks": {
+    "title": "Stock",
+    "newStock": "Nouvel enregistrement de stock",
+    "entityName": "enregistrement de stock",
+    "emptyMessage": "Aucun enregistrement de stock à afficher",
+    "allWarehouses": "Tous les entrepôts",
+    "allResources": "Toutes les ressources",
+    "reserved": "Réservé",
+    "available": "Disponible",
+    "adjust": "Ajuster",
+    "hint": "Utilisez Ajuster pour modifier une quantité — cela conserve toujours le journal d'audit des mouvements intact.",
+    "created": "Enregistrement de stock créé.",
+    "adjusted": "Stock ajusté.",
+    "create": {
+      "selectResource": "Sélectionnez une ressource",
+      "selectWarehouse": "Sélectionnez un entrepôt",
+      "initialQuantity": "Quantité initiale",
+      "creating": "Création…",
+      "createAction": "Créer",
+      "quantityNonNegative": "La quantité de stock doit être égale ou supérieure à zéro"
+    },
+    "adjustPage": {
+      "title": "Ajuster le stock",
+      "stockId": "ID de stock : {{id}}",
+      "back": "Retour",
+      "current": "Actuel",
+      "action": "Action",
+      "selectAction": "Sélectionnez une action",
+      "increase": "Augmenter le stock",
+      "decrease": "Diminuer le stock",
+      "amount": "Quantité",
+      "hint": "Chaque changement est enregistré dans le journal d'audit (historique des mouvements). Les diminutions ne peuvent pas descendre en dessous de zéro.",
+      "applying": "Application…",
+      "applyChange": "Appliquer le changement",
+      "loading": "Chargement du stock…",
+      "notFound": "Enregistrement de stock introuvable.",
+      "amountPositive": "La quantité doit être supérieure à 0"
+    }
+  },
+  "orders": {
+    "title": "Commandes",
+    "newOrder": "Nouvelle commande",
+    "emptyMessage": "Aucune commande à afficher",
+    "entityName": "commande",
+    "allUnits": "Toutes les unités",
+    "unit": "Unité",
+    "dateCreated": "Date de création",
+    "view": "Voir",
+    "from": "de",
+    "originWarehouse": "Entrepôt d'origine",
+    "loading": "Chargement de la commande…",
+    "notFound": "Commande introuvable.",
+    "updated": "Commande mise à jour.",
+    "orderNumber": "Commande n° {{id}}",
+    "itemsTitle": "Articles",
+    "noItems": "Aucun article.",
+    "shipped": "Expédié",
+    "shipmentsTitle": "Expéditions",
+    "noShipments": "Aucune expédition.",
+    "newShipment": "Nouvelle expédition",
+    "movementsTitle": "Mouvements (liés)",
+    "movementsHint": "Seuls les mouvements explicitement liés à cette commande sont affichés.",
+    "noLinkedMovements": "Aucun mouvement lié.",
+    "date": "Date",
+    "action": "Action",
+    "amount": "Quantité",
+    "shipment": "Expédition",
+    "back": "Retour",
+    "edit": {
+      "title": "Modifier la commande n° {{id}}",
+      "fixedAtCreation": "Fixé à la création — chaque article réserve du stock de cet entrepôt.",
+      "statusLockedCompleted": "Cette commande est terminée — son statut ne peut plus changer.",
+      "statusLockedCancelled": "Cette commande est annulée — son statut ne peut plus changer."
+    },
+    "itemsManager": {
+      "lockedHint": "Cette commande est terminée ou annulée — les articles ne peuvent plus être modifiés.",
+      "loading": "Chargement des articles…",
+      "noItems": "Aucun article dans cette commande.",
+      "add": "Ajouter",
+      "update": "Mettre à jour",
+      "remove": "Supprimer",
+      "removeTitle": "Supprimer cet article ?",
+      "removeMessage": "Cela supprime l'article de la commande.",
+      "quantityAriaLabel": "Quantité pour {{name}}",
+      "quantityPositive": "La quantité de l'article de commande doit être supérieure à 0"
+    },
+    "itemsRow": {
+      "loading": "Chargement des articles…",
+      "error": "Impossible de charger les articles.",
+      "noItems": "Aucun article dans cette commande."
+    },
+    "wizard": {
+      "title": "Nouvelle commande",
+      "stepHeader": "En-tête",
+      "stepItems": "Articles",
+      "stepShipment": "Expédition",
+      "nextItems": "Suivant : Articles",
+      "nextShipment": "Suivant : Expédition",
+      "creating": "Création…",
+      "createOrder": "Créer la commande",
+      "shipmentCreateFailed": "La commande a été créée, mais l'expédition n'a pas pu être créée : {{message}}",
+      "header": {
+        "selectUnit": "Sélectionnez une unité",
+        "selectWarehouse": "Sélectionnez un entrepôt d'origine",
+        "dateRequired": "La date de création de la commande est requise",
+        "selectStatus": "Sélectionnez un statut",
+        "warehouseHint": "Fixé pour toute la commande — chaque article réserve du stock de cet entrepôt, et l'expédition en hérite automatiquement."
+      },
+      "items": {
+        "selectResource": "Sélectionnez une ressource",
+        "checking": "Vérification…",
+        "add": "Ajouter",
+        "availabilityWarning": "Attention : seules {{available}} unité(s) de {{name}} sont encore non réservées dans l'entrepôt de cette commande. Vous pouvez quand même ajouter cet article, mais la création de la commande peut échouer.",
+        "noItemsYet": "Aucun article ajouté pour l'instant.",
+        "addAtLeastOne": "Ajoutez au moins un article pour continuer.",
+        "remove": "Supprimer",
+        "quantityPositive": "La quantité de l'article de commande doit être supérieure à 0"
+      },
+      "shipment": {
+        "createNow": "Créer une expédition pour cette commande maintenant",
+        "vehicle": "Véhicule",
+        "selectVehicle": "Sélectionnez un véhicule",
+        "vehicleOption": "Véhicule n° {{id}} — {{type}} — {{status}}",
+        "warehouseFixedHint": "Fixé à l'entrepôt de la commande.",
+        "itemsToShip": "Articles à expédier",
+        "ordered": "Commandé",
+        "shipNow": "Expédier maintenant",
+        "shipNowAriaLabel": "Quantité à expédier pour {{name}}",
+        "shipNowHint": "Par défaut, tout est expédié maintenant ; réduisez une quantité pour laisser le reste pour une expédition ultérieure.",
+        "selectVehicleRequired": "Sélectionnez un véhicule"
+      }
+    }
+  },
+  "shipments": {
+    "title": "Expéditions",
+    "newShipment": "Nouvelle expédition",
+    "editShipment": "Modifier l'expédition n°{{id}}",
+    "emptyMessage": "Aucune expédition à afficher",
+    "entityName": "expédition",
+    "orderIdPlaceholder": "ID de commande",
+    "order": "Commande",
+    "vehicle": "Véhicule",
+    "loading": "Chargement de l'expédition…",
+    "notFound": "Expédition introuvable.",
+    "updated": "Expédition mise à jour.",
+    "created": "Expédition créée.",
+    "view": "Voir",
+    "shipmentNumber": "Expédition n°{{id}}",
+    "form": {
+      "selectOrder": "Sélectionnez une commande",
+      "selectVehicle": "Sélectionnez un véhicule",
+      "selectStatus": "Sélectionnez un statut",
+      "vehicleOption": "Véhicule n°{{id}} — {{type}} — {{status}}",
+      "orderOption": "Commande n°{{id}} — {{date}} — {{status}}",
+      "originWarehouse": "Entrepôt (origine)",
+      "originWarehouseHint": "Fixé à l'entrepôt de la commande sélectionnée.",
+      "selectOrderFirst": "Sélectionnez d'abord une commande.",
+      "itemsToShip": "Articles à expédier",
+      "orderNoItems": "Cette commande n'a pas encore d'articles.",
+      "ordered": "Commandé",
+      "delivered": "Livré",
+      "shipNow": "Expédier maintenant",
+      "shipNowAriaLabel": "Quantité à expédier pour {{name}}",
+      "leftSuffix": "/ {{max}} restants",
+      "selectAtLeastOneItem": "Sélectionnez au moins un article à expédier.",
+      "deliveredHint": "Passer à Livré déduit le stock de l'entrepôt d'origine pour les articles de cette expédition et enregistre les mouvements — l'opération sera rejetée si le stock est insuffisant."
+    },
+    "detail": {
+      "context": "Contexte",
+      "warehouseOrigin": "Entrepôt (origine)",
+      "itemsTitle": "Articles (cette expédition)",
+      "noItems": "Aucun article.",
+      "thisShipment": "Cette expédition",
+      "movementsTitle": "Mouvements (liés)",
+      "movementsHint": "Seuls les mouvements explicitement liés à cette expédition sont affichés.",
+      "noLinkedMovements": "Aucun mouvement lié.",
+      "stock": "Stock"
+    }
+  },
+  "movements": {
+    "title": "Journal d'audit",
+    "emptyMessage": "Aucun mouvement à afficher",
+    "date": "Date",
+    "type": "Type",
+    "allTypes": "Tous les types",
+    "amount": "Montant",
+    "by": "Par",
+    "orderIdPlaceholder": "ID de commande",
+    "shipmentIdPlaceholder": "ID d'expédition"
+  },
+  "users": {
+    "title": "Utilisateurs",
+    "newUser": "Nouvel utilisateur",
+    "emptyMessage": "Aucun utilisateur à afficher",
+    "username": "Nom d'utilisateur",
+    "role": "Rôle",
+    "enabled": "Activé",
+    "disabled": "Désactivé",
+    "resetPassword": "Réinitialiser le mot de passe",
+    "disable": "Désactiver",
+    "enable": "Activer",
+    "changeRole": "Changer le rôle",
+    "changeRoleTitle": "Changer le rôle de {{username}} ?",
+    "changeRoleMessage": "Changer le rôle de {{username}} en {{role}}.",
+    "toggleTitle": "{{action}} ce compte ?",
+    "toggleMessage": "{{action}} le compte « {{username}} ».",
+    "created": "Utilisateur créé.",
+    "form": {
+      "usernameLength": "Le nom d'utilisateur doit comporter entre 3 et 50 caractères",
+      "passwordLength": "Le mot de passe doit comporter entre 12 et 128 caractères",
+      "passwordHint": "Au moins 12 caractères.",
+      "selectRole": "Sélectionnez un rôle"
+    },
+    "resetPasswordPage": {
+      "title": "Réinitialiser le mot de passe",
+      "titleWithUsername": "Réinitialiser le mot de passe — {{username}}",
+      "newPassword": "Nouveau mot de passe",
+      "loading": "Chargement de l'utilisateur…",
+      "notFound": "Utilisateur introuvable."
+    }
+  },
   "enums": {
     "orderStatus": {
       "CREATED": "Créée",
@@ -157,6 +471,15 @@
       "ADMIN": "Administrateur",
       "OPERATOR": "Opérateur",
       "AUDITOR": "Auditeur"
+    },
+    "criticality": {
+      "LOW": "Faible",
+      "MEDIUM": "Moyenne",
+      "HIGH": "Élevée"
+    },
+    "movementType": {
+      "ENTRY": "Entrée",
+      "EXIT": "Sortie"
     }
   }
 }

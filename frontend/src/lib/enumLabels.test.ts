@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import i18n from '../i18n'
 import {
+  CRITICALITY_LABELS,
   enumLabel,
+  MOVEMENT_TYPE_LABELS,
   ORDER_STATUS_LABELS,
   ROLE_LABELS,
   SHIPMENT_STATUS_LABELS,
@@ -56,6 +58,14 @@ describe('label map completeness', () => {
     expect(Object.keys(ROLE_LABELS).sort()).toEqual(['ADMIN', 'AUDITOR', 'OPERATOR'].sort())
   })
 
+  it('covers every criticality value', () => {
+    expect(Object.keys(CRITICALITY_LABELS).sort()).toEqual(['HIGH', 'LOW', 'MEDIUM'].sort())
+  })
+
+  it('covers every MovementType value', () => {
+    expect(Object.keys(MOVEMENT_TYPE_LABELS).sort()).toEqual(['ENTRY', 'EXIT'].sort())
+  })
+
   it('never resolves a value to an empty or unchanged-but-ugly label', () => {
     const allMaps = [
       ORDER_STATUS_LABELS,
@@ -63,6 +73,8 @@ describe('label map completeness', () => {
       VEHICLE_STATUS_LABELS,
       VEHICLE_TYPE_LABELS,
       ROLE_LABELS,
+      CRITICALITY_LABELS,
+      MOVEMENT_TYPE_LABELS,
     ]
     for (const map of allMaps) {
       for (const value of Object.keys(map)) {
@@ -83,6 +95,8 @@ describe('label map completeness', () => {
       VEHICLE_STATUS_LABELS,
       VEHICLE_TYPE_LABELS,
       ROLE_LABELS,
+      CRITICALITY_LABELS,
+      MOVEMENT_TYPE_LABELS,
     ]
     for (const map of allMaps) {
       for (const key of Object.values(map)) {

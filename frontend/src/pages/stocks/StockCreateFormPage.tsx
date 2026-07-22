@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { api } from '../../api/client'
@@ -12,15 +14,18 @@ import { FormPage } from '../../components/form/FormPage'
 import { useToast } from '../../components/toast/toastContext'
 import { nonNegativeNumber, positiveId } from '../../components/form/zodHelpers'
 
-const schema = z.object({
-  resourceId: positiveId('Select a resource'),
-  warehouseId: positiveId('Select a warehouse'),
-  quantity: nonNegativeNumber('Stock quantity must be zero or greater'),
-})
+function buildSchema(t: TFunction) {
+  return z.object({
+    resourceId: positiveId(t('stocks.create.selectResource')),
+    warehouseId: positiveId(t('stocks.create.selectWarehouse')),
+    quantity: nonNegativeNumber(t('stocks.create.quantityNonNegative')),
+  })
+}
 
-type FormValues = z.infer<typeof schema>
+type FormValues = z.infer<ReturnType<typeof buildSchema>>
 
 export default function StockCreateFormPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { showToast } = useToast()
   const { byId: resources } = useLookup<ResourceEntity>('/resources')
@@ -33,7 +38,7 @@ export default function StockCreateFormPage() {
     setError,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(buildSchema(t)),
     defaultValues: { resourceId: undefined, warehouseId: undefined, quantity: 0 },
   })
 
@@ -41,7 +46,7 @@ export default function StockCreateFormPage() {
     setBanner(null)
     try {
       await api.post('/stocks', values)
-      showToast('Stock record created.', 'success')
+      showToast(t('stocks.created'), 'success')
       navigate('/stocks')
     } catch (error) {
       setBanner(applyApiError(extractApiError(error), setError))
@@ -49,18 +54,18 @@ export default function StockCreateFormPage() {
   }
 
   return (
-    <FormPage title="New stock record" backTo="/stocks">
+    <FormPage title={t('stocks.newStock')} backTo="/stocks">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <FormBanner message={banner} />
         <SelectField
-          label="Resource"
+          label={t('common.resource')}
           id="resourceId"
           defaultValue=""
           registration={register('resourceId', { valueAsNumber: true })}
           error={errors.resourceId?.message}
         >
           <option value="" disabled>
-            Select a resource
+            {t('stocks.create.selectResource')}
           </option>
           {Object.values(resources).map((r) => (
             <option key={r.id} value={r.id}>
@@ -69,14 +74,14 @@ export default function StockCreateFormPage() {
           ))}
         </SelectField>
         <SelectField
-          label="Warehouse"
+          label={t('common.warehouse')}
           id="warehouseId"
           defaultValue=""
           registration={register('warehouseId', { valueAsNumber: true })}
           error={errors.warehouseId?.message}
         >
           <option value="" disabled>
-            Select a warehouse
+            {t('stocks.create.selectWarehouse')}
           </option>
           {Object.values(warehouses).map((w) => (
             <option key={w.id} value={w.id}>
@@ -85,7 +90,7 @@ export default function StockCreateFormPage() {
           ))}
         </SelectField>
         <TextField
-          label="Initial quantity"
+          label={t('stocks.create.initialQuantity')}
           id="quantity"
           type="number"
           min={0}
@@ -94,8 +99,10 @@ export default function StockCreateFormPage() {
           error={errors.quantity?.message}
         />
         <div className="flex gap-3">
-          <SubmitButton submitting={isSubmitting}>{isSubmitting ? 'Creating…' : 'Create'}</SubmitButton>
-          <SecondaryButton onClick={() => navigate('/stocks')}>Cancel</SecondaryButton>
+          <SubmitButton submitting={isSubmitting}>
+            {isSubmitting ? t('stocks.create.creating') : t('stocks.create.createAction')}
+          </SubmitButton>
+          <SecondaryButton onClick={() => navigate('/stocks')}>{t('common.cancel')}</SecondaryButton>
         </div>
       </form>
     </FormPage>

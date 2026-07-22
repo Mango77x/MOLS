@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { api } from '../../api/client'
@@ -12,21 +14,24 @@ import { FormPage } from '../../components/form/FormPage'
 import { useDuplicateNameWarning } from '../../components/form/useDuplicateNameWarning'
 import { useToast } from '../../components/toast/toastContext'
 
-const schema = z.object({
-  name: z
-    .string()
-    .min(2, 'Resource name must be between 2 and 100 characters')
-    .max(100, 'Resource name must be between 2 and 100 characters'),
-  type: z
-    .string()
-    .min(2, 'Resource type must be between 2 and 50 characters')
-    .max(50, 'Resource type must be between 2 and 50 characters'),
-  criticality: z.enum(['LOW', 'MEDIUM', 'HIGH'], { message: 'Select a criticality level' }),
-})
+function buildSchema(t: TFunction) {
+  return z.object({
+    name: z
+      .string()
+      .min(2, t('resources.form.nameLength'))
+      .max(100, t('resources.form.nameLength')),
+    type: z
+      .string()
+      .min(2, t('resources.form.typeLength'))
+      .max(50, t('resources.form.typeLength')),
+    criticality: z.enum(['LOW', 'MEDIUM', 'HIGH'], { message: t('resources.form.selectCriticality') }),
+  })
+}
 
-type FormValues = z.infer<typeof schema>
+type FormValues = z.infer<ReturnType<typeof buildSchema>>
 
 export default function ResourceFormPage() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const isEdit = id !== undefined
   const navigate = useNavigate()
@@ -37,7 +42,7 @@ export default function ResourceFormPage() {
   const [banner, setBanner] = useState<string | null>(null)
   const { warning: nameWarning, checkName } = useDuplicateNameWarning(
     '/resources',
-    'resource',
+    t('resources.entityName'),
     isEdit ? Number(id) : undefined,
   )
 
@@ -48,7 +53,7 @@ export default function ResourceFormPage() {
     setError,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(buildSchema(t)),
     defaultValues: { name: '', type: '', criticality: undefined },
   })
 
@@ -67,10 +72,10 @@ export default function ResourceFormPage() {
     try {
       if (isEdit) {
         await api.put(`/resources/${id}`, values)
-        showToast('Resource updated.', 'success')
+        showToast(t('resources.updated'), 'success')
       } else {
         await api.post('/resources', values)
-        showToast('Resource created.', 'success')
+        showToast(t('resources.created'), 'success')
       }
       navigate('/resources')
     } catch (error) {
@@ -79,47 +84,49 @@ export default function ResourceFormPage() {
   }
 
   if (isEdit && loading) {
-    return <p className="text-sm text-gray-500 dark:text-gray-400">Loading resource…</p>
+    return <p className="text-sm text-gray-500 dark:text-gray-400">{t('resources.loading')}</p>
   }
   if (isEdit && notFound) {
-    return <FormBanner message="Resource not found." />
+    return <FormBanner message={t('resources.notFound')} />
   }
 
   return (
-    <FormPage title={isEdit ? 'Edit resource' : 'New resource'} backTo="/resources">
+    <FormPage title={isEdit ? t('resources.editResource') : t('resources.newResource')} backTo="/resources">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <FormBanner message={banner} />
         <TextField
-          label="Name"
+          label={t('common.name')}
           id="name"
           registration={register('name', { onBlur: (e) => checkName(e.target.value) })}
           error={errors.name?.message}
           warning={nameWarning}
         />
         <TextField
-          label="Type"
+          label={t('common.type')}
           id="type"
-          placeholder="e.g. Equipment, Material"
+          placeholder={t('resources.form.typePlaceholder')}
           registration={register('type')}
           error={errors.type?.message}
         />
         <SelectField
-          label="Criticality"
+          label={t('resources.criticality')}
           id="criticality"
           registration={register('criticality')}
           error={errors.criticality?.message}
           defaultValue=""
         >
           <option value="" disabled>
-            Select a level
+            {t('resources.form.selectLevel')}
           </option>
-          <option value="LOW">Low</option>
-          <option value="MEDIUM">Medium</option>
-          <option value="HIGH">High</option>
+          <option value="LOW">{t('enums.criticality.LOW')}</option>
+          <option value="MEDIUM">{t('enums.criticality.MEDIUM')}</option>
+          <option value="HIGH">{t('enums.criticality.HIGH')}</option>
         </SelectField>
         <div className="flex gap-3">
-          <SubmitButton submitting={isSubmitting}>{isSubmitting ? 'Saving…' : 'Save'}</SubmitButton>
-          <SecondaryButton onClick={() => navigate('/resources')}>Cancel</SecondaryButton>
+          <SubmitButton submitting={isSubmitting}>
+            {isSubmitting ? t('common.saving') : t('common.save')}
+          </SubmitButton>
+          <SecondaryButton onClick={() => navigate('/resources')}>{t('common.cancel')}</SecondaryButton>
         </div>
       </form>
     </FormPage>

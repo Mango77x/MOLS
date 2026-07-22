@@ -1,5 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { hasAnyRole, useCurrentRole } from '../../auth/roles'
 import { api } from '../../api/client'
@@ -21,6 +22,7 @@ const STATUS_TONE: Record<OrderStatus, BadgeTone> = {
 }
 
 export default function OrdersPage() {
+  const { t } = useTranslation()
   const role = useCurrentRole()
   const canEdit = hasAnyRole(role, ['ADMIN', 'OPERATOR'])
   const isAdmin = role === 'ADMIN'
@@ -51,7 +53,7 @@ export default function OrdersPage() {
   const columns: ColumnDef<OrderEntity, unknown>[] = [
     {
       id: 'id',
-      header: 'ID',
+      header: t('common.id'),
       enableSorting: true,
       cell: ({ row }) => (
         <button
@@ -65,18 +67,18 @@ export default function OrdersPage() {
     },
     {
       id: 'unit',
-      header: 'Unit',
+      header: t('orders.unit'),
       cell: ({ row }) => units[row.original.unitId]?.name ?? `#${row.original.unitId}`,
     },
     {
       id: 'warehouse',
-      header: 'Warehouse',
+      header: t('common.warehouse'),
       cell: ({ row }) => warehouses[row.original.warehouseId]?.name ?? `#${row.original.warehouseId}`,
     },
-    { id: 'dateCreated', header: 'Date created', accessorKey: 'dateCreated', enableSorting: true },
+    { id: 'dateCreated', header: t('orders.dateCreated'), accessorKey: 'dateCreated', enableSorting: true },
     {
       id: 'status',
-      header: 'Status',
+      header: t('common.status'),
       accessorKey: 'status',
       enableSorting: true,
       cell: ({ getValue }) => {
@@ -86,13 +88,13 @@ export default function OrdersPage() {
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('common.actions'),
       cell: ({ row }) => (
         <div className="flex gap-3">
-          <RouteActionLink to={`/orders/${row.original.id}`}>View</RouteActionLink>
-          {canEdit && <RouteActionLink to={`/orders/${row.original.id}/edit`}>Edit</RouteActionLink>}
+          <RouteActionLink to={`/orders/${row.original.id}`}>{t('orders.view')}</RouteActionLink>
+          {canEdit && <RouteActionLink to={`/orders/${row.original.id}/edit`}>{t('common.edit')}</RouteActionLink>}
           {isAdmin && (
-            <DeleteAction label="order" onConfirm={() => handleDelete(row.original.id)} />
+            <DeleteAction label={t('orders.entityName')} onConfirm={() => handleDelete(row.original.id)} />
           )}
         </div>
       ),
@@ -102,13 +104,13 @@ export default function OrdersPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold">Orders</h1>
+        <h1 className="text-xl font-bold">{t('orders.title')}</h1>
         {canEdit && (
           <Link
             to="/orders/new"
             className="rounded bg-army-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-army-800"
           >
-            New order
+            {t('orders.newOrder')}
           </Link>
         )}
       </div>
@@ -119,7 +121,7 @@ export default function OrdersPage() {
           onChange={(e) => setStatus(e.target.value)}
           className="rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
         >
-          <option value="">All statuses</option>
+          <option value="">{t('common.allStatuses')}</option>
           {Object.entries(ORDER_STATUS_LABELS).map(([value]) => (
             <option key={value} value={value}>
               {enumLabel(ORDER_STATUS_LABELS, value)}
@@ -131,7 +133,7 @@ export default function OrdersPage() {
           onChange={(e) => setUnitId(e.target.value)}
           className="rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
         >
-          <option value="">All units</option>
+          <option value="">{t('orders.allUnits')}</option>
           {Object.values(units).map((u) => (
             <option key={u.id} value={u.id}>
               {u.name}
@@ -145,7 +147,7 @@ export default function OrdersPage() {
         data={table.rows}
         loading={table.loading}
         error={table.error}
-        emptyMessage="No orders to display"
+        emptyMessage={t('orders.emptyMessage')}
         sort={table.sort}
         onSortChange={table.toggleSort}
         page={table.page}

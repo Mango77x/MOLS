@@ -1,5 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useCurrentRole } from '../../auth/roles'
 import { api } from '../../api/client'
@@ -17,6 +18,7 @@ const STATUS_TONE: Record<VehicleStatus, BadgeTone> = {
 }
 
 export default function VehiclesPage() {
+  const { t } = useTranslation()
   const role = useCurrentRole()
   const isAdmin = role === 'ADMIN'
   const [type, setType] = useState('')
@@ -30,24 +32,24 @@ export default function VehiclesPage() {
   }
 
   const columns: ColumnDef<VehicleEntity, unknown>[] = [
-    { id: 'id', header: 'ID', accessorKey: 'id', enableSorting: true },
+    { id: 'id', header: t('common.id'), accessorKey: 'id', enableSorting: true },
     {
       id: 'type',
-      header: 'Type',
+      header: t('common.type'),
       accessorKey: 'type',
       enableSorting: true,
       cell: ({ getValue }) => enumLabel(VEHICLE_TYPE_LABELS, getValue<string>()),
     },
     {
       id: 'capacity',
-      header: 'Capacity',
+      header: t('vehicles.capacity'),
       accessorKey: 'capacity',
       enableSorting: true,
-      cell: ({ getValue }) => `${getValue<number>()} kg`,
+      cell: ({ getValue }) => t('vehicles.capacityUnit', { value: getValue<number>() }),
     },
     {
       id: 'status',
-      header: 'Status',
+      header: t('common.status'),
       accessorKey: 'status',
       enableSorting: true,
       cell: ({ getValue }) => {
@@ -59,11 +61,11 @@ export default function VehiclesPage() {
   if (isAdmin) {
     columns.push({
       id: 'actions',
-      header: 'Actions',
+      header: t('common.actions'),
       cell: ({ row }) => (
         <div className="flex gap-3">
-          <RouteActionLink to={`/vehicles/${row.original.id}/edit`}>Edit</RouteActionLink>
-          <DeleteAction label="vehicle" onConfirm={() => handleDelete(row.original.id)} />
+          <RouteActionLink to={`/vehicles/${row.original.id}/edit`}>{t('common.edit')}</RouteActionLink>
+          <DeleteAction label={t('vehicles.entityName')} onConfirm={() => handleDelete(row.original.id)} />
         </div>
       ),
     })
@@ -72,13 +74,13 @@ export default function VehiclesPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold">Vehicles</h1>
+        <h1 className="text-xl font-bold">{t('vehicles.title')}</h1>
         {isAdmin && (
           <Link
             to="/vehicles/new"
             className="rounded bg-army-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-army-800"
           >
-            New vehicle
+            {t('vehicles.newVehicle')}
           </Link>
         )}
       </div>
@@ -87,7 +89,7 @@ export default function VehiclesPage() {
         <input
           value={type}
           onChange={(e) => setType(e.target.value)}
-          placeholder="Filter by type…"
+          placeholder={t('vehicles.typeFilterPlaceholder')}
           className="rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
         />
         <select
@@ -95,7 +97,7 @@ export default function VehiclesPage() {
           onChange={(e) => setStatus(e.target.value)}
           className="rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
         >
-          <option value="">All statuses</option>
+          <option value="">{t('common.allStatuses')}</option>
           {Object.entries(VEHICLE_STATUS_LABELS).map(([value]) => (
             <option key={value} value={value}>
               {enumLabel(VEHICLE_STATUS_LABELS, value)}
@@ -109,7 +111,7 @@ export default function VehiclesPage() {
         data={table.rows}
         loading={table.loading}
         error={table.error}
-        emptyMessage="No vehicles to display"
+        emptyMessage={t('vehicles.emptyMessage')}
         sort={table.sort}
         onSortChange={table.toggleSort}
         page={table.page}

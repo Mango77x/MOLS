@@ -3,7 +3,27 @@
     "cancel": "Cancelar",
     "delete": "Eliminar",
     "deleting": "Eliminando…",
-    "save": "Guardar"
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "id": "ID",
+    "name": "Nombre",
+    "actions": "Acciones",
+    "edit": "Editar",
+    "back": "Volver",
+    "location": "Ubicación",
+    "type": "Tipo",
+    "status": "Estado",
+    "allStatuses": "Todos los estados",
+    "latitude": "Latitud",
+    "longitude": "Longitud",
+    "latitudeOptional": "Latitud (opcional)",
+    "longitudeOptional": "Longitud (opcional)",
+    "pickOnMap": "Seleccionar en el mapa (opcional)",
+    "resource": "Recurso",
+    "warehouse": "Almacén",
+    "quantity": "Cantidad",
+    "reason": "Motivo",
+    "password": "Contraseña"
   },
   "errors": {
     "STOCK_NO_RECORD_IN_WAREHOUSE": "No se puede reservar stock: este recurso no tiene stock registrado en el almacén del pedido. Solicitado: {{requested}}. Recurso id: {{resourceId}}, almacén id: {{warehouseId}}",
@@ -130,6 +150,300 @@
       "stockLabel": "Stock: {{status}}"
     }
   },
+  "warehouses": {
+    "title": "Almacenes",
+    "newWarehouse": "Nuevo almacén",
+    "editWarehouse": "Editar almacén",
+    "searchPlaceholder": "Buscar por nombre…",
+    "emptyMessage": "No hay almacenes que mostrar",
+    "entityName": "almacén",
+    "loading": "Cargando almacén…",
+    "notFound": "Almacén no encontrado.",
+    "created": "Almacén creado.",
+    "updated": "Almacén actualizado.",
+    "form": {
+      "nameLength": "El nombre del almacén debe tener entre 2 y 100 caracteres",
+      "locationLength": "La ubicación del almacén debe tener entre 2 y 200 caracteres"
+    }
+  },
+  "resources": {
+    "title": "Recursos",
+    "newResource": "Nuevo recurso",
+    "editResource": "Editar recurso",
+    "searchPlaceholder": "Buscar por nombre…",
+    "typeFilterPlaceholder": "Filtrar por tipo…",
+    "emptyMessage": "No hay recursos que mostrar",
+    "entityName": "recurso",
+    "loading": "Cargando recurso…",
+    "notFound": "Recurso no encontrado.",
+    "created": "Recurso creado.",
+    "updated": "Recurso actualizado.",
+    "criticality": "Criticidad",
+    "form": {
+      "nameLength": "El nombre del recurso debe tener entre 2 y 100 caracteres",
+      "typeLength": "El tipo de recurso debe tener entre 2 y 50 caracteres",
+      "typePlaceholder": "p. ej. Equipamiento, Material",
+      "selectCriticality": "Selecciona un nivel de criticidad",
+      "selectLevel": "Selecciona un nivel"
+    }
+  },
+  "vehicles": {
+    "title": "Vehículos",
+    "newVehicle": "Nuevo vehículo",
+    "editVehicle": "Editar vehículo",
+    "typeFilterPlaceholder": "Filtrar por tipo…",
+    "emptyMessage": "No hay vehículos que mostrar",
+    "entityName": "vehículo",
+    "loading": "Cargando vehículo…",
+    "notFound": "Vehículo no encontrado.",
+    "created": "Vehículo creado.",
+    "updated": "Vehículo actualizado.",
+    "capacity": "Capacidad",
+    "capacityKg": "Capacidad (kg)",
+    "capacityUnit": "{{value}} kg",
+    "form": {
+      "selectType": "Selecciona un tipo",
+      "selectStatus": "Selecciona un estado",
+      "capacityPositive": "La capacidad del vehículo debe ser mayor que 0"
+    }
+  },
+  "units": {
+    "title": "Unidades",
+    "newUnit": "Nueva unidad",
+    "editUnit": "Editar unidad",
+    "searchPlaceholder": "Buscar por nombre…",
+    "emptyMessage": "No hay unidades que mostrar",
+    "entityName": "unidad",
+    "loading": "Cargando unidad…",
+    "notFound": "Unidad no encontrada.",
+    "created": "Unidad creada.",
+    "updated": "Unidad actualizada.",
+    "form": {
+      "nameLength": "El nombre de la unidad debe tener entre 2 y 100 caracteres",
+      "locationLength": "La ubicación de la unidad debe tener entre 2 y 200 caracteres"
+    }
+  },
+  "stocks": {
+    "title": "Stock",
+    "newStock": "Nuevo registro de stock",
+    "entityName": "registro de stock",
+    "emptyMessage": "No hay registros de stock que mostrar",
+    "allWarehouses": "Todos los almacenes",
+    "allResources": "Todos los recursos",
+    "reserved": "Reservado",
+    "available": "Disponible",
+    "adjust": "Ajustar",
+    "hint": "Usa Ajustar para cambiar una cantidad — siempre mantiene intacto el registro de auditoría de movimientos.",
+    "created": "Registro de stock creado.",
+    "adjusted": "Stock ajustado.",
+    "create": {
+      "selectResource": "Selecciona un recurso",
+      "selectWarehouse": "Selecciona un almacén",
+      "initialQuantity": "Cantidad inicial",
+      "creating": "Creando…",
+      "createAction": "Crear",
+      "quantityNonNegative": "La cantidad de stock debe ser cero o mayor"
+    },
+    "adjustPage": {
+      "title": "Ajustar stock",
+      "stockId": "ID de stock: {{id}}",
+      "back": "Volver",
+      "current": "Actual",
+      "action": "Acción",
+      "selectAction": "Selecciona una acción",
+      "increase": "Aumentar stock",
+      "decrease": "Reducir stock",
+      "amount": "Cantidad",
+      "hint": "Cada cambio se registra en el registro de auditoría (historial de movimientos). Las reducciones no pueden bajar de cero.",
+      "applying": "Aplicando…",
+      "applyChange": "Aplicar cambio",
+      "loading": "Cargando stock…",
+      "notFound": "Registro de stock no encontrado.",
+      "amountPositive": "La cantidad debe ser mayor que 0"
+    }
+  },
+  "orders": {
+    "title": "Pedidos",
+    "newOrder": "Nuevo pedido",
+    "emptyMessage": "No hay pedidos que mostrar",
+    "entityName": "pedido",
+    "allUnits": "Todas las unidades",
+    "unit": "Unidad",
+    "dateCreated": "Fecha de creación",
+    "view": "Ver",
+    "from": "desde",
+    "originWarehouse": "Almacén de origen",
+    "loading": "Cargando pedido…",
+    "notFound": "Pedido no encontrado.",
+    "updated": "Pedido actualizado.",
+    "orderNumber": "Pedido n.º {{id}}",
+    "itemsTitle": "Artículos",
+    "noItems": "Sin artículos.",
+    "shipped": "Enviado",
+    "shipmentsTitle": "Envíos",
+    "noShipments": "Sin envíos.",
+    "newShipment": "Nuevo envío",
+    "movementsTitle": "Movimientos (vinculados)",
+    "movementsHint": "Solo se muestran los movimientos vinculados explícitamente a este pedido.",
+    "noLinkedMovements": "Sin movimientos vinculados.",
+    "date": "Fecha",
+    "action": "Acción",
+    "amount": "Cantidad",
+    "shipment": "Envío",
+    "back": "Volver",
+    "edit": {
+      "title": "Editar pedido n.º {{id}}",
+      "fixedAtCreation": "Fijado al crear — cada artículo reserva stock de este almacén.",
+      "statusLockedCompleted": "Este pedido está completado — su estado ya no puede cambiar.",
+      "statusLockedCancelled": "Este pedido está cancelado — su estado ya no puede cambiar."
+    },
+    "itemsManager": {
+      "lockedHint": "Este pedido está completado o cancelado — los artículos ya no se pueden modificar.",
+      "loading": "Cargando artículos…",
+      "noItems": "Este pedido no tiene artículos.",
+      "add": "Añadir",
+      "update": "Actualizar",
+      "remove": "Eliminar",
+      "removeTitle": "¿Eliminar este artículo?",
+      "removeMessage": "Esto elimina el artículo del pedido.",
+      "quantityAriaLabel": "Cantidad de {{name}}",
+      "quantityPositive": "La cantidad del artículo del pedido debe ser mayor que 0"
+    },
+    "itemsRow": {
+      "loading": "Cargando artículos…",
+      "error": "No se pudieron cargar los artículos.",
+      "noItems": "Este pedido no tiene artículos."
+    },
+    "wizard": {
+      "title": "Nuevo pedido",
+      "stepHeader": "Cabecera",
+      "stepItems": "Artículos",
+      "stepShipment": "Envío",
+      "nextItems": "Siguiente: Artículos",
+      "nextShipment": "Siguiente: Envío",
+      "creating": "Creando…",
+      "createOrder": "Crear pedido",
+      "shipmentCreateFailed": "El pedido se creó, pero el envío no pudo crearse: {{message}}",
+      "header": {
+        "selectUnit": "Selecciona una unidad",
+        "selectWarehouse": "Selecciona un almacén de origen",
+        "dateRequired": "La fecha de creación del pedido es obligatoria",
+        "selectStatus": "Selecciona un estado",
+        "warehouseHint": "Fijado para todo el pedido — cada artículo reserva stock de este almacén, y el envío lo hereda automáticamente."
+      },
+      "items": {
+        "selectResource": "Selecciona un recurso",
+        "checking": "Comprobando…",
+        "add": "Añadir",
+        "availabilityWarning": "Aviso: solo quedan {{available}} unidad(es) sin reservar de {{name}} en el almacén de este pedido. Puedes añadir el artículo igualmente, pero crear el pedido puede fallar.",
+        "noItemsYet": "Todavía no se han añadido artículos.",
+        "addAtLeastOne": "Añade al menos un artículo para continuar.",
+        "remove": "Eliminar",
+        "quantityPositive": "La cantidad del artículo del pedido debe ser mayor que 0"
+      },
+      "shipment": {
+        "createNow": "Crear un envío para este pedido ahora",
+        "vehicle": "Vehículo",
+        "selectVehicle": "Selecciona un vehículo",
+        "vehicleOption": "Vehículo n.º {{id}} — {{type}} — {{status}}",
+        "warehouseFixedHint": "Fijado al almacén del pedido.",
+        "itemsToShip": "Artículos a enviar",
+        "ordered": "Pedido",
+        "shipNow": "Enviar ahora",
+        "shipNowAriaLabel": "Cantidad a enviar de {{name}}",
+        "shipNowHint": "Por defecto se envía todo ahora; reduce una cantidad para dejar el resto para un envío posterior.",
+        "selectVehicleRequired": "Selecciona un vehículo"
+      }
+    }
+  },
+  "shipments": {
+    "title": "Envíos",
+    "newShipment": "Nuevo envío",
+    "editShipment": "Editar envío #{{id}}",
+    "emptyMessage": "No hay envíos para mostrar",
+    "entityName": "envío",
+    "orderIdPlaceholder": "ID de pedido",
+    "order": "Pedido",
+    "vehicle": "Vehículo",
+    "loading": "Cargando envío…",
+    "notFound": "Envío no encontrado.",
+    "updated": "Envío actualizado.",
+    "created": "Envío creado.",
+    "view": "Ver",
+    "shipmentNumber": "Envío #{{id}}",
+    "form": {
+      "selectOrder": "Selecciona un pedido",
+      "selectVehicle": "Selecciona un vehículo",
+      "selectStatus": "Selecciona un estado",
+      "vehicleOption": "Vehículo #{{id}} — {{type}} — {{status}}",
+      "orderOption": "Pedido #{{id}} — {{date}} — {{status}}",
+      "originWarehouse": "Almacén (origen)",
+      "originWarehouseHint": "Fijado al almacén del pedido seleccionado.",
+      "selectOrderFirst": "Selecciona primero un pedido.",
+      "itemsToShip": "Artículos a enviar",
+      "orderNoItems": "Este pedido aún no tiene artículos.",
+      "ordered": "Pedido",
+      "delivered": "Entregado",
+      "shipNow": "Enviar ahora",
+      "shipNowAriaLabel": "Cantidad a enviar de {{name}}",
+      "leftSuffix": "/ {{max}} restantes",
+      "selectAtLeastOneItem": "Selecciona al menos un artículo para enviar.",
+      "deliveredHint": "Pasar a Entregado descuenta stock del almacén de origen para los artículos de este envío y registra los movimientos — se rechazará si el stock es insuficiente."
+    },
+    "detail": {
+      "context": "Contexto",
+      "warehouseOrigin": "Almacén (origen)",
+      "itemsTitle": "Artículos (este envío)",
+      "noItems": "Sin artículos.",
+      "thisShipment": "Este envío",
+      "movementsTitle": "Movimientos (vinculados)",
+      "movementsHint": "Solo se muestran los movimientos vinculados explícitamente a este envío.",
+      "noLinkedMovements": "Sin movimientos vinculados.",
+      "stock": "Stock"
+    }
+  },
+  "movements": {
+    "title": "Registro de auditoría",
+    "emptyMessage": "No hay movimientos para mostrar",
+    "date": "Fecha",
+    "type": "Tipo",
+    "allTypes": "Todos los tipos",
+    "amount": "Cantidad",
+    "by": "Por",
+    "orderIdPlaceholder": "ID de pedido",
+    "shipmentIdPlaceholder": "ID de envío"
+  },
+  "users": {
+    "title": "Usuarios",
+    "newUser": "Nuevo usuario",
+    "emptyMessage": "No hay usuarios para mostrar",
+    "username": "Usuario",
+    "role": "Rol",
+    "enabled": "Habilitado",
+    "disabled": "Deshabilitado",
+    "resetPassword": "Restablecer contraseña",
+    "disable": "Deshabilitar",
+    "enable": "Habilitar",
+    "changeRole": "Cambiar rol",
+    "changeRoleTitle": "¿Cambiar el rol de {{username}}?",
+    "changeRoleMessage": "Cambiar el rol de {{username}} a {{role}}.",
+    "toggleTitle": "¿{{action}} esta cuenta?",
+    "toggleMessage": "{{action}} la cuenta '{{username}}'.",
+    "created": "Usuario creado.",
+    "form": {
+      "usernameLength": "El usuario debe tener entre 3 y 50 caracteres",
+      "passwordLength": "La contraseña debe tener entre 12 y 128 caracteres",
+      "passwordHint": "Al menos 12 caracteres.",
+      "selectRole": "Selecciona un rol"
+    },
+    "resetPasswordPage": {
+      "title": "Restablecer contraseña",
+      "titleWithUsername": "Restablecer contraseña — {{username}}",
+      "newPassword": "Nueva contraseña",
+      "loading": "Cargando usuario…",
+      "notFound": "Usuario no encontrado."
+    }
+  },
   "enums": {
     "orderStatus": {
       "CREATED": "Creado",
@@ -157,6 +471,15 @@
       "ADMIN": "Administrador",
       "OPERATOR": "Operador",
       "AUDITOR": "Auditor"
+    },
+    "criticality": {
+      "LOW": "Baja",
+      "MEDIUM": "Media",
+      "HIGH": "Alta"
+    },
+    "movementType": {
+      "ENTRY": "Entrada",
+      "EXIT": "Salida"
     }
   }
 }
