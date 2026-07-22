@@ -273,9 +273,9 @@ export default function ShipmentFormPage() {
         )}
 
         <SelectField label="Status" id="status" registration={register('status')} error={errors.status?.message}>
-          {Object.entries(SHIPMENT_STATUS_LABELS).map(([value, label]) => (
+          {Object.entries(SHIPMENT_STATUS_LABELS).map(([value]) => (
             <option key={value} value={value}>
-              {label}
+              {enumLabel(SHIPMENT_STATUS_LABELS, value)}
             </option>
           ))}
         </SelectField>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import 'leaflet/dist/leaflet.css'
+import { useTranslation } from 'react-i18next'
 import { MapContainer, Marker, Polyline, TileLayer, useMap } from 'react-leaflet'
 import type { Polyline as LeafletPolyline } from 'leaflet'
 import { api } from '../../api/client'
@@ -60,6 +61,7 @@ function FlyToOnSearch({ target }: { target: [number, number] | null }) {
 }
 
 export default function LogisticsMap() {
+  const { t } = useTranslation()
   const [data, setData] = useState<MapData | null>(null)
   const [error, setError] = useState(false)
   const [selected, setSelected] = useState<Selected>(null)
@@ -108,25 +110,20 @@ export default function LogisticsMap() {
   }
 
   if (error) {
-    return (
-      <p className="text-sm text-status-critical">The map could not be loaded. Please try again.</p>
-    )
+    return <p className="text-sm text-status-critical">{t('dashboard.map.loadError')}</p>
   }
 
   if (!data) {
-    return <p className="text-sm text-gray-500 dark:text-gray-400">Loading map…</p>
+    return <p className="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.map.loading')}</p>
   }
 
   if (warehouses.length === 0 && units.length === 0) {
     return (
       <div className="rounded-xl bg-white p-6 text-center shadow-sm dark:bg-gray-900">
         <h2 className="mb-1 text-sm font-semibold text-gray-700 dark:text-gray-200">
-          Logistics map
+          {t('dashboard.map.title')}
         </h2>
-        <p className="text-sm text-gray-400 dark:text-gray-500">
-          No warehouses or units have coordinates yet. Add latitude/longitude from their edit
-          forms to see them here.
-        </p>
+        <p className="text-sm text-gray-400 dark:text-gray-500">{t('dashboard.map.emptyDescription')}</p>
       </div>
     )
   }
@@ -139,13 +136,13 @@ export default function LogisticsMap() {
   return (
     <div className="rounded-xl bg-white p-4 shadow-sm dark:bg-gray-900">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Logistics map</h2>
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">{t('dashboard.map.title')}</h2>
         <div className="flex flex-wrap items-center gap-3 text-sm">
           <form onSubmit={handleSearch} className="flex gap-1">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search warehouse or unit…"
+              placeholder={t('dashboard.map.searchPlaceholder')}
               className="rounded border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-800"
             />
           </form>
@@ -155,7 +152,7 @@ export default function LogisticsMap() {
               checked={activeShipmentsOnly}
               onChange={(e) => setActiveShipmentsOnly(e.target.checked)}
             />
-            Active shipments only
+            {t('dashboard.map.activeShipmentsOnly')}
           </label>
           <label className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-300">
             <input
@@ -163,7 +160,7 @@ export default function LogisticsMap() {
               checked={lowStockOnly}
               onChange={(e) => setLowStockOnly(e.target.checked)}
             />
-            Low stock only
+            {t('dashboard.map.lowStockOnly')}
           </label>
         </div>
       </div>
@@ -203,11 +200,11 @@ export default function LogisticsMap() {
 
         <div className="w-full shrink-0 rounded-lg border border-gray-100 p-3 text-sm dark:border-gray-800 lg:w-56">
           {selected === null ? (
-            <p className="text-gray-400 dark:text-gray-500">Click a pin for details.</p>
+            <p className="text-gray-400 dark:text-gray-500">{t('dashboard.map.clickPinForDetails')}</p>
           ) : selected.kind === 'warehouse' ? (
             <div>
               <div className="font-semibold">{selected.pin.name}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Warehouse</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{t('dashboard.map.warehouse')}</div>
               <div
                 className={`mt-2 text-xs font-medium ${
                   selected.pin.stockStatus === 'CRITICAL'
@@ -217,13 +214,13 @@ export default function LogisticsMap() {
                       : 'text-status-ok'
                 }`}
               >
-                Stock: {selected.pin.stockStatus}
+                {t('dashboard.map.stockLabel', { status: selected.pin.stockStatus })}
               </div>
             </div>
           ) : (
             <div>
               <div className="font-semibold">{selected.pin.name}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Unit</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{t('dashboard.map.unit')}</div>
             </div>
           )}
         </div>
