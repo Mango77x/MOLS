@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import type { DashboardAlerts, DashboardThresholds } from './types'
 
 function staleTone(daysPending: number, staleOrderDays: number) {
@@ -12,12 +14,16 @@ export default function AlertsPanel({
   alerts: DashboardAlerts
   thresholds: DashboardThresholds
 }) {
+  const { t } = useTranslation()
+
   return (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
       <div className="rounded-xl bg-white p-4 shadow-sm dark:bg-gray-900">
-        <h2 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-200">Low stock</h2>
+        <h2 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-200">
+          {t('dashboard.alerts.lowStockTitle')}
+        </h2>
         {alerts.lowStock.length === 0 ? (
-          <p className="text-sm text-gray-400 dark:text-gray-500">No low stock alerts</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">{t('dashboard.alerts.noLowStock')}</p>
         ) : (
           <ul className="divide-y divide-gray-100 dark:divide-gray-800">
             {alerts.lowStock.map((item) => (
@@ -34,12 +40,12 @@ export default function AlertsPanel({
                   >
                     {item.quantity}
                   </span>
-                  <a
-                    href={`/ui/stocks/${item.stockId}/adjust`}
+                  <Link
+                    to={`/stocks/${item.stockId}/adjust`}
                     className="text-xs font-medium text-army-700 underline dark:text-army-300"
                   >
-                    Adjust
-                  </a>
+                    {t('dashboard.alerts.adjust')}
+                  </Link>
                 </div>
               </li>
             ))}
@@ -49,16 +55,18 @@ export default function AlertsPanel({
 
       <div className="rounded-xl bg-white p-4 shadow-sm dark:bg-gray-900">
         <h2 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-200">
-          Pending orders (&gt;{thresholds.staleOrderDays}d)
+          {t('dashboard.alerts.pendingOrdersTitle', { days: thresholds.staleOrderDays })}
         </h2>
         {alerts.staleOrders.length === 0 ? (
-          <p className="text-sm text-gray-400 dark:text-gray-500">No stale orders</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">{t('dashboard.alerts.noStaleOrders')}</p>
         ) : (
           <ul className="divide-y divide-gray-100 dark:divide-gray-800">
             {alerts.staleOrders.map((order) => (
               <li key={order.orderId} className="flex items-center justify-between gap-3 py-2">
                 <div>
-                  <div className="text-sm font-medium">Order #{order.orderId}</div>
+                  <div className="text-sm font-medium">
+                    {t('dashboard.alerts.orderNumber', { id: order.orderId })}
+                  </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">{order.unitName}</div>
                 </div>
                 <span

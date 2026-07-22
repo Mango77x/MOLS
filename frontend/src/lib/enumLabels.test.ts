@@ -1,19 +1,30 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
+import i18n from '../i18n'
 import {
   enumLabel,
   ORDER_STATUS_LABELS,
+  ROLE_LABELS,
   SHIPMENT_STATUS_LABELS,
   VEHICLE_STATUS_LABELS,
   VEHICLE_TYPE_LABELS,
 } from './enumLabels'
 
 describe('enumLabel', () => {
+  afterEach(() => {
+    void i18n.changeLanguage('en')
+  })
+
   it('returns the mapped friendly label for a known value', () => {
     expect(enumLabel(ORDER_STATUS_LABELS, 'PARTIALLY_SHIPPED')).toBe('Partially shipped')
   })
 
   it('falls back to the raw value for an unmapped value', () => {
     expect(enumLabel(ORDER_STATUS_LABELS, 'SOME_FUTURE_STATUS')).toBe('SOME_FUTURE_STATUS')
+  })
+
+  it('resolves through the active i18next language, not a hardcoded one', async () => {
+    await i18n.changeLanguage('es')
+    expect(enumLabel(ORDER_STATUS_LABELS, 'PARTIALLY_SHIPPED')).toBe('Parcialmente enviado')
   })
 })
 
@@ -41,15 +52,41 @@ describe('label map completeness', () => {
     expect(Object.keys(VEHICLE_TYPE_LABELS).sort()).toEqual(['AIR', 'LAND', 'SEA'].sort())
   })
 
-  it('never maps a value to an empty or unchanged-but-ugly label', () => {
-    const allMaps = [ORDER_STATUS_LABELS, SHIPMENT_STATUS_LABELS, VEHICLE_STATUS_LABELS, VEHICLE_TYPE_LABELS]
+  it('covers every Role value', () => {
+    expect(Object.keys(ROLE_LABELS).sort()).toEqual(['ADMIN', 'AUDITOR', 'OPERATOR'].sort())
+  })
+
+  it('never resolves a value to an empty or unchanged-but-ugly label', () => {
+    const allMaps = [
+      ORDER_STATUS_LABELS,
+      SHIPMENT_STATUS_LABELS,
+      VEHICLE_STATUS_LABELS,
+      VEHICLE_TYPE_LABELS,
+      ROLE_LABELS,
+    ]
     for (const map of allMaps) {
-      for (const [value, label] of Object.entries(map)) {
+      for (const value of Object.keys(map)) {
+        const label = enumLabel(map, value)
         expect(label.length).toBeGreaterThan(0)
         // A friendly label should read as a sentence fragment, not
         // SHOUT_CASE — this is what the whole module exists to fix.
         expect(label).not.toBe(value)
         expect(label).not.toMatch(/_/)
+      }
+    }
+  })
+
+  it('every map entry is a resolvable i18next key, not leftover literal text', () => {
+    const allMaps = [
+      ORDER_STATUS_LABELS,
+      SHIPMENT_STATUS_LABELS,
+      VEHICLE_STATUS_LABELS,
+      VEHICLE_TYPE_LABELS,
+      ROLE_LABELS,
+    ]
+    for (const map of allMaps) {
+      for (const key of Object.values(map)) {
+        expect(i18n.exists(key)).toBe(true)
       }
     }
   })
