@@ -100,9 +100,9 @@ export default function ShipmentStep({
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Fixed to the order's warehouse.</p>
             </div>
             <SelectField label="Status" id="shipmentStatus" registration={register('status')} error={undefined}>
-              {Object.entries(SHIPMENT_STATUS_LABELS).map(([value, label]) => (
+              {Object.entries(SHIPMENT_STATUS_LABELS).map(([value]) => (
                 <option key={value} value={value}>
-                  {label}
+                  {enumLabel(SHIPMENT_STATUS_LABELS, value)}
                 </option>
               ))}
             </SelectField>

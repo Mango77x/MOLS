@@ -96,6 +96,19 @@
       "warehouse": "Entrepôt",
       "quantity": "Quantité",
       "reason": "Motif"
+    },
+    "map": {
+      "title": "Carte logistique",
+      "loadError": "Impossible de charger la carte. Veuillez réessayer.",
+      "loading": "Chargement de la carte…",
+      "emptyDescription": "Aucun entrepôt ni unité n'a encore de coordonnées. Ajoutez la latitude/longitude depuis leurs formulaires d'édition pour les voir ici.",
+      "searchPlaceholder": "Rechercher un entrepôt ou une unité…",
+      "activeShipmentsOnly": "Expéditions actives uniquement",
+      "lowStockOnly": "Stock bas uniquement",
+      "clickPinForDetails": "Cliquez sur un repère pour voir les détails.",
+      "warehouse": "Entrepôt",
+      "unit": "Unité",
+      "stockLabel": "Stock : {{status}}"
     }
   },
   "enums": {

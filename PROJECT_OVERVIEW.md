@@ -714,16 +714,22 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 
 - **Maintainer**: See `pom.xml` for project details
 
-**Last updated**: 2026-07-22 (Sprint 16: internationalization
+**Last updated**: 2026-07-22 (Sprint 16 + fixup: internationalization
 infrastructure — `react-i18next`, EN/ES/FR resources, a `useLocale` hook
 mirroring the theme toggle's pattern, and a language switcher in
 `AppLayout`. Translated the shared UI surface (nav, `ConfirmDialog`,
-`DataTable` chrome, `RowActions`, `LoginPage`, 404 page, the Dashboard);
-per-page content is Sprint 17. Fixed two correctness gaps found along the
-way: `DataTable`'s result-count pluralization now uses i18next's
-CLDR-backed plural rules instead of an English-only ternary (French
-treats 0 as grammatically singular, unlike English), and two
-`toLocaleString` call sites now pass the active UI locale explicitly
-instead of trusting the browser's. Also fixed a stale pre-React-migration
-`/ui/...` link found in `AlertsPanel` while already touching that line.
-Frontend suite grew from 21 files / 74 tests to 23 files / 86 tests.)
+`DataTable` chrome, `RowActions`, `LoginPage`, 404 page, the Dashboard
+including `LogisticsMap`); per-page content is Sprint 17. Fixed two
+correctness gaps found along the way: `DataTable`'s result-count
+pluralization now uses i18next's CLDR-backed plural rules instead of an
+English-only ternary (French treats 0 as grammatically singular, unlike
+English), and two `toLocaleString` call sites now pass the active UI
+locale explicitly instead of trusting the browser's. Also fixed a stale
+pre-React-migration `/ui/...` link found in `AlertsPanel` while already
+touching that line. A same-day fixup then closed a real regression the
+maintainer caught testing the merged build: 8 call sites that populated
+status/type `<select>` options from the label maps were rendering the
+destructured `label` directly instead of resolving it through
+`enumLabel()`, so those dropdowns briefly showed raw keys like
+`enums.shipmentStatus.PLANNED` instead of "Planned". Frontend suite grew
+from 21 files / 74 tests to 23 files / 86 tests.)

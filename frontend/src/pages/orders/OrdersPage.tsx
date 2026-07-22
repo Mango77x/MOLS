@@ -120,9 +120,9 @@ export default function OrdersPage() {
           className="rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
         >
           <option value="">All statuses</option>
-          {Object.entries(ORDER_STATUS_LABELS).map(([value, label]) => (
+          {Object.entries(ORDER_STATUS_LABELS).map(([value]) => (
             <option key={value} value={value}>
-              {label}
+              {enumLabel(ORDER_STATUS_LABELS, value)}
             </option>
           ))}
         </select>
