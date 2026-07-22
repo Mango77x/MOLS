@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { api } from '../../api/client'
@@ -10,16 +12,19 @@ import { useEntity } from '../../api/useEntity'
 import { FormBanner, SecondaryButton, SubmitButton, TextField } from '../../components/form/fields'
 import { FormPage } from '../../components/form/FormPage'
 
-const schema = z.object({
-  password: z
-    .string()
-    .min(12, 'Password must be between 12 and 128 characters')
-    .max(128, 'Password must be between 12 and 128 characters'),
-})
+function buildSchema(t: TFunction) {
+  return z.object({
+    password: z
+      .string()
+      .min(12, t('users.form.passwordLength'))
+      .max(128, t('users.form.passwordLength')),
+  })
+}
 
-type FormValues = z.infer<typeof schema>
+type FormValues = z.infer<ReturnType<typeof buildSchema>>
 
 export default function UserResetPasswordPage() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const navigate = useNavigate()
   const { data: user, loading, notFound } = useEntity<UserEntity>(id ? `/users/${id}` : null)
@@ -31,7 +36,7 @@ export default function UserResetPasswordPage() {
     setError,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(buildSchema(t)),
     defaultValues: { password: '' },
   })
 
@@ -46,28 +51,35 @@ export default function UserResetPasswordPage() {
   }
 
   if (loading) {
-    return <p className="text-sm text-gray-500 dark:text-gray-400">Loading user…</p>
+    return <p className="text-sm text-gray-500 dark:text-gray-400">{t('users.resetPasswordPage.loading')}</p>
   }
   if (notFound) {
-    return <FormBanner message="User not found." />
+    return <FormBanner message={t('users.resetPasswordPage.notFound')} />
   }
 
   return (
-    <FormPage title={user ? `Reset password — ${user.username}` : 'Reset password'} backTo="/users">
+    <FormPage
+      title={
+        user
+          ? t('users.resetPasswordPage.titleWithUsername', { username: user.username })
+          : t('users.resetPasswordPage.title')
+      }
+      backTo="/users"
+    >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <FormBanner message={banner} />
         <TextField
-          label="New password"
+          label={t('users.resetPasswordPage.newPassword')}
           id="password"
           type="password"
           autoComplete="new-password"
-          hint="At least 12 characters."
+          hint={t('users.form.passwordHint')}
           registration={register('password')}
           error={errors.password?.message}
         />
         <div className="flex gap-3">
-          <SubmitButton submitting={isSubmitting}>{isSubmitting ? 'Saving…' : 'Save'}</SubmitButton>
-          <SecondaryButton onClick={() => navigate('/users')}>Cancel</SecondaryButton>
+          <SubmitButton submitting={isSubmitting}>{isSubmitting ? t('common.saving') : t('common.save')}</SubmitButton>
+          <SecondaryButton onClick={() => navigate('/users')}>{t('common.cancel')}</SecondaryButton>
         </div>
       </form>
     </FormPage>

@@ -48,6 +48,17 @@ export const ROLE_LABELS: Record<string, string> = {
   AUDITOR: 'enums.role.AUDITOR',
 }
 
+export const CRITICALITY_LABELS: Record<string, string> = {
+  LOW: 'enums.criticality.LOW',
+  MEDIUM: 'enums.criticality.MEDIUM',
+  HIGH: 'enums.criticality.HIGH',
+}
+
+export const MOVEMENT_TYPE_LABELS: Record<string, string> = {
+  ENTRY: 'enums.movementType.ENTRY',
+  EXIT: 'enums.movementType.EXIT',
+}
+
 /** Human-readable label for an enum value; falls back to the raw value if unmapped. */
 export function enumLabel(map: Record<string, string>, value: string): string {
   const key = map[value]

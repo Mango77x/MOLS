@@ -53,12 +53,17 @@ Scoped from a real count against the current codebase, not a guess: ~35-40 of 69
 
 #### Sprint 17 — i18n: remaining pages + backend error codes + ES/FR content
 
-- [ ] Extract the remaining page-specific strings: the 9 list/form page pairs (Warehouses, Resources, Vehicles, Units, Stock, Orders, Shipments, Movements, Users) — filters, column headers, field labels/hints, wizard step copy.
-- [ ] Backend: add `code` (+ `params` where the message interpolates a value) to the custom exceptions and `GlobalExceptionHandler`'s own three messages, scoped to the error codes that actually surface in normal use (confirmed live during the audit: insufficient stock on reservation, duplicate resource, the delete-integrity guards, "can't disable the last ADMIN", field validation). The long tail of the ~67 messages keeps falling back to English via `message` until migrated opportunistically later.
-- [ ] Frontend: extend `ApiError`/`extractApiError` to carry `code`/`params`; translate via `t(code, params)` when the code is recognized in `errors.json`, otherwise show `message` unchanged.
-- [ ] Write full Spanish and French content for everything extracted across Sprint 16 and 17.
-- [ ] Tests: the code-based `extractApiError` path (recognized code → translated; unknown code → English fallback), plus spot coverage on a couple of migrated pages.
-- [ ] Docs: `PROJECT_OVERVIEW.md`, plus a short mention in `HELP.md` if the language switcher needs explaining to end users/operators.
+- [x] Extract the remaining page-specific strings: the 9 list/form page pairs (Warehouses, Resources, Vehicles, Units, Stock, Orders, Shipments, Movements, Users) — filters, column headers, field labels/hints, wizard step copy.
+- [x] Backend: added `code` (+ `params` where the message interpolates a value) to the custom exceptions (`CodedException` base class) and `GlobalExceptionHandler`'s 4 handlers, across 17 throw sites (stock reservation/adjust/delete, delete-integrity guards on Warehouse/Resource/Unit/Vehicle/Order, "can't disable/remove the last ADMIN"). The long tail of the remaining messages keeps falling back to English via `message` until migrated opportunistically later.
+- [x] Frontend: extended `ApiErrorBody`/`extractApiError` to carry `code`/`params`; translates via `i18n.t('errors.' + code, params)` when the code is recognized, otherwise shows `message` unchanged.
+- [x] Wrote full Spanish and French content for everything extracted across Sprint 16 and 17 — `npm run i18n:status` reports 100% ES/FR coverage (340/340 keys).
+- [x] Tests: `errors.test.ts` covers the code-based `extractApiError` path (recognized code → translated with params, unrecognized/missing code → English fallback, fieldErrors priority preserved). Spot coverage on migrated pages: the pre-existing DOM-behavior tests (`WarehouseFormPage`, `ResourceFormPage`, `VehicleFormPage`, `UnitFormPage`, `StockCreateFormPage`, `StockAdjustFormPage`, `OrderEditFormPage`, `ShipmentFormPage`, `UserFormPage`) all still pass unchanged against the translated components, since they assert against the English locale's resolved text.
+- [x] Docs: `PROJECT_OVERVIEW.md`. No `HELP.md` change needed — the language switcher was already documented in Sprint 16; Sprint 17 only extended coverage, it didn't change end-user-visible behavior.
+
+**Found and fixed during the mandatory live Docker verification (not by any test):**
+- `OrderDetailPage.tsx` interpolated the English word "from" as a literal (`{unit?.name} • from {warehouse.name}`) instead of `t('orders.from')` — showed untranslated in ES/FR.
+- `FormPage.tsx` (the shared create/edit page chrome used by all 9 form pages) hardcoded `backLabel = 'Back'` as its default prop — every single form's "Back" link was English-only in every locale. No caller ever overrode it, so this silently affected the entire app; fixed by resolving the default through `t('common.back')` inside the component instead.
+- `ShipmentFormPage.tsx`'s "items to ship" section rendered a stray literal `NaN` text node on the new-shipment form before an order is selected: `{selectedOrderId && orderItems.length === 0 && (...)}` — when the order `<select>` is unselected, React Hook Form's `valueAsNumber` transform yields `NaN` (not `undefined`) for the empty string, and JS `&&` returns the first falsy operand (`NaN`) rather than `false`, which React renders as text. Pre-existing bug (same logic before Sprint 17, only the copy changed), not introduced by this sprint — fixed with an explicit `Boolean(selectedOrderId)` coercion.
 
 ### Sprint 18 — CSV/Excel export
 
@@ -106,4 +111,4 @@ Only worth starting if the goal shifts from "run MOLS for one organization" to "
 - Frontend: `npm run lint`, `npm test`, `npx tsc -b --noEmit` inside `frontend/`.
 - Any sprint touching UI: rebuild and run the real Docker stack, verify manually in the browser — passing tests alone isn't sufficient sign-off for this plan (this is exactly how the login-hint and duplicate-name-warning gaps in Sprint 15 were found in the first place: neither broke a test, both broke real usage).
 
-**Last updated**: 2026-07-22 (Sprint 16 complete — i18n infrastructure and the shared-UI-surface translation pass (EN/ES/FR); Sprint 17 next)
+**Last updated**: 2026-07-22 (Sprint 17 complete — backend translatable error codes, ES/FR translation of the remaining 9 page modules, and three real bugs found/fixed during live verification; Sprint 18 next)

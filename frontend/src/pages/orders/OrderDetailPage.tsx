@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { api } from '../../api/client'
 import { hasAnyRole, useCurrentRole } from '../../auth/roles'
@@ -18,6 +19,7 @@ import { useLookup } from '../../api/lookups'
 import Badge, { type BadgeTone } from '../../components/Badge'
 import { FormBanner } from '../../components/form/fields'
 import type { PageResponse } from '../../components/table/useServerTable'
+import { enumLabel, MOVEMENT_TYPE_LABELS, ORDER_STATUS_LABELS, SHIPMENT_STATUS_LABELS } from '../../lib/enumLabels'
 
 const ORDER_STATUS_TONE: Record<OrderStatus, BadgeTone> = {
   CREATED: 'neutral',
@@ -39,6 +41,7 @@ async function fetchByOrderId<T>(path: string, orderId: number): Promise<T[]> {
 }
 
 export default function OrderDetailPage() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const role = useCurrentRole()
   const canEdit = hasAnyRole(role, ['ADMIN', 'OPERATOR'])
@@ -73,29 +76,30 @@ export default function OrderDetailPage() {
   }, [order])
 
   if (loading) {
-    return <p className="text-sm text-gray-500 dark:text-gray-400">Loading order…</p>
+    return <p className="text-sm text-gray-500 dark:text-gray-400">{t('orders.loading')}</p>
   }
   if (notFound || !order) {
-    return <FormBanner message="Order not found." />
+    return <FormBanner message={t('orders.notFound')} />
   }
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold">Order #{order.id}</h1>
+          <h1 className="text-xl font-bold">{t('orders.orderNumber', { id: order.id })}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {unit?.name ?? `Unit #${order.unitId}`} • from {warehouses[order.warehouseId]?.name ?? `Warehouse #${order.warehouseId}`}{' '}
-            • {order.dateCreated} • <Badge tone={ORDER_STATUS_TONE[order.status]}>{order.status}</Badge>
+            {unit?.name ?? `Unit #${order.unitId}`} • {t('orders.from')}{' '}
+            {warehouses[order.warehouseId]?.name ?? `Warehouse #${order.warehouseId}`} • {order.dateCreated} •{' '}
+            <Badge tone={ORDER_STATUS_TONE[order.status]}>{enumLabel(ORDER_STATUS_LABELS, order.status)}</Badge>
           </p>
         </div>
         <div className="flex gap-3">
           <Link to="/orders" className="text-sm font-medium text-army-700 underline dark:text-army-300">
-            Back
+            {t('common.back')}
           </Link>
           {canEdit && (
             <Link to={`/orders/${order.id}/edit`} className="text-sm font-medium text-army-700 underline dark:text-army-300">
-              Edit
+              {t('common.edit')}
             </Link>
           )}
         </div>
@@ -105,20 +109,20 @@ export default function OrderDetailPage() {
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-900">
-          <h2 className="mb-3 text-lg font-semibold">Items</h2>
+          <h2 className="mb-3 text-lg font-semibold">{t('orders.itemsTitle')}</h2>
           <table className="w-full text-left text-sm">
             <thead className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
               <tr>
-                <th className="py-2 pr-3 font-medium">Resource</th>
-                <th className="py-2 text-right font-medium">Qty</th>
-                <th className="py-2 text-right font-medium">Shipped</th>
+                <th className="py-2 pr-3 font-medium">{t('common.resource')}</th>
+                <th className="py-2 text-right font-medium">{t('common.quantity')}</th>
+                <th className="py-2 text-right font-medium">{t('orders.shipped')}</th>
               </tr>
             </thead>
             <tbody>
               {items.length === 0 && (
                 <tr>
                   <td colSpan={3} className="py-3 text-center text-gray-400 dark:text-gray-500">
-                    No items.
+                    {t('orders.noItems')}
                   </td>
                 </tr>
               )}
@@ -141,21 +145,21 @@ export default function OrderDetailPage() {
         </div>
 
         <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-900">
-          <h2 className="mb-3 text-lg font-semibold">Shipments</h2>
+          <h2 className="mb-3 text-lg font-semibold">{t('orders.shipmentsTitle')}</h2>
           <table className="w-full text-left text-sm">
             <thead className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
               <tr>
-                <th className="py-2 pr-3 font-medium">ID</th>
-                <th className="py-2 pr-3 font-medium">Warehouse</th>
-                <th className="py-2 pr-3 font-medium">Status</th>
-                <th className="py-2 text-right font-medium">Actions</th>
+                <th className="py-2 pr-3 font-medium">{t('common.id')}</th>
+                <th className="py-2 pr-3 font-medium">{t('common.warehouse')}</th>
+                <th className="py-2 pr-3 font-medium">{t('common.status')}</th>
+                <th className="py-2 text-right font-medium">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {shipments.length === 0 && (
                 <tr>
                   <td colSpan={4} className="py-3 text-center text-gray-400 dark:text-gray-500">
-                    No shipments.
+                    {t('orders.noShipments')}
                   </td>
                 </tr>
               )}
@@ -164,11 +168,13 @@ export default function OrderDetailPage() {
                   <td className="py-2 pr-3 font-medium">#{shipment.id}</td>
                   <td className="py-2 pr-3">{warehouses[shipment.warehouseId]?.name ?? `#${shipment.warehouseId}`}</td>
                   <td className="py-2 pr-3">
-                    <Badge tone={SHIPMENT_STATUS_TONE[shipment.status]}>{shipment.status}</Badge>
+                    <Badge tone={SHIPMENT_STATUS_TONE[shipment.status]}>
+                      {enumLabel(SHIPMENT_STATUS_LABELS, shipment.status)}
+                    </Badge>
                   </td>
                   <td className="py-2 text-right">
                     <Link to={`/shipments/${shipment.id}`} className="text-army-700 underline dark:text-army-300">
-                      View
+                      {t('orders.view')}
                     </Link>
                   </td>
                 </tr>
@@ -180,31 +186,29 @@ export default function OrderDetailPage() {
               to={`/shipments/new?orderId=${order.id}`}
               className="mt-3 inline-block rounded bg-army-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-army-800"
             >
-              New shipment
+              {t('orders.newShipment')}
             </Link>
           )}
         </div>
 
         <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-900 xl:col-span-2">
-          <h2 className="mb-1 text-lg font-semibold">Movements (linked)</h2>
-          <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
-            Only movements explicitly linked to this order are shown.
-          </p>
+          <h2 className="mb-1 text-lg font-semibold">{t('orders.movementsTitle')}</h2>
+          <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">{t('orders.movementsHint')}</p>
           <table className="w-full text-left text-sm">
             <thead className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
               <tr>
-                <th className="py-2 pr-3 font-medium">Date</th>
-                <th className="py-2 pr-3 font-medium">Action</th>
-                <th className="py-2 pr-3 text-right font-medium">Amount</th>
-                <th className="py-2 pr-3 font-medium">Reason</th>
-                <th className="py-2 text-right font-medium">Shipment</th>
+                <th className="py-2 pr-3 font-medium">{t('orders.date')}</th>
+                <th className="py-2 pr-3 font-medium">{t('orders.action')}</th>
+                <th className="py-2 pr-3 text-right font-medium">{t('orders.amount')}</th>
+                <th className="py-2 pr-3 font-medium">{t('common.reason')}</th>
+                <th className="py-2 text-right font-medium">{t('orders.shipment')}</th>
               </tr>
             </thead>
             <tbody>
               {movements.length === 0 && (
                 <tr>
                   <td colSpan={5} className="py-3 text-center text-gray-400 dark:text-gray-500">
-                    No linked movements.
+                    {t('orders.noLinkedMovements')}
                   </td>
                 </tr>
               )}
@@ -212,7 +216,9 @@ export default function OrderDetailPage() {
                 <tr key={movement.id} className="border-t border-gray-100 dark:border-gray-800">
                   <td className="py-2 pr-3">{movement.dateTime.replace('T', ' ').slice(0, 16)}</td>
                   <td className="py-2 pr-3">
-                    <Badge tone={movement.type === 'ENTRY' ? 'ok' : 'warn'}>{movement.type}</Badge>
+                    <Badge tone={movement.type === 'ENTRY' ? 'ok' : 'warn'}>
+                      {enumLabel(MOVEMENT_TYPE_LABELS, movement.type)}
+                    </Badge>
                   </td>
                   <td className="py-2 pr-3 text-right font-medium">{movement.quantity}</td>
                   <td className="py-2 pr-3">{movement.reason ?? '—'}</td>

@@ -1,5 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { api } from '../../api/client'
 import type { UserEntity, UserRole } from '../../api/entities'
@@ -9,12 +10,14 @@ import ConfirmDialog from '../../components/ConfirmDialog'
 import { FormBanner } from '../../components/form/fields'
 import DataTable from '../../components/table/DataTable'
 import { RouteActionLink } from '../../components/table/RowActions'
+import { enumLabel, ROLE_LABELS } from '../../lib/enumLabels'
 
 type PendingAction =
   | { type: 'role'; user: UserEntity; role: UserRole }
   | { type: 'toggle'; user: UserEntity }
 
 export default function UsersPage() {
+  const { t } = useTranslation()
   const [users, setUsers] = useState<UserEntity[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -66,11 +69,11 @@ export default function UsersPage() {
   }
 
   const columns: ColumnDef<UserEntity, unknown>[] = [
-    { id: 'id', header: 'ID', accessorKey: 'id' },
-    { id: 'username', header: 'Username', accessorKey: 'username' },
+    { id: 'id', header: t('common.id'), accessorKey: 'id' },
+    { id: 'username', header: t('users.username'), accessorKey: 'username' },
     {
       id: 'role',
-      header: 'Role',
+      header: t('users.role'),
       cell: ({ row }) => (
         <select
           value={
@@ -81,50 +84,55 @@ export default function UsersPage() {
           onChange={(e) => handleRoleChange(row.original, e.target.value as UserRole)}
           className="rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
         >
-          <option value="ADMIN">ADMIN</option>
-          <option value="OPERATOR">OPERATOR</option>
-          <option value="AUDITOR">AUDITOR</option>
+          {Object.entries(ROLE_LABELS).map(([value]) => (
+            <option key={value} value={value}>
+              {enumLabel(ROLE_LABELS, value)}
+            </option>
+          ))}
         </select>
       ),
     },
     {
       id: 'enabled',
-      header: 'Status',
+      header: t('common.status'),
       cell: ({ row }) => (
         <Badge tone={row.original.enabled ? 'ok' : 'neutral'}>
-          {row.original.enabled ? 'Enabled' : 'Disabled'}
+          {row.original.enabled ? t('users.enabled') : t('users.disabled')}
         </Badge>
       ),
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('common.actions'),
       cell: ({ row }) => (
         <div className="flex gap-3">
           <RouteActionLink to={`/users/${row.original.id}/reset-password`}>
-            Reset password
+            {t('users.resetPassword')}
           </RouteActionLink>
           <button
             type="button"
             onClick={() => handleToggleEnabled(row.original)}
             className={row.original.enabled ? 'text-status-critical underline' : 'text-status-ok underline'}
           >
-            {row.original.enabled ? 'Disable' : 'Enable'}
+            {row.original.enabled ? t('users.disable') : t('users.enable')}
           </button>
         </div>
       ),
     },
   ]
 
+  const toggleAction =
+    pendingAction?.type === 'toggle' ? (pendingAction.user.enabled ? t('users.disable') : t('users.enable')) : ''
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold">Users</h1>
+        <h1 className="text-xl font-bold">{t('users.title')}</h1>
         <Link
           to="/users/new"
           className="rounded bg-army-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-army-800"
         >
-          New user
+          {t('users.newUser')}
         </Link>
       </div>
 
@@ -135,7 +143,7 @@ export default function UsersPage() {
         data={users}
         loading={loading}
         error={error}
-        emptyMessage="No users to display"
+        emptyMessage={t('users.emptyMessage')}
         page={0}
         size={100}
         totalPages={1}
@@ -148,15 +156,18 @@ export default function UsersPage() {
         open={pendingAction !== null}
         title={
           pendingAction?.type === 'role'
-            ? `Change ${pendingAction.user.username}'s role?`
-            : `${pendingAction?.user.enabled ? 'Disable' : 'Enable'} this account?`
+            ? t('users.changeRoleTitle', { username: pendingAction.user.username })
+            : t('users.toggleTitle', { action: toggleAction })
         }
         message={
           pendingAction?.type === 'role'
-            ? `Change ${pendingAction.user.username}'s role to ${pendingAction.role}.`
-            : `${pendingAction?.user.enabled ? 'Disable' : 'Enable'} account '${pendingAction?.user.username}'.`
+            ? t('users.changeRoleMessage', {
+                username: pendingAction.user.username,
+                role: enumLabel(ROLE_LABELS, pendingAction.role),
+              })
+            : t('users.toggleMessage', { action: toggleAction, username: pendingAction?.user.username })
         }
-        confirmLabel={pendingAction?.type === 'role' ? 'Change role' : pendingAction?.user.enabled ? 'Disable' : 'Enable'}
+        confirmLabel={pendingAction?.type === 'role' ? t('users.changeRole') : toggleAction}
         onConfirm={confirmPendingAction}
         onCancel={() => setPendingAction(null)}
       />

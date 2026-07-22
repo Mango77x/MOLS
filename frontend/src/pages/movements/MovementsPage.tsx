@@ -12,6 +12,7 @@ import type {
 import Badge, { type BadgeTone } from '../../components/Badge'
 import DataTable from '../../components/table/DataTable'
 import { useServerTable } from '../../components/table/useServerTable'
+import { enumLabel, MOVEMENT_TYPE_LABELS } from '../../lib/enumLabels'
 
 const TYPE_TONE: Record<MovementType, BadgeTone> = {
   ENTRY: 'ok',
@@ -27,7 +28,7 @@ function formatDateTime(value: string, locale: string) {
 }
 
 export default function MovementsPage() {
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [type, setType] = useState('')
   const [orderId, setOrderId] = useState('')
   const [shipmentId, setShipmentId] = useState('')
@@ -57,36 +58,36 @@ export default function MovementsPage() {
   const columns: ColumnDef<MovementEntity, unknown>[] = [
     {
       id: 'dateTime',
-      header: 'Date',
+      header: t('movements.date'),
       enableSorting: true,
       cell: ({ row }) => formatDateTime(row.original.dateTime, i18n.language),
     },
     {
       id: 'type',
-      header: 'Type',
+      header: t('movements.type'),
       accessorKey: 'type',
       enableSorting: true,
       cell: ({ getValue }) => {
         const value = getValue<MovementType>()
-        return <Badge tone={TYPE_TONE[value]}>{value}</Badge>
+        return <Badge tone={TYPE_TONE[value]}>{enumLabel(MOVEMENT_TYPE_LABELS, value)}</Badge>
       },
     },
-    { id: 'quantity', header: 'Amount', accessorKey: 'quantity', enableSorting: true },
-    { id: 'resource', header: 'Resource', cell: ({ row }) => resourceName(row.original.stockId) },
-    { id: 'warehouse', header: 'Warehouse', cell: ({ row }) => warehouseName(row.original.stockId) },
-    { id: 'reason', header: 'Reason', accessorFn: (row) => row.reason ?? '—' },
-    { id: 'createdBy', header: 'By', accessorFn: (row) => row.createdBy ?? '—' },
-    { id: 'orderId', header: 'Order', accessorFn: (row) => (row.orderId ? `#${row.orderId}` : '—') },
+    { id: 'quantity', header: t('movements.amount'), accessorKey: 'quantity', enableSorting: true },
+    { id: 'resource', header: t('common.resource'), cell: ({ row }) => resourceName(row.original.stockId) },
+    { id: 'warehouse', header: t('common.warehouse'), cell: ({ row }) => warehouseName(row.original.stockId) },
+    { id: 'reason', header: t('common.reason'), accessorFn: (row) => row.reason ?? '—' },
+    { id: 'createdBy', header: t('movements.by'), accessorFn: (row) => row.createdBy ?? '—' },
+    { id: 'orderId', header: t('shipments.order'), accessorFn: (row) => (row.orderId ? `#${row.orderId}` : '—') },
     {
       id: 'shipmentId',
-      header: 'Shipment',
+      header: t('orders.shipment'),
       accessorFn: (row) => (row.shipmentId ? `#${row.shipmentId}` : '—'),
     },
   ]
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold">Audit log</h1>
+      <h1 className="text-xl font-bold">{t('movements.title')}</h1>
 
       <div className="flex flex-wrap gap-3">
         <select
@@ -94,21 +95,24 @@ export default function MovementsPage() {
           onChange={(e) => setType(e.target.value)}
           className="rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
         >
-          <option value="">All types</option>
-          <option value="ENTRY">ENTRY</option>
-          <option value="EXIT">EXIT</option>
+          <option value="">{t('movements.allTypes')}</option>
+          {Object.entries(MOVEMENT_TYPE_LABELS).map(([value]) => (
+            <option key={value} value={value}>
+              {enumLabel(MOVEMENT_TYPE_LABELS, value)}
+            </option>
+          ))}
         </select>
         <input
           value={orderId}
           onChange={(e) => setOrderId(e.target.value)}
-          placeholder="Order ID"
+          placeholder={t('movements.orderIdPlaceholder')}
           inputMode="numeric"
           className="w-28 rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
         />
         <input
           value={shipmentId}
           onChange={(e) => setShipmentId(e.target.value)}
-          placeholder="Shipment ID"
+          placeholder={t('movements.shipmentIdPlaceholder')}
           inputMode="numeric"
           className="w-32 rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
         />
@@ -119,7 +123,7 @@ export default function MovementsPage() {
         data={table.rows}
         loading={table.loading}
         error={table.error}
-        emptyMessage="No movements to display"
+        emptyMessage={t('movements.emptyMessage')}
         sort={table.sort}
         onSortChange={table.toggleSort}
         page={table.page}

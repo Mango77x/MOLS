@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 import { api } from '../../../api/client'
 import type { ResourceEntity } from '../../../api/entities'
@@ -10,12 +12,14 @@ import { SecondaryButton, SelectField, SubmitButton, TextField } from '../../../
 import { positiveId, positiveNumber } from '../../../components/form/zodHelpers'
 import type { DraftItem } from './shared'
 
-const schema = z.object({
-  resourceId: positiveId('Select a resource'),
-  quantity: positiveNumber('Order item quantity must be greater than 0'),
-})
+function buildSchema(t: TFunction) {
+  return z.object({
+    resourceId: positiveId(t('orders.wizard.items.selectResource')),
+    quantity: positiveNumber(t('orders.wizard.items.quantityPositive')),
+  })
+}
 
-type AddItemValues = z.infer<typeof schema>
+type AddItemValues = z.infer<ReturnType<typeof buildSchema>>
 
 interface StockRecord {
   resourceId: number
@@ -51,6 +55,7 @@ export default function ItemsStep({
   onNext: () => void
   onBack: () => void
 }) {
+  const { t } = useTranslation()
   const { byId: resources } = useLookup<ResourceEntity>('/resources')
   const [availabilityNote, setAvailabilityNote] = useState<string | null>(null)
   const [checking, setChecking] = useState(false)
@@ -61,7 +66,7 @@ export default function ItemsStep({
     reset,
     formState: { errors },
   } = useForm<AddItemValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(buildSchema(t)),
     defaultValues: { resourceId: undefined, quantity: undefined },
   })
 
@@ -73,7 +78,10 @@ export default function ItemsStep({
       const resource = resources[values.resourceId]
       if (available < values.quantity) {
         setAvailabilityNote(
-          `Warning: only ${available} unit(s) of ${resource?.name ?? `resource #${values.resourceId}`} are still unreserved in this order's warehouse. You can still add this item, but creating the order may fail.`,
+          t('orders.wizard.items.availabilityWarning', {
+            available,
+            name: resource?.name ?? `resource #${values.resourceId}`,
+          }),
         )
       }
       onChange([
@@ -94,14 +102,14 @@ export default function ItemsStep({
     <div className="space-y-4">
       <form onSubmit={handleSubmit(handleAdd)} className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-end">
         <SelectField
-          label="Resource"
+          label={t('common.resource')}
           id="itemResourceId"
           defaultValue=""
           registration={register('resourceId', { valueAsNumber: true })}
           error={errors.resourceId?.message}
         >
           <option value="" disabled>
-            Select a resource
+            {t('orders.wizard.items.selectResource')}
           </option>
           {Object.values(resources).map((r) => (
             <option key={r.id} value={r.id}>
@@ -111,7 +119,7 @@ export default function ItemsStep({
         </SelectField>
         <div className="w-32">
           <TextField
-            label="Quantity"
+            label={t('common.quantity')}
             id="itemQuantity"
             type="number"
             min={1}
@@ -120,7 +128,9 @@ export default function ItemsStep({
             error={errors.quantity?.message}
           />
         </div>
-        <SubmitButton submitting={checking}>{checking ? 'Checking…' : 'Add'}</SubmitButton>
+        <SubmitButton submitting={checking}>
+          {checking ? t('orders.wizard.items.checking') : t('orders.wizard.items.add')}
+        </SubmitButton>
       </form>
 
       {availabilityNote && (
@@ -133,16 +143,16 @@ export default function ItemsStep({
         <table className="w-full text-left text-sm">
           <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:bg-gray-800/50 dark:text-gray-400">
             <tr>
-              <th className="px-3 py-2 font-medium">Resource</th>
-              <th className="px-3 py-2 font-medium">Quantity</th>
-              <th className="px-3 py-2 text-right font-medium">Actions</th>
+              <th className="px-3 py-2 font-medium">{t('common.resource')}</th>
+              <th className="px-3 py-2 font-medium">{t('common.quantity')}</th>
+              <th className="px-3 py-2 text-right font-medium">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody>
             {items.length === 0 && (
               <tr>
                 <td colSpan={3} className="px-3 py-4 text-center text-gray-400 dark:text-gray-500">
-                  No items added yet.
+                  {t('orders.wizard.items.noItemsYet')}
                 </td>
               </tr>
             )}
@@ -156,7 +166,7 @@ export default function ItemsStep({
                     onClick={() => handleRemove(index)}
                     className="text-status-critical underline"
                   >
-                    Remove
+                    {t('orders.wizard.items.remove')}
                   </button>
                 </td>
               </tr>
@@ -172,12 +182,12 @@ export default function ItemsStep({
           onClick={onNext}
           className="rounded-lg bg-army-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-army-600 disabled:opacity-60"
         >
-          Next: Shipment
+          {t('orders.wizard.nextShipment')}
         </button>
-        <SecondaryButton onClick={onBack}>Back</SecondaryButton>
+        <SecondaryButton onClick={onBack}>{t('common.back')}</SecondaryButton>
       </div>
       {items.length === 0 && (
-        <p className="text-xs text-gray-500 dark:text-gray-400">Add at least one item to continue.</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{t('orders.wizard.items.addAtLeastOne')}</p>
       )}
     </div>
   )

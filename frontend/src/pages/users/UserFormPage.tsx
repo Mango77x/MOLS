@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { api } from '../../api/client'
@@ -8,22 +10,26 @@ import { applyApiError, extractApiError } from '../../api/errors'
 import { FormBanner, SecondaryButton, SelectField, SubmitButton, TextField } from '../../components/form/fields'
 import { FormPage } from '../../components/form/FormPage'
 import { useToast } from '../../components/toast/toastContext'
+import { enumLabel, ROLE_LABELS } from '../../lib/enumLabels'
 
-const schema = z.object({
-  username: z
-    .string()
-    .min(3, 'Username must be between 3 and 50 characters')
-    .max(50, 'Username must be between 3 and 50 characters'),
-  password: z
-    .string()
-    .min(12, 'Password must be between 12 and 128 characters')
-    .max(128, 'Password must be between 12 and 128 characters'),
-  role: z.enum(['ADMIN', 'OPERATOR', 'AUDITOR'], { message: 'Select a role' }),
-})
+function buildSchema(t: TFunction) {
+  return z.object({
+    username: z
+      .string()
+      .min(3, t('users.form.usernameLength'))
+      .max(50, t('users.form.usernameLength')),
+    password: z
+      .string()
+      .min(12, t('users.form.passwordLength'))
+      .max(128, t('users.form.passwordLength')),
+    role: z.enum(['ADMIN', 'OPERATOR', 'AUDITOR'], { message: t('users.form.selectRole') }),
+  })
+}
 
-type FormValues = z.infer<typeof schema>
+type FormValues = z.infer<ReturnType<typeof buildSchema>>
 
 export default function UserFormPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { showToast } = useToast()
   const [banner, setBanner] = useState<string | null>(null)
@@ -34,7 +40,7 @@ export default function UserFormPage() {
     setError,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(buildSchema(t)),
     defaultValues: { username: '', password: '', role: undefined },
   })
 
@@ -42,7 +48,7 @@ export default function UserFormPage() {
     setBanner(null)
     try {
       await api.post('/users', values)
-      showToast('User created.', 'success')
+      showToast(t('users.created'), 'success')
       navigate('/users')
     } catch (error) {
       setBanner(applyApiError(extractApiError(error), setError))
@@ -50,41 +56,43 @@ export default function UserFormPage() {
   }
 
   return (
-    <FormPage title="New user" backTo="/users">
+    <FormPage title={t('users.newUser')} backTo="/users">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <FormBanner message={banner} />
         <TextField
-          label="Username"
+          label={t('users.username')}
           id="username"
           registration={register('username')}
           error={errors.username?.message}
         />
         <TextField
-          label="Password"
+          label={t('common.password')}
           id="password"
           type="password"
           autoComplete="new-password"
-          hint="At least 12 characters."
+          hint={t('users.form.passwordHint')}
           registration={register('password')}
           error={errors.password?.message}
         />
         <SelectField
-          label="Role"
+          label={t('users.role')}
           id="role"
           registration={register('role')}
           error={errors.role?.message}
           defaultValue=""
         >
           <option value="" disabled>
-            Select a role
+            {t('users.form.selectRole')}
           </option>
-          <option value="ADMIN">Admin</option>
-          <option value="OPERATOR">Operator</option>
-          <option value="AUDITOR">Auditor</option>
+          {Object.entries(ROLE_LABELS).map(([value]) => (
+            <option key={value} value={value}>
+              {enumLabel(ROLE_LABELS, value)}
+            </option>
+          ))}
         </SelectField>
         <div className="flex gap-3">
-          <SubmitButton submitting={isSubmitting}>{isSubmitting ? 'Saving…' : 'Save'}</SubmitButton>
-          <SecondaryButton onClick={() => navigate('/users')}>Cancel</SecondaryButton>
+          <SubmitButton submitting={isSubmitting}>{isSubmitting ? t('common.saving') : t('common.save')}</SubmitButton>
+          <SecondaryButton onClick={() => navigate('/users')}>{t('common.cancel')}</SecondaryButton>
         </div>
       </form>
     </FormPage>

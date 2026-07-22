@@ -1,5 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useCurrentRole } from '../../auth/roles'
 import { api } from '../../api/client'
@@ -9,6 +10,7 @@ import { DeleteAction, RouteActionLink } from '../../components/table/RowActions
 import { useServerTable } from '../../components/table/useServerTable'
 
 export default function UnitsPage() {
+  const { t } = useTranslation()
   const role = useCurrentRole()
   const isAdmin = role === 'ADMIN'
   const [name, setName] = useState('')
@@ -21,18 +23,18 @@ export default function UnitsPage() {
   }
 
   const columns: ColumnDef<UnitEntity, unknown>[] = [
-    { id: 'id', header: 'ID', accessorKey: 'id', enableSorting: true },
-    { id: 'name', header: 'Name', accessorKey: 'name', enableSorting: true },
-    { id: 'location', header: 'Location', accessorFn: (row) => row.location ?? '—' },
+    { id: 'id', header: t('common.id'), accessorKey: 'id', enableSorting: true },
+    { id: 'name', header: t('common.name'), accessorKey: 'name', enableSorting: true },
+    { id: 'location', header: t('common.location'), accessorFn: (row) => row.location ?? '—' },
   ]
   if (isAdmin) {
     columns.push({
       id: 'actions',
-      header: 'Actions',
+      header: t('common.actions'),
       cell: ({ row }) => (
         <div className="flex gap-3">
-          <RouteActionLink to={`/units/${row.original.id}/edit`}>Edit</RouteActionLink>
-          <DeleteAction label="unit" onConfirm={() => handleDelete(row.original.id)} />
+          <RouteActionLink to={`/units/${row.original.id}/edit`}>{t('common.edit')}</RouteActionLink>
+          <DeleteAction label={t('units.entityName')} onConfirm={() => handleDelete(row.original.id)} />
         </div>
       ),
     })
@@ -41,13 +43,13 @@ export default function UnitsPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold">Units</h1>
+        <h1 className="text-xl font-bold">{t('units.title')}</h1>
         {isAdmin && (
           <Link
             to="/units/new"
             className="rounded bg-army-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-army-800"
           >
-            New unit
+            {t('units.newUnit')}
           </Link>
         )}
       </div>
@@ -56,7 +58,7 @@ export default function UnitsPage() {
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Search by name…"
+          placeholder={t('units.searchPlaceholder')}
           className="rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
         />
       </div>
@@ -66,7 +68,7 @@ export default function UnitsPage() {
         data={table.rows}
         loading={table.loading}
         error={table.error}
-        emptyMessage="No units to display"
+        emptyMessage={t('units.emptyMessage')}
         sort={table.sort}
         onSortChange={table.toggleSort}
         page={table.page}

@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { api } from '../../api/client'
@@ -14,22 +16,30 @@ import { coordinate } from '../../components/form/zodHelpers'
 import LocationPicker from '../../components/map/LocationPicker'
 import { useToast } from '../../components/toast/toastContext'
 
-const schema = z.object({
-  name: z
-    .string()
-    .min(2, 'Warehouse name must be between 2 and 100 characters')
-    .max(100, 'Warehouse name must be between 2 and 100 characters'),
-  location: z
-    .string()
-    .min(2, 'Warehouse location must be between 2 and 200 characters')
-    .max(200, 'Warehouse location must be between 2 and 200 characters'),
-  latitude: coordinate(-90, 90, 'Latitude'),
-  longitude: coordinate(-180, 180, 'Longitude'),
-})
+// A plain function (not a hook) so it can be called from useForm's resolver
+// setup and used for type inference (`ReturnType<typeof buildSchema>`) alike.
+// Has to be a function at all, rather than a module-level constant, because
+// its validation messages need the active i18next language at the time the
+// form renders, not whatever was active when the module first loaded.
+function buildSchema(t: TFunction) {
+  return z.object({
+    name: z
+      .string()
+      .min(2, t('warehouses.form.nameLength'))
+      .max(100, t('warehouses.form.nameLength')),
+    location: z
+      .string()
+      .min(2, t('warehouses.form.locationLength'))
+      .max(200, t('warehouses.form.locationLength')),
+    latitude: coordinate(-90, 90, t('common.latitude')),
+    longitude: coordinate(-180, 180, t('common.longitude')),
+  })
+}
 
-type FormValues = z.infer<typeof schema>
+type FormValues = z.infer<ReturnType<typeof buildSchema>>
 
 export default function WarehouseFormPage() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const isEdit = id !== undefined
   const navigate = useNavigate()
@@ -40,7 +50,7 @@ export default function WarehouseFormPage() {
   const [banner, setBanner] = useState<string | null>(null)
   const { warning: nameWarning, checkName } = useDuplicateNameWarning(
     '/warehouses',
-    'warehouse',
+    t('warehouses.entityName'),
     isEdit ? Number(id) : undefined,
   )
 
@@ -53,7 +63,7 @@ export default function WarehouseFormPage() {
     setError,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(buildSchema(t)),
     defaultValues: { name: '', location: '', latitude: undefined, longitude: undefined },
   })
 
@@ -82,10 +92,10 @@ export default function WarehouseFormPage() {
     try {
       if (isEdit) {
         await api.put(`/warehouses/${id}`, payload)
-        showToast('Warehouse updated.', 'success')
+        showToast(t('warehouses.updated'), 'success')
       } else {
         await api.post('/warehouses', payload)
-        showToast('Warehouse created.', 'success')
+        showToast(t('warehouses.created'), 'success')
       }
       navigate('/warehouses')
     } catch (error) {
@@ -94,32 +104,36 @@ export default function WarehouseFormPage() {
   }
 
   if (isEdit && loading) {
-    return <p className="text-sm text-gray-500 dark:text-gray-400">Loading warehouse…</p>
+    return <p className="text-sm text-gray-500 dark:text-gray-400">{t('warehouses.loading')}</p>
   }
   if (isEdit && notFound) {
-    return <FormBanner message="Warehouse not found." />
+    return <FormBanner message={t('warehouses.notFound')} />
   }
 
   return (
-    <FormPage title={isEdit ? 'Edit warehouse' : 'New warehouse'} backTo="/warehouses" wide>
+    <FormPage
+      title={isEdit ? t('warehouses.editWarehouse') : t('warehouses.newWarehouse')}
+      backTo="/warehouses"
+      wide
+    >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <FormBanner message={banner} />
         <TextField
-          label="Name"
+          label={t('common.name')}
           id="name"
           registration={register('name', { onBlur: (e) => checkName(e.target.value) })}
           error={errors.name?.message}
           warning={nameWarning}
         />
         <TextField
-          label="Location"
+          label={t('common.location')}
           id="location"
           registration={register('location')}
           error={errors.location?.message}
         />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <TextField
-            label="Latitude (optional)"
+            label={t('common.latitudeOptional')}
             id="latitude"
             type="number"
             step="any"
@@ -130,7 +144,7 @@ export default function WarehouseFormPage() {
             error={errors.latitude?.message}
           />
           <TextField
-            label="Longitude (optional)"
+            label={t('common.longitudeOptional')}
             id="longitude"
             type="number"
             step="any"
@@ -142,7 +156,7 @@ export default function WarehouseFormPage() {
           />
         </div>
         <div>
-          <p className="mb-1 text-sm font-medium">Pick on map (optional)</p>
+          <p className="mb-1 text-sm font-medium">{t('common.pickOnMap')}</p>
           <LocationPicker
             latitude={latitude ?? null}
             longitude={longitude ?? null}
@@ -153,8 +167,10 @@ export default function WarehouseFormPage() {
           />
         </div>
         <div className="flex gap-3">
-          <SubmitButton submitting={isSubmitting}>{isSubmitting ? 'Saving…' : 'Save'}</SubmitButton>
-          <SecondaryButton onClick={() => navigate('/warehouses')}>Cancel</SecondaryButton>
+          <SubmitButton submitting={isSubmitting}>
+            {isSubmitting ? t('common.saving') : t('common.save')}
+          </SubmitButton>
+          <SecondaryButton onClick={() => navigate('/warehouses')}>{t('common.cancel')}</SecondaryButton>
         </div>
       </form>
     </FormPage>
