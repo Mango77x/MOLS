@@ -23,7 +23,10 @@
     "warehouse": "Entrepôt",
     "quantity": "Quantité",
     "reason": "Motif",
-    "password": "Mot de passe"
+    "password": "Mot de passe",
+    "exportCsv": "Exporter en CSV",
+    "exporting": "Exportation…",
+    "exportFailed": "Échec de l'export."
   },
   "errors": {
     "STOCK_NO_RECORD_IN_WAREHOUSE": "Impossible de réserver le stock : cette ressource n'a aucun stock enregistré dans l'entrepôt de la commande. Demandé : {{requested}}. Ressource id : {{resourceId}}, entrepôt id : {{warehouseId}}",
