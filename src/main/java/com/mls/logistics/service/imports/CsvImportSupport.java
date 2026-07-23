@@ -38,38 +38,37 @@ public final class CsvImportSupport {
             throw new InvalidRequestException("The uploaded file is empty.");
         }
 
-        CSVParser parser;
-        try {
-            parser = CSVFormat.DEFAULT.builder()
-                    .setHeader()
-                    .setSkipHeaderRecord(true)
-                    .setIgnoreSurroundingSpaces(true)
-                    .setTrim(true)
-                    .build()
-                    .parse(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
+        try (InputStreamReader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8);
+             CSVParser parser = CSVFormat.DEFAULT.builder()
+                     .setHeader()
+                     .setSkipHeaderRecord(true)
+                     .setIgnoreSurroundingSpaces(true)
+                     .setTrim(true)
+                     .build()
+                     .parse(reader)) {
+
+            List<String> header;
+            try {
+                header = parser.getHeaderNames();
+            } catch (IllegalStateException ex) {
+                throw new InvalidRequestException("The uploaded file has no header row.");
+            }
+            for (String required : requiredColumns) {
+                if (!header.contains(required)) {
+                    throw new InvalidRequestException("CSV is missing required column '" + required
+                            + "'. Expected columns: " + String.join(", ", requiredColumns));
+                }
+            }
+
+            try {
+                return parser.getRecords();
+            } catch (RuntimeException ex) {
+                // e.g. UncheckedIOException from malformed quoting the parser
+                // can't recover from — a file-level problem, not a row-level one.
+                throw new InvalidRequestException("Could not parse the uploaded file as CSV.");
+            }
         } catch (IOException ex) {
             throw new InvalidRequestException("Could not read the uploaded file.");
-        }
-
-        List<String> header;
-        try {
-            header = parser.getHeaderNames();
-        } catch (IllegalStateException ex) {
-            throw new InvalidRequestException("The uploaded file has no header row.");
-        }
-        for (String required : requiredColumns) {
-            if (!header.contains(required)) {
-                throw new InvalidRequestException("CSV is missing required column '" + required
-                        + "'. Expected columns: " + String.join(", ", requiredColumns));
-            }
-        }
-
-        try {
-            return parser.getRecords();
-        } catch (RuntimeException ex) {
-            // e.g. UncheckedIOException from malformed quoting the parser
-            // can't recover from — a file-level problem, not a row-level one.
-            throw new InvalidRequestException("Could not parse the uploaded file as CSV.");
         }
     }
 
