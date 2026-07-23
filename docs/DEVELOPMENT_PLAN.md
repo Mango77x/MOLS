@@ -24,7 +24,9 @@ Same workflow as before: one `sprint-N` branch per sprint, opened as a PR agains
 
 ---
 
-## Nivel 1 — table stakes for a real deployment
+## Nivel 1 — table stakes for a real deployment (done, Sprints 16-20)
+
+All four items originally scoped for this tier — internationalization, data export, notifications, bulk import — are now shipped. Next up is deciding whether to start Nivel 2 (see the backlog section at the bottom) or address anything else that comes up first.
 
 ### Internationalization (i18n) — Sprints 16-17
 
@@ -87,12 +89,14 @@ Scoped from a real count against the current codebase, not a guess: ~35-40 of 69
 
 ### Sprint 20 — Bulk CSV import
 
-- [ ] Scope: Resources, Warehouses, Units only — the catalog data an organization bulk-loads once at onboarding, per the plan. Deliberately not Orders/Shipments/Stock: those carry relational dependencies (resource/warehouse ids, stock levels) that make a naive bulk import unsafe, so catalog-only sidesteps that class of problem for v1.
-- [ ] Backend: `POST /api/{resources|warehouses|units}/import/preview` and `.../import/commit` (ADMIN-only, matching the existing create-endpoint role guard), accepting a CSV file (`multipart/form-data`). No CSV parsing library is in `pom.xml` yet (`opencsv` or `commons-csv`). Reuses each entity's existing field validation and the same case-insensitive duplicate-name check already backing `useDuplicateNameWarning`, rather than a parallel set of rules.
-- [ ] Two-step preview-then-commit, not a single-shot upload: `preview` parses and validates without persisting, returning a row-by-row result (valid / duplicate-name warning / validation error, mirroring the messages `CreateXRequest` already produces) so the operator can review before committing anything; `commit` re-runs the same validation and persists. All-or-nothing per commit (one transaction) rather than partial-success — simpler to reason about than per-row rollback, and preview should already have caught anything that would fail commit.
-- [ ] Frontend: an `ImportPage` per catalog module (or one page parameterized by resource, given the three are structurally similar) — file picker, a preview table color-coding row status, and a "Commit N valid rows" action gated on zero blocking errors (duplicate-name warnings stay advisory, like the existing single-record form warning, and shouldn't block commit).
-- [ ] Tests: backend unit tests for parse/validate/preview (malformed CSV, missing required column, a row that trips existing field validation, a row that collides with an existing name) and the commit transaction boundary; a frontend test for the preview-table rendering given a mixed valid/invalid response.
-- [ ] Docs: `PROJECT_OVERVIEW.md`; `HELP.md` (the expected CSV column format per entity, since operators prepare these files themselves).
+- [x] Scope: Resources, Warehouses, Units only — deliberately not Orders/Shipments/Stock, whose relational dependencies (resource/warehouse ids, stock levels) would make a naive bulk import unsafe.
+- [x] Backend: `POST /api/{resources|warehouses|units}/import/preview` and `.../import/commit` (ADMIN-only — falls under the existing generic "remaining POST /api/** is ADMIN-only" rule in `SecurityConfig`, no change needed there), accepting a CSV file (`multipart/form-data`, field name `file`). Added `commons-csv` (no CSV library was in `pom.xml`). A shared `CsvImportSupport` (`service/imports/`) owns parsing and required-column checking; each of `WarehouseService`/`ResourceService`/`UnitService` gained its own `previewImport`/`commitImport` + a private `buildImportRows` reusing the *same* `CreateXRequest` DTO and a real injected `jakarta.validation.Validator` (`Validator.validate(dto)`) — so a CSV row fails with the exact same messages the single-record form would, not a parallel set of rules. Two shared response types (`ImportRowResult<T>`, `ImportPreviewResponse<T>`) are reused across all three, since only the columns and endpoint differ.
+- [x] Two-step preview-then-commit: `preview` parses/validates and persists nothing; `commit` re-parses the same file and persists every row that isn't `ERROR` (duplicate-name rows are `DUPLICATE_WARNING`, not blocking — there's no unique constraint on these names in the database, matching the existing single-record form's advisory-only `useDuplicateNameWarning`). Duplicate detection covers both "already in the database" and "repeated within the same file." `commit` is one `@Transactional` method — a mid-commit failure rolls back the whole file, not just the failed row.
+- [x] Frontend: one shared `ImportPage` (`components/imports/`) parameterized by API path and column list, since the three modules are structurally identical apart from that — three thin per-entity wrapper pages supply their own translated columns. File picker → Preview → a color-coded (green/amber/red) result table → "Commit N rows", disabled while any row is `ERROR` and again after a successful commit (prevents double-submitting the same file). An "Import CSV" link sits next to "New X" on each of the three list pages.
+- [x] Tests: `WarehouseServiceImportTest`/`ResourceServiceImportTest`/`UnitServiceImportTest` (using a *real* Hibernate Validator, not a mock, so the actual `@NotBlank`/`@Size` constraints are exercised) cover all-valid, field-validation-error, duplicate-vs-database, duplicate-within-file, non-numeric-coordinate, missing-required-column, empty-file, and the commit transaction boundary (errors skipped, everything else persisted). Frontend `ImportPage.test.tsx` covers the disabled-until-file-chosen state, row rendering, the commit-gated-on-zero-errors rule, and the post-commit disabled state.
+- [x] Docs: `PROJECT_OVERVIEW.md`, `HELP.md` (CSV column format per entity).
+
+**Verified live** (Docker): uploaded a 3-row CSV to Warehouses mixing a valid row, a row colliding with an existing warehouse (case-insensitive — correctly flagged even against a differently-cased existing name), and a row missing its required `location` column — the preview showed all three statuses correctly and Commit stayed disabled. Re-uploaded an all-valid file, confirmed Commit enabled, clicked it, confirmed the new warehouse actually appeared in the Warehouses list afterward, and that re-viewing the page shows "this file has already been committed." Spot-checked the same preview flow on Resources and Units.
 
 ---
 
@@ -125,4 +129,4 @@ Only worth starting if the goal shifts from "run MOLS for one organization" to "
 - Frontend: `npm run lint`, `npm test`, `npx tsc -b --noEmit` inside `frontend/`.
 - Any sprint touching UI: rebuild and run the real Docker stack, verify manually in the browser — passing tests alone isn't sufficient sign-off for this plan (this is exactly how the login-hint and duplicate-name-warning gaps in Sprint 15 were found in the first place: neither broke a test, both broke real usage).
 
-**Last updated**: 2026-07-23 (Sprint 19 complete — low-stock/stale-order email digest, self-service password reset by email, and a pre-login locale fix found during live verification; Sprint 20 next)
+**Last updated**: 2026-07-23 (Sprint 20 complete — two-step preview/commit bulk CSV import for Resources, Warehouses, and Units, closing out Nivel 1. Nivel 2 is next, pending a decision on which item(s) to schedule.)

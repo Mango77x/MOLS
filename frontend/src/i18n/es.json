@@ -182,6 +182,9 @@
     "notFound": "Almacén no encontrado.",
     "created": "Almacén creado.",
     "updated": "Almacén actualizado.",
+    "importCsv": "Importar CSV",
+    "importTitle": "Importar almacenes",
+    "importColumnsHint": "Columnas esperadas: name, location, latitude, longitude (latitude/longitude opcionales).",
     "form": {
       "nameLength": "El nombre del almacén debe tener entre 2 y 100 caracteres",
       "locationLength": "La ubicación del almacén debe tener entre 2 y 200 caracteres"
@@ -200,6 +203,9 @@
     "created": "Recurso creado.",
     "updated": "Recurso actualizado.",
     "criticality": "Criticidad",
+    "importCsv": "Importar CSV",
+    "importTitle": "Importar recursos",
+    "importColumnsHint": "Columnas esperadas: name, type, criticality.",
     "form": {
       "nameLength": "El nombre del recurso debe tener entre 2 y 100 caracteres",
       "typeLength": "El tipo de recurso debe tener entre 2 y 50 caracteres",
@@ -239,6 +245,9 @@
     "notFound": "Unidad no encontrada.",
     "created": "Unidad creada.",
     "updated": "Unidad actualizada.",
+    "importCsv": "Importar CSV",
+    "importTitle": "Importar unidades",
+    "importColumnsHint": "Columnas esperadas: name, location, latitude, longitude (latitude/longitude opcionales).",
     "form": {
       "nameLength": "El nombre de la unidad debe tener entre 2 y 100 caracteres",
       "locationLength": "La ubicación de la unidad debe tener entre 2 y 200 caracteres"
@@ -467,6 +476,25 @@
       "newPassword": "Nueva contraseña",
       "loading": "Cargando usuario…",
       "notFound": "Usuario no encontrado."
+    }
+  },
+  "import": {
+    "selectFile": "Archivo CSV",
+    "preview": "Vista previa",
+    "processing": "Procesando…",
+    "commit_one": "Confirmar {{count}} fila",
+    "commit_other": "Confirmar {{count}} filas",
+    "committed_one": "Se importó {{count}} fila.",
+    "committed_other": "Se importaron {{count}} filas.",
+    "fixErrorsHint": "Corrige las filas marcadas como error y vuelve a subir el archivo — solo se pueden confirmar las filas sin errores.",
+    "committedHint": "Este archivo ya fue confirmado.",
+    "row": "Fila",
+    "details": "Detalles",
+    "noRows": "El archivo no tiene filas de datos.",
+    "status": {
+      "VALID": "Válida",
+      "DUPLICATE_WARNING": "Posible duplicado",
+      "ERROR": "Error"
     }
   },
   "enums": {

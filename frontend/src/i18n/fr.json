@@ -182,6 +182,9 @@
     "notFound": "Entrepôt introuvable.",
     "created": "Entrepôt créé.",
     "updated": "Entrepôt mis à jour.",
+    "importCsv": "Importer un CSV",
+    "importTitle": "Importer des entrepôts",
+    "importColumnsHint": "Colonnes attendues : name, location, latitude, longitude (latitude/longitude facultatifs).",
     "form": {
       "nameLength": "Le nom de l'entrepôt doit comporter entre 2 et 100 caractères",
       "locationLength": "L'emplacement de l'entrepôt doit comporter entre 2 et 200 caractères"
@@ -200,6 +203,9 @@
     "created": "Ressource créée.",
     "updated": "Ressource mise à jour.",
     "criticality": "Criticité",
+    "importCsv": "Importer un CSV",
+    "importTitle": "Importer des ressources",
+    "importColumnsHint": "Colonnes attendues : name, type, criticality.",
     "form": {
       "nameLength": "Le nom de la ressource doit comporter entre 2 et 100 caractères",
       "typeLength": "Le type de ressource doit comporter entre 2 et 50 caractères",
@@ -239,6 +245,9 @@
     "notFound": "Unité introuvable.",
     "created": "Unité créée.",
     "updated": "Unité mise à jour.",
+    "importCsv": "Importer un CSV",
+    "importTitle": "Importer des unités",
+    "importColumnsHint": "Colonnes attendues : name, location, latitude, longitude (latitude/longitude facultatifs).",
     "form": {
       "nameLength": "Le nom de l'unité doit comporter entre 2 et 100 caractères",
       "locationLength": "L'emplacement de l'unité doit comporter entre 2 et 200 caractères"
@@ -467,6 +476,25 @@
       "newPassword": "Nouveau mot de passe",
       "loading": "Chargement de l'utilisateur…",
       "notFound": "Utilisateur introuvable."
+    }
+  },
+  "import": {
+    "selectFile": "Fichier CSV",
+    "preview": "Aperçu",
+    "processing": "Traitement…",
+    "commit_one": "Valider {{count}} ligne",
+    "commit_other": "Valider {{count}} lignes",
+    "committed_one": "{{count}} ligne importée.",
+    "committed_other": "{{count}} lignes importées.",
+    "fixErrorsHint": "Corrigez les lignes marquées en erreur et renvoyez le fichier — seules les lignes sans erreur peuvent être validées.",
+    "committedHint": "Ce fichier a déjà été validé.",
+    "row": "Ligne",
+    "details": "Détails",
+    "noRows": "Le fichier ne contient aucune ligne de données.",
+    "status": {
+      "VALID": "Valide",
+      "DUPLICATE_WARNING": "Doublon possible",
+      "ERROR": "Erreur"
     }
   },
   "enums": {
