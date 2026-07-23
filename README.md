@@ -14,9 +14,14 @@
   <a href="PROJECT_OVERVIEW.md">
     <img alt="PROJECT OVERVIEW" src="https://img.shields.io/badge/docs-PROJECT_OVERVIEW-informational?style=for-the-badge">
   </a>
+  <a href="https://mols-demo.onrender.com/app">
+    <img alt="LIVE DEMO" src="https://img.shields.io/badge/demo-live-success?style=for-the-badge">
+  </a>
 </p>
 
 MOLS is a logistics app to manage warehouses, resources, stock, orders and shipments, with an audit log (movements) so you can trace what changed and why.
+
+🔗 **Live demo:** [mols-demo.onrender.com/app](https://mols-demo.onrender.com/app) — log in with a read-only auditor account: `AuditorDemo` / `DemoPassword77` (see [HELP.md](HELP.md) for what each role can do). First load may take up to a minute — this runs on free-tier hosting that sleeps when idle.
 
 ---
 
