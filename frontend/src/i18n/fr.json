@@ -24,6 +24,7 @@
     "quantity": "Quantité",
     "reason": "Motif",
     "password": "Mot de passe",
+    "email": "Email",
     "exportCsv": "Exporter en CSV",
     "exporting": "Exportation…",
     "exportFailed": "Échec de l'export."
@@ -98,7 +99,24 @@
     "signingIn": "Connexion…",
     "invalidCredentials": "Nom d'utilisateur ou mot de passe incorrect.",
     "adminCreated": "Compte administrateur créé — connectez-vous pour continuer.",
-    "lostAccessHint": "Impossible de vous connecter ? Contactez votre administrateur système pour récupérer l'accès."
+    "lostAccessHint": "Impossible de vous connecter ? Contactez votre administrateur système pour récupérer l'accès.",
+    "forgotPassword": "Mot de passe oublié ?"
+  },
+  "forgotPassword": {
+    "title": "Réinitialisez votre mot de passe",
+    "subtitle": "Saisissez l'email de votre compte et nous vous enverrons un lien de réinitialisation.",
+    "send": "Envoyer le lien",
+    "sending": "Envoi en cours…",
+    "confirmation": "Si cet email correspond à un compte, nous lui avons envoyé un lien de réinitialisation.",
+    "backToLogin": "Retour à la connexion"
+  },
+  "resetPassword": {
+    "title": "Définir un nouveau mot de passe",
+    "subtitle": "Choisissez un nouveau mot de passe pour votre compte.",
+    "newPassword": "Nouveau mot de passe",
+    "submit": "Réinitialiser le mot de passe",
+    "success": "Votre mot de passe a été réinitialisé — vous pouvez maintenant vous connecter avec.",
+    "missingToken": "Ce lien de réinitialisation n'a pas de jeton. Demandez-en un nouveau."
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -428,6 +446,7 @@
     "disable": "Désactiver",
     "enable": "Activer",
     "changeRole": "Changer le rôle",
+    "emailAriaLabel": "Email de {{username}}",
     "changeRoleTitle": "Changer le rôle de {{username}} ?",
     "changeRoleMessage": "Changer le rôle de {{username}} en {{role}}.",
     "toggleTitle": "{{action}} ce compte ?",
@@ -437,7 +456,10 @@
       "usernameLength": "Le nom d'utilisateur doit comporter entre 3 et 50 caractères",
       "passwordLength": "Le mot de passe doit comporter entre 12 et 128 caractères",
       "passwordHint": "Au moins 12 caractères.",
-      "selectRole": "Sélectionnez un rôle"
+      "selectRole": "Sélectionnez un rôle",
+      "emailOptional": "Email (facultatif)",
+      "emailHint": "Active le résumé stock bas/commandes en attente et la réinitialisation de mot de passe en libre-service pour ce compte.",
+      "invalidEmail": "Doit être une adresse email valide"
     },
     "resetPasswordPage": {
       "title": "Réinitialiser le mot de passe",

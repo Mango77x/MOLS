@@ -48,7 +48,7 @@ public class AppUserAdminService {
     }
 
     @Transactional
-    public AppUser createUser(String username, String rawPassword, Role role) {
+    public AppUser createUser(String username, String rawPassword, Role role, String email) {
         String normalizedUsername = username == null ? "" : username.trim();
         if (normalizedUsername.isBlank()) {
             throw new InvalidRequestException("Username is required.");
@@ -67,9 +67,15 @@ public class AppUserAdminService {
             throw new InvalidRequestException("Username already exists.");
         }
 
+        String normalizedEmail = normalizeEmail(email);
+        if (normalizedEmail != null && appUserRepository.existsByEmail(normalizedEmail)) {
+            throw new InvalidRequestException("A user with this email already exists.");
+        }
+
         try {
             AppUser user = new AppUser(normalizedUsername, passwordEncoder.encode(rawPassword), role);
             user.setEnabledFlag(true);
+            user.setEmail(normalizedEmail);
             return appUserRepository.save(user);
         } catch (DataAccessException ex) {
             throw ex;
@@ -115,6 +121,31 @@ public class AppUserAdminService {
         // bump rather than a timestamp comparison.
         user.setPasswordVersion(user.getPasswordVersion() + 1);
         return appUserRepository.save(user);
+    }
+
+    @Transactional
+    public AppUser updateEmail(Long id, String email) {
+        AppUser user = appUserRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+
+        String normalizedEmail = normalizeEmail(email);
+        if (normalizedEmail != null
+                && !normalizedEmail.equalsIgnoreCase(user.getEmail())
+                && appUserRepository.existsByEmail(normalizedEmail)) {
+            throw new InvalidRequestException("A user with this email already exists.");
+        }
+
+        user.setEmail(normalizedEmail);
+        return appUserRepository.save(user);
+    }
+
+    /** Blank clears the field, mirroring how optional fields are treated everywhere else in the app. */
+    private static String normalizeEmail(String email) {
+        if (email == null) {
+            return null;
+        }
+        String trimmed = email.trim();
+        return trimmed.isBlank() ? null : trimmed;
     }
 
     @Transactional

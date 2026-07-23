@@ -91,6 +91,30 @@ JWT settings (read from the environment, see `.env.example`):
 - `SECURITY_JWT_SECRET_KEY` (required, no committed default)
 - `SECURITY_JWT_EXPIRATION_MS` (optional, default 24h)
 - `SECURITY_JWT_COOKIE_SECURE` (optional, default false; true behind HTTPS)
+- `SECURITY_JWT_RESET_TOKEN_EXPIRATION_MS` (optional, default 30 min — password-reset link lifetime)
+
+## Email (optional, off by default)
+
+Powers two features: a daily digest emailing every enabled ADMIN with an
+email on file the current low-stock/stale-order alerts, and self-service
+password reset ("Forgot your password?" on the login page). Neither runs
+unless `MOLS_MAIL_ENABLED=true` — the app boots and works normally with
+none of this set.
+
+- `MOLS_MAIL_ENABLED` (optional, default false)
+- `MOLS_MAIL_FROM` (optional, default `mols-noreply@example.com`)
+- `MOLS_MAIL_APP_BASE_URL` (optional, default `http://localhost:8080` — used to build the password-reset link)
+- `MOLS_MAIL_DIGEST_CRON` (optional, default `0 0 7 * * *`, 07:00 daily)
+- `SPRING_MAIL_HOST` / `SPRING_MAIL_PORT` / `SPRING_MAIL_USERNAME` / `SPRING_MAIL_PASSWORD` — your real SMTP server details (ignored while `MOLS_MAIL_ENABLED=false`)
+
+To try it locally without a real SMTP account, `docker-compose.yml`
+includes an optional `mailpit` service (a catcher, not a real mail
+server) — every email sent shows up at http://localhost:8025 instead of
+being delivered. Set `MOLS_MAIL_ENABLED=true` in `.env` and leave
+`SPRING_MAIL_HOST=mailpit` (the default) to use it.
+
+A user needs an email on file for either feature to apply to them — set
+one for any account under Users management (`PATCH /api/users/{id}/email`).
 
 ## Roles
 
@@ -110,7 +134,11 @@ Bootstrap admin (dev-only) can be configured via environment variables:
 - `BOOTSTRAP_ADMIN_USERNAME`
 - `BOOTSTRAP_ADMIN_PASSWORD`
 
-If you don't know an application user's password, reset it in DB (requires `pgcrypto`):
+If the user has an email on file and mail is enabled, they can self-serve
+via "Forgot your password?" on the login page instead. Otherwise, or with
+mail disabled, an ADMIN can reset it directly from Users management
+(`PATCH /api/users/{id}/password`), or — if no ADMIN account is usable
+either — reset it in DB (requires `pgcrypto`):
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
