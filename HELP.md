@@ -116,6 +116,29 @@ being delivered. Set `MOLS_MAIL_ENABLED=true` in `.env` and leave
 A user needs an email on file for either feature to apply to them — set
 one for any account under Users management (`PATCH /api/users/{id}/email`).
 
+## CSV bulk import (Resources, Warehouses, Units)
+
+ADMIN-only, one file at a time, two steps: **Import CSV** on each list
+page opens a page that first *previews* the file (nothing is saved yet,
+every row is checked and shown with its status) and only *commits* it —
+a separate click — once you've reviewed the preview. A row with a
+duplicate name is only a warning, not an error, and is still committed;
+only rows marked as errors are skipped. "Commit" stays disabled until
+every row is either valid or a duplicate warning.
+
+Expected CSV columns (first row is the header; extra columns are
+ignored):
+
+| Page | Columns |
+| --- | --- |
+| Resources | `name`, `type`, `criticality` |
+| Warehouses | `name`, `location`, `latitude`, `longitude` (`latitude`/`longitude` optional) |
+| Units | `name`, `location`, `latitude`, `longitude` (`latitude`/`longitude` optional) |
+
+Not available for Orders, Shipments, or Stock — those reference other
+records (a resource id, a warehouse id, existing stock levels) that a
+plain CSV can't safely resolve on its own.
+
 ## Roles
 
 - ADMIN: full access + user management

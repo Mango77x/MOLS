@@ -3,6 +3,7 @@ package com.mls.logistics.controller;
 import com.mls.logistics.domain.Unit;
 import com.mls.logistics.dto.request.CreateUnitRequest;
 import com.mls.logistics.dto.request.UpdateUnitRequest;
+import com.mls.logistics.dto.response.ImportPreviewResponse;
 import com.mls.logistics.dto.response.UnitResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.UnitService;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.stream.Collectors;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -188,5 +190,47 @@ public class UnitController {
             @PathVariable Long id) {
         unitService.deleteUnit(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Bulk import, step 1: parses and validates a CSV of units without
+     * persisting anything.
+     *
+     * POST /api/units/import/preview (multipart, field name "file")
+     */
+    @Operation(
+        summary = "Preview a bulk unit import",
+        description = "Parses and validates a CSV file (columns: name, location, latitude, longitude) "
+                + "without persisting anything, so the result can be reviewed before committing."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "File parsed; see the per-row result"),
+        @ApiResponse(responseCode = "400", description = "The file itself is unusable (unreadable, empty, missing a required column)")
+    })
+    @PostMapping("/import/preview")
+    public ResponseEntity<ImportPreviewResponse<CreateUnitRequest>> previewImport(
+            @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(unitService.previewImport(file));
+    }
+
+    /**
+     * Bulk import, step 2: re-parses and re-validates the same file, then
+     * persists every non-error row.
+     *
+     * POST /api/units/import/commit (multipart, field name "file")
+     */
+    @Operation(
+        summary = "Commit a bulk unit import",
+        description = "Re-validates the CSV file and persists every row that isn't an error "
+                + "(duplicate-name rows are only a warning, same as the single-record form)."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Import committed; see the per-row result"),
+        @ApiResponse(responseCode = "400", description = "The file itself is unusable (unreadable, empty, missing a required column)")
+    })
+    @PostMapping("/import/commit")
+    public ResponseEntity<ImportPreviewResponse<CreateUnitRequest>> commitImport(
+            @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(unitService.commitImport(file));
     }
 }

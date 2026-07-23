@@ -182,6 +182,9 @@
     "notFound": "Warehouse not found.",
     "created": "Warehouse created.",
     "updated": "Warehouse updated.",
+    "importCsv": "Import CSV",
+    "importTitle": "Import warehouses",
+    "importColumnsHint": "Expected columns: name, location, latitude, longitude (latitude/longitude optional).",
     "form": {
       "nameLength": "Warehouse name must be between 2 and 100 characters",
       "locationLength": "Warehouse location must be between 2 and 200 characters"
@@ -200,6 +203,9 @@
     "created": "Resource created.",
     "updated": "Resource updated.",
     "criticality": "Criticality",
+    "importCsv": "Import CSV",
+    "importTitle": "Import resources",
+    "importColumnsHint": "Expected columns: name, type, criticality.",
     "form": {
       "nameLength": "Resource name must be between 2 and 100 characters",
       "typeLength": "Resource type must be between 2 and 50 characters",
@@ -239,6 +245,9 @@
     "notFound": "Unit not found.",
     "created": "Unit created.",
     "updated": "Unit updated.",
+    "importCsv": "Import CSV",
+    "importTitle": "Import units",
+    "importColumnsHint": "Expected columns: name, location, latitude, longitude (latitude/longitude optional).",
     "form": {
       "nameLength": "Unit name must be between 2 and 100 characters",
       "locationLength": "Unit location must be between 2 and 200 characters"
@@ -467,6 +476,25 @@
       "newPassword": "New password",
       "loading": "Loading user…",
       "notFound": "User not found."
+    }
+  },
+  "import": {
+    "selectFile": "CSV file",
+    "preview": "Preview",
+    "processing": "Processing…",
+    "commit_one": "Commit {{count}} row",
+    "commit_other": "Commit {{count}} rows",
+    "committed_one": "Imported {{count}} row.",
+    "committed_other": "Imported {{count}} rows.",
+    "fixErrorsHint": "Fix the rows marked as errors and upload the file again — only rows with no errors can be committed.",
+    "committedHint": "This file has already been committed.",
+    "row": "Row",
+    "details": "Details",
+    "noRows": "The file has no data rows.",
+    "status": {
+      "VALID": "Valid",
+      "DUPLICATE_WARNING": "Possible duplicate",
+      "ERROR": "Error"
     }
   },
   "enums": {

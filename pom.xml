@@ -65,6 +65,15 @@
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
 
+		<!-- CSV parsing for the Sprint 20 bulk-import endpoints (Resources/
+		     Warehouses/Units). Not managed by spring-boot-starter-parent's BOM,
+		     hence the explicit version. -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-csv</artifactId>
+			<version>1.12.0</version>
+		</dependency>
+
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>

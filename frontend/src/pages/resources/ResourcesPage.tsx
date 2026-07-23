@@ -64,12 +64,20 @@ export default function ResourcesPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold">{t('resources.title')}</h1>
         {isAdmin && (
-          <Link
-            to="/resources/new"
-            className="rounded bg-army-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-army-800"
-          >
-            {t('resources.newResource')}
-          </Link>
+          <div className="flex gap-3">
+            <Link
+              to="/resources/import"
+              className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+            >
+              {t('resources.importCsv')}
+            </Link>
+            <Link
+              to="/resources/new"
+              className="rounded bg-army-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-army-800"
+            >
+              {t('resources.newResource')}
+            </Link>
+          </div>
         )}
       </div>
 
