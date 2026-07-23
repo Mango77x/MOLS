@@ -22,6 +22,7 @@ import java.util.Arrays;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -89,7 +90,7 @@ class UserControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void createUser_WithValidRequest_ShouldReturn201() throws Exception {
-        when(appUserAdminService.createUser(eq("bob"), eq("a-long-enough-password"), eq(Role.AUDITOR)))
+        when(appUserAdminService.createUser(eq("bob"), eq("a-long-enough-password"), eq(Role.AUDITOR), isNull()))
                 .thenReturn(new AppUser("bob", "hashed", Role.AUDITOR));
 
         mockMvc.perform(post("/api/users")
@@ -108,13 +109,13 @@ class UserControllerTest {
                         .content("{\"username\":\"bob\",\"password\":\"short\",\"role\":\"AUDITOR\"}"))
                 .andExpect(status().isBadRequest());
 
-        verify(appUserAdminService, never()).createUser(any(), any(), any());
+        verify(appUserAdminService, never()).createUser(any(), any(), any(), any());
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
     void createUser_WithDuplicateUsername_ShouldReturn400() throws Exception {
-        when(appUserAdminService.createUser(any(), any(), any()))
+        when(appUserAdminService.createUser(any(), any(), any(), any()))
                 .thenThrow(new InvalidRequestException("Username already exists."));
 
         mockMvc.perform(post("/api/users")
@@ -179,5 +180,30 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"enabled\":true}"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void updateEmail_WithValidRequest_ShouldReturn200() throws Exception {
+        testUser.setEmail("alice@example.com");
+        when(appUserAdminService.updateEmail(eq(1L), eq("alice@example.com"))).thenReturn(testUser);
+
+        mockMvc.perform(patch("/api/users/1/email")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"alice@example.com\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("alice@example.com"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void updateEmail_AlreadyUsed_ShouldReturn400() throws Exception {
+        when(appUserAdminService.updateEmail(eq(1L), eq("taken@example.com")))
+                .thenThrow(new InvalidRequestException("A user with this email already exists."));
+
+        mockMvc.perform(patch("/api/users/1/email")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"taken@example.com\"}"))
+                .andExpect(status().isBadRequest());
     }
 }

@@ -1,10 +1,13 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import ForgotPasswordPage from './auth/ForgotPasswordPage'
 import LoginPage from './auth/LoginPage'
 import RequireAuth from './auth/RequireAuth'
+import ResetPasswordPage from './auth/ResetPasswordPage'
 import SetupPage from './auth/SetupPage'
 import { useAuthStore } from './auth/store'
 import AppLayout from './layout/AppLayout'
+import { useLocale } from './layout/useLocale'
 import DashboardPage from './pages/DashboardPage'
 import MovementsPage from './pages/movements/MovementsPage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -38,6 +41,11 @@ import WarehousesPage from './pages/warehouses/WarehousesPage'
  */
 export default function App() {
   const restore = useAuthStore((state) => state.restore)
+  // Applies the persisted/browser-detected locale at the app root, not just
+  // inside AppLayout (which only mounts once authenticated) — otherwise
+  // Login/ForgotPassword/ResetPassword/Setup always rendered in i18next's
+  // built-in fallback language regardless of what the user last chose.
+  useLocale()
 
   useEffect(() => {
     void restore()
@@ -47,6 +55,8 @@ export default function App() {
     <BrowserRouter basename="/app">
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/setup" element={<SetupPage />} />
 
         <Route

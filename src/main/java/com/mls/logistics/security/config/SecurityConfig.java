@@ -70,6 +70,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/auth/register").hasRole("ADMIN")
                 // Logout only clears the HttpOnly auth cookie — safe to allow
                 .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
+                // Self-service password reset: by definition reachable by
+                // someone who isn't authenticated yet.
+                .requestMatchers(HttpMethod.POST, "/api/auth/forgot-password").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/reset-password").permitAll()
                 // Session descriptor for browser clients (SPA session restore)
                 .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
                 // Block any other auth endpoints by default

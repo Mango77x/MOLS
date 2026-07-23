@@ -62,6 +62,16 @@ public class AppUser implements UserDetails {
     @Column(nullable = false)
     private int passwordVersion;
 
+    /**
+     * Optional — nullable for the same upgrade-compatibility reason as
+     * {@code enabled}: existing accounts (including the first-run ADMIN)
+     * have none until an admin sets one. Used by the low-stock/stale-order
+     * digest job (Sprint 19) and the self-service password-reset flow, both
+     * of which simply skip a user with no email set.
+     */
+    @Column
+    private String email;
+
     public AppUser() {
     }
 
@@ -150,5 +160,13 @@ public class AppUser implements UserDetails {
 
     public void setPasswordVersion(int passwordVersion) {
         this.passwordVersion = passwordVersion;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }

@@ -24,6 +24,7 @@
     "quantity": "Cantidad",
     "reason": "Motivo",
     "password": "Contraseña",
+    "email": "Email",
     "exportCsv": "Exportar CSV",
     "exporting": "Exportando…",
     "exportFailed": "No se pudo exportar."
@@ -98,7 +99,24 @@
     "signingIn": "Iniciando sesión…",
     "invalidCredentials": "Usuario o contraseña incorrectos.",
     "adminCreated": "Cuenta de administrador creada — inicia sesión para continuar.",
-    "lostAccessHint": "¿No puedes iniciar sesión? Contacta con el administrador del sistema para recuperar el acceso."
+    "lostAccessHint": "¿No puedes iniciar sesión? Contacta con el administrador del sistema para recuperar el acceso.",
+    "forgotPassword": "¿Olvidaste tu contraseña?"
+  },
+  "forgotPassword": {
+    "title": "Restablece tu contraseña",
+    "subtitle": "Escribe el email de tu cuenta y te enviaremos un enlace para restablecerla.",
+    "send": "Enviar enlace",
+    "sending": "Enviando…",
+    "confirmation": "Si ese email está en una cuenta, te hemos enviado un enlace para restablecer la contraseña.",
+    "backToLogin": "Volver a iniciar sesión"
+  },
+  "resetPassword": {
+    "title": "Establece una nueva contraseña",
+    "subtitle": "Elige una nueva contraseña para tu cuenta.",
+    "newPassword": "Nueva contraseña",
+    "submit": "Restablecer contraseña",
+    "success": "Tu contraseña se ha restablecido — ya puedes iniciar sesión con ella.",
+    "missingToken": "A este enlace le falta el token. Solicita uno nuevo."
   },
   "dashboard": {
     "title": "Panel",
@@ -428,6 +446,7 @@
     "disable": "Deshabilitar",
     "enable": "Habilitar",
     "changeRole": "Cambiar rol",
+    "emailAriaLabel": "Email de {{username}}",
     "changeRoleTitle": "¿Cambiar el rol de {{username}}?",
     "changeRoleMessage": "Cambiar el rol de {{username}} a {{role}}.",
     "toggleTitle": "¿{{action}} esta cuenta?",
@@ -437,7 +456,10 @@
       "usernameLength": "El usuario debe tener entre 3 y 50 caracteres",
       "passwordLength": "La contraseña debe tener entre 12 y 128 caracteres",
       "passwordHint": "Al menos 12 caracteres.",
-      "selectRole": "Selecciona un rol"
+      "selectRole": "Selecciona un rol",
+      "emailOptional": "Email (opcional)",
+      "emailHint": "Habilita el resumen de stock bajo/pedidos estancados y el restablecimiento de contraseña por autoservicio para esta cuenta.",
+      "invalidEmail": "Debe ser un email válido"
     },
     "resetPasswordPage": {
       "title": "Restablecer contraseña",

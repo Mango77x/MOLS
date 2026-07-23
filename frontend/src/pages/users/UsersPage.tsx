@@ -16,6 +16,62 @@ type PendingAction =
   | { type: 'role'; user: UserEntity; role: UserRole }
   | { type: 'toggle'; user: UserEntity }
 
+/** Inline, immediately-persisted email editor for one row — not destructive, so no confirm dialog. */
+function EmailCell({ user, onSaved }: { user: UserEntity; onSaved: () => void }) {
+  const { t } = useTranslation()
+  const [value, setValue] = useState(user.email ?? '')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setValue(user.email ?? '')
+    setError(null)
+  }, [user.email])
+
+  const dirty = value !== (user.email ?? '')
+
+  async function handleSave() {
+    setSaving(true)
+    setError(null)
+    try {
+      await api.patch(`/users/${user.id}/email`, { email: value })
+      onSaved()
+    } catch (err) {
+      setError(extractApiError(err).message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="email"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        placeholder={t('users.form.emailOptional')}
+        aria-label={t('users.emailAriaLabel', { username: user.username })}
+        className="w-48 rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800"
+      />
+      {dirty && (
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+          className="text-army-700 underline disabled:opacity-50 dark:text-army-300"
+        >
+          {saving ? t('common.saving') : t('common.save')}
+        </button>
+      )}
+      {error && (
+        <span role="alert" className="text-xs text-status-critical">
+          {error}
+        </span>
+      )}
+    </div>
+  )
+}
+
 export default function UsersPage() {
   const { t } = useTranslation()
   const [users, setUsers] = useState<UserEntity[]>([])
@@ -71,6 +127,11 @@ export default function UsersPage() {
   const columns: ColumnDef<UserEntity, unknown>[] = [
     { id: 'id', header: t('common.id'), accessorKey: 'id' },
     { id: 'username', header: t('users.username'), accessorKey: 'username' },
+    {
+      id: 'email',
+      header: t('common.email'),
+      cell: ({ row }) => <EmailCell user={row.original} onSaved={loadUsers} />,
+    },
     {
       id: 'role',
       header: t('users.role'),

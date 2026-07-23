@@ -3,6 +3,7 @@ package com.mls.logistics.security.service;
 import com.mls.logistics.security.config.JwtProperties;
 import com.mls.logistics.security.domain.AppUser;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -25,6 +26,22 @@ import java.util.function.Function;
  */
 @Service
 public class JwtService {
+
+    /** Marks a token as a password-reset link rather than a session credential. */
+    private static final String RESET_PURPOSE_CLAIM = "purpose";
+    private static final String RESET_PURPOSE_VALUE = "password_reset";
+
+    /**
+     * Deliberately a different claim key than the ordinary session token's
+     * {@code pwdVersion} (see {@link #generateToken}) — a reset token must
+     * never pass {@link com.mls.logistics.security.filter.JwtAuthFilter}'s
+     * revocation check as if it were a session credential. Using a
+     * differently-named claim means {@code JwtAuthFilter.extractPasswordVersion}
+     * simply never finds it there, so a reset token is always treated as
+     * revoked/invalid for that purpose — regardless of this class's own,
+     * separate validation in {@link #isPasswordResetTokenValid}.
+     */
+    private static final String RESET_PWD_VERSION_CLAIM = "resetPwdVersion";
 
     private final JwtProperties jwtProperties;
 
@@ -93,6 +110,51 @@ public class JwtService {
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+    }
+
+    /**
+     * Mints a short-lived, single-use password-reset token for the
+     * self-service "forgot password" flow.
+     *
+     * <p>Embeds the user's current {@code passwordVersion} under a
+     * dedicated claim name (not the session token's {@code pwdVersion}) so
+     * redeeming it — which bumps {@code passwordVersion}, same as an
+     * admin-driven reset — makes any other outstanding copy of this exact
+     * token (e.g. from clicking an old email twice) fail
+     * {@link #isPasswordResetTokenValid} afterward.</p>
+     */
+    public String generatePasswordResetToken(AppUser user) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(RESET_PURPOSE_CLAIM, RESET_PURPOSE_VALUE);
+        claims.put(RESET_PWD_VERSION_CLAIM, user.getPasswordVersion());
+        return Jwts.builder()
+                .claims(claims)
+                .subject(user.getUsername())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + jwtProperties.getResetTokenExpirationMs()))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    /**
+     * Validates a password-reset token end to end: well-formed and
+     * correctly signed, not expired, carries the password-reset purpose
+     * claim (not some other token type), names this exact user, and its
+     * embedded password version still matches the user's current one
+     * (single-use — see {@link #generatePasswordResetToken}).
+     */
+    public boolean isPasswordResetTokenValid(String token, AppUser user) {
+        try {
+            Claims claims = extractAllClaims(token);
+            boolean correctPurpose = RESET_PURPOSE_VALUE.equals(claims.get(RESET_PURPOSE_CLAIM, String.class));
+            boolean correctUser = user.getUsername().equals(claims.getSubject());
+            Integer tokenVersion = claims.get(RESET_PWD_VERSION_CLAIM, Integer.class);
+            boolean correctVersion = tokenVersion != null && tokenVersion == user.getPasswordVersion();
+            boolean notExpired = claims.getExpiration().after(new Date());
+            return correctPurpose && correctUser && correctVersion && notExpired;
+        } catch (JwtException | IllegalArgumentException ex) {
+            return false;
+        }
     }
 
     // Private helpers

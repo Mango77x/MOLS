@@ -43,4 +43,21 @@ public interface AppUserRepository extends JpaRepository<AppUser, Long> {
     long countByEnabledTrue();
 
     List<AppUser> findAllByRole(Role role);
+
+    /**
+     * Looks up a user by email, for the self-service "forgot password" flow.
+     * Safe against {@code NonUniqueResultException}: {@code idx_app_users_email}
+     * (V9) enforces uniqueness among non-null emails.
+     */
+    Optional<AppUser> findByEmail(String email);
+
+    boolean existsByEmail(String email);
+
+    /**
+     * Recipients for the low-stock/stale-order digest job (Sprint 19):
+     * every enabled ADMIN. Callers still filter out accounts with no email
+     * set — this query can't do that itself without excluding them from the
+     * count elsewhere too.
+     */
+    List<AppUser> findAllByRoleAndEnabledTrue(Role role);
 }

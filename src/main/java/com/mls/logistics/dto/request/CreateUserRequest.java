@@ -1,5 +1,6 @@
 package com.mls.logistics.dto.request;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -24,6 +25,14 @@ public class CreateUserRequest {
 
     @NotBlank(message = "Role is required")
     private String role;
+
+    /**
+     * Optional — enables this user for the low-stock/stale-order digest job
+     * and the self-service password-reset flow (Sprint 19). Not required at
+     * creation; can be set later via {@code PATCH /api/users/{id}/email}.
+     */
+    @Email(message = "Must be a valid email address")
+    private String email;
 
     public CreateUserRequest() {
     }
@@ -50,5 +59,13 @@ public class CreateUserRequest {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }

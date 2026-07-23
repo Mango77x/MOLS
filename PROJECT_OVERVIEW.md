@@ -128,9 +128,33 @@ Tailwind 4) and is served at `/app/**`:
   picked this up automatically, no call-site changes needed.
   Users (`/app/users`, ADMIN-only) lists accounts, creates users, changes
   roles, resets passwords and enables/disables accounts against
-  `/api/users/**` (Sprint 6). First-run setup (`/app/setup`) creates the
+  `/api/users/**` (Sprint 6), plus an inline-editable optional email per
+  user (Sprint 19, `PATCH /api/users/{id}/email`) that powers the two
+  email features below. First-run setup (`/app/setup`) creates the
   initial ADMIN when the database has zero users, backed by
   `GET/POST /api/auth/setup-status` and `/api/auth/setup`.
+- **Email** (Sprint 19, off by default): `spring-boot-starter-mail` +
+  `MailProperties` (`mols.mail.enabled`/`from`/`digest-cron`/`app-base-url`).
+  SMTP connection is Spring Boot's own `spring.mail.*` properties;
+  `spring.mail.host` always has a default so the auto-configured
+  `JavaMailSender` bean exists regardless, and actual sending stays gated
+  behind `mols.mail.enabled` so the app boots and works normally with no
+  mail server configured at all. Two features: a daily `AlertDigestJob`
+  (`@Scheduled`) emailing every enabled ADMIN with an email set the same
+  low-stock/stale-order alerts the Dashboard already computes
+  (`DashboardService.lowStockAlerts()`/`staleOrderAlerts()`, reused
+  directly); and self-service password reset (`ForgotPasswordPage`/
+  `ResetPasswordPage`, `POST /api/auth/forgot-password` — always 200, to
+  avoid account enumeration — and `POST /api/auth/reset-password`). The
+  reset token is a JWT (`JwtService.generatePasswordResetToken`) carrying
+  a `purpose` claim and a `resetPwdVersion` claim under a different key
+  than the session token's `pwdVersion`, so `JwtAuthFilter` can never
+  authenticate a request with it; redeeming it reuses
+  `AppUserAdminService.resetPassword`, which bumps `passwordVersion` —
+  making the token single-use and revoking any session from the old
+  password, for free. `docker-compose.yml` includes an optional `mailpit`
+  service (a local SMTP catcher, http://localhost:8025) for trying this
+  without a real SMTP account.
 - **Forms & detail pages** (Sprint 5): full create/edit flows built with
   `react-hook-form` + a `zod` resolver — shared field components live in
   `src/components/form/` (`TextField`/`SelectField`/`FormBanner`/buttons)
@@ -728,7 +752,29 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 
 - **Maintainer**: See `pom.xml` for project details
 
-**Last updated**: 2026-07-22 (Sprint 18: CSV export on Stock/Movements/
+**Last updated**: 2026-07-23 (Sprint 19: low-stock/stale-order email digest
+and self-service password reset, off by default. `spring-boot-starter-mail`
++ `MailProperties`; `spring.mail.host` always has a default so the
+auto-configured `JavaMailSender` bean exists even with no real SMTP server,
+while actual sending stays gated behind `mols.mail.enabled` — verified live
+that the app boots cleanly either way. `AlertDigestJob` reuses
+`DashboardService`'s existing alert queries rather than duplicating them.
+The reset token is a JWT carrying a `purpose` claim and a `resetPwdVersion`
+claim under a different key than the session token's `pwdVersion`, so
+`JwtAuthFilter` can never treat it as a session credential; redeeming it
+reuses the existing `AppUserAdminService.resetPassword`, making the token
+single-use and revoking old sessions for free — the same `passwordVersion`
+mechanism Sprint 9 built for admin-driven resets. Verified the entire
+forgot/reset flow live end to end through a new optional `mailpit` service
+in `docker-compose.yml`: requested a reset, read the real token out of the
+caught email, redeemed it, confirmed the old password stopped working and
+the new one signed in. Also fixed a gap the two new public pages exposed:
+the persisted UI locale was only ever applied inside `AppLayout`, which
+doesn't mount until after login, so `LoginPage` and the reset pages always
+rendered in the i18next fallback language regardless of what the user had
+chosen — moved `useLocale()`'s effect up to the app root.)
+
+**2026-07-22** (Sprint 18: CSV export on Stock/Movements/
 Orders — `fetchAllPages()` loops the existing paginated endpoints at the
 server's own 100-row page-size cap instead of adding an uncapped export
 endpoint, honoring each page's current filters/sort; `lib/csv.ts` builds
