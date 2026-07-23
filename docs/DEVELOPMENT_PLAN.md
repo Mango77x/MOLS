@@ -7,9 +7,9 @@ Sprints 1-14 (backend/frontend build-out, then a technical-debt + product-comple
 After Sprint 14, the app went through a second hands-on product audit (live, in-browser, trying to break things — not a code review) to check whether it held up as a real, usable tool rather than just "tests pass." That audit found the core (data integrity, stock reservation, role guards, session revocation) genuinely solid, but flagged a tier of missing capability between "MVP" and "professional software a team could run on daily without hand-holding." This plan tracks that follow-up work, split by how big a bet each tier is:
 
 - **Nivel 0 — bugs found during the audit.** Small, unambiguous fixes. **Done (Sprint 15).**
-- **Nivel 1 — table stakes for a real deployment.** Internationalization, data export, notifications, bulk import. This is where the immediate sprint backlog below lives.
-- **Nivel 2 — commercial ERP surface.** Approval workflows, barcode scanning, custom reporting, third-party integrations, a real public API. Recommended, not yet scheduled — see the backlog section at the bottom.
-- **Nivel 3 — multi-tenant SaaS infrastructure.** Only relevant if the goal becomes selling to multiple customers from one instance, not running MOLS for a single organization. Not recommended to start until that's an explicit decision — see the backlog section.
+- **Nivel 1 — table stakes for a real deployment.** Internationalization, data export, notifications, bulk import. This is where the immediate sprint backlog below lives. **Done (Sprints 16-20).**
+- **Nivel 2 — commercial ERP surface.** Approval workflows, barcode scanning, custom reporting, third-party integrations, a real public API. Recommended, not yet scheduled — see `docs/FUTURE_IDEAS.md`.
+- **Nivel 3 — multi-tenant SaaS infrastructure.** Only relevant if the goal becomes selling to multiple customers from one instance, not running MOLS for a single organization. Not recommended to start until that's an explicit decision — see `docs/FUTURE_IDEAS.md`.
 
 Same workflow as before: one `sprint-N` branch per sprint, opened as a PR against `main`, merged by the maintainer. No AI/Claude co-author trailer on any commit. This doc is checked off sprint by sprint, alongside `PROJECT_OVERVIEW.md`'s "Last updated" line.
 
@@ -100,26 +100,9 @@ Scoped from a real count against the current codebase, not a guess: ~35-40 of 69
 
 ---
 
-## Nivel 2 — commercial ERP surface (recommended, not scheduled)
+## Status
 
-Not broken into sprints yet — these are larger, and several depend on decisions not yet made (which integrations, whether approval chains need to be configurable or fixed, etc.). Listed here so the option is documented rather than lost between conversations:
-
-- Approval workflows (e.g., an order above a threshold needs sign-off before confirming).
-- Barcode/QR scanning for warehouse floor operations (needs a camera-capable PWA flow or dedicated hardware).
-- Custom/configurable reporting beyond the fixed Dashboard.
-- Integrations with external systems (accounting/invoicing, e-commerce) via webhooks.
-- A real public API product: API keys, rate limiting, and documentation aimed at third-party integrators (today's Swagger is internal documentation, not a product surface).
-- Multi-currency support, if operating across countries with different currencies.
-
-## Nivel 3 — multi-tenant SaaS infrastructure (only if selling to multiple orgs)
-
-Only worth starting if the goal shifts from "run MOLS for one organization" to "sell MOLS as a product to many organizations from one deployment" — a multi-month/multi-team scope, not sprint-sized:
-
-- Real multi-tenancy (data isolation per organization — today everything is one shared database).
-- Billing/subscription management.
-- Self-service onboarding (account creation without manual intervention).
-- Horizontal scaling, backups/disaster recovery, an actual SLA.
-- Compliance tooling (GDPR export/delete, SOC2-style audit controls).
+Nivel 0 and Nivel 1 are complete — this plan's execution phase is closed. Nivel 2 and Nivel 3 were never scheduled and have moved to `docs/FUTURE_IDEAS.md` as an open backlog, expanded with rough sizing and the decisions each would need first. This file stays as the historical record of what was audited, prioritized, and shipped in Sprints 8-20; new work gets a new sprint entry here only once it's actually picked up from that backlog.
 
 ---
 
@@ -129,4 +112,4 @@ Only worth starting if the goal shifts from "run MOLS for one organization" to "
 - Frontend: `npm run lint`, `npm test`, `npx tsc -b --noEmit` inside `frontend/`.
 - Any sprint touching UI: rebuild and run the real Docker stack, verify manually in the browser — passing tests alone isn't sufficient sign-off for this plan (this is exactly how the login-hint and duplicate-name-warning gaps in Sprint 15 were found in the first place: neither broke a test, both broke real usage).
 
-**Last updated**: 2026-07-23 (Sprint 20 complete — two-step preview/commit bulk CSV import for Resources, Warehouses, and Units, closing out Nivel 1. Nivel 2 is next, pending a decision on which item(s) to schedule.)
+**Last updated**: 2026-07-23 (Sprint 20 complete, closing out Nivel 1. Nivel 2/Nivel 3 moved to `docs/FUTURE_IDEAS.md` as an open backlog — this file's execution phase is now closed.)
