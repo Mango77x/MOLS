@@ -24,6 +24,7 @@
     "quantity": "Quantity",
     "reason": "Reason",
     "password": "Password",
+    "email": "Email",
     "exportCsv": "Export CSV",
     "exporting": "Exporting…",
     "exportFailed": "Export failed."
@@ -98,7 +99,24 @@
     "signingIn": "Signing in…",
     "invalidCredentials": "Invalid username or password.",
     "adminCreated": "Administrator account created — sign in to continue.",
-    "lostAccessHint": "Can't sign in? Contact your system administrator to reset your access."
+    "lostAccessHint": "Can't sign in? Contact your system administrator to reset your access.",
+    "forgotPassword": "Forgot your password?"
+  },
+  "forgotPassword": {
+    "title": "Reset your password",
+    "subtitle": "Enter the email on your account and we'll send you a reset link.",
+    "send": "Send reset link",
+    "sending": "Sending…",
+    "confirmation": "If that email is on an account, we've sent a reset link to it.",
+    "backToLogin": "Back to sign in"
+  },
+  "resetPassword": {
+    "title": "Set a new password",
+    "subtitle": "Choose a new password for your account.",
+    "newPassword": "New password",
+    "submit": "Reset password",
+    "success": "Your password has been reset — you can sign in with it now.",
+    "missingToken": "This reset link is missing its token. Request a new one."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -428,6 +446,7 @@
     "disable": "Disable",
     "enable": "Enable",
     "changeRole": "Change role",
+    "emailAriaLabel": "Email for {{username}}",
     "changeRoleTitle": "Change {{username}}'s role?",
     "changeRoleMessage": "Change {{username}}'s role to {{role}}.",
     "toggleTitle": "{{action}} this account?",
@@ -437,7 +456,10 @@
       "usernameLength": "Username must be between 3 and 50 characters",
       "passwordLength": "Password must be between 12 and 128 characters",
       "passwordHint": "At least 12 characters.",
-      "selectRole": "Select a role"
+      "selectRole": "Select a role",
+      "emailOptional": "Email (optional)",
+      "emailHint": "Enables the low-stock/stale-order digest and self-service password reset for this account.",
+      "invalidEmail": "Must be a valid email address"
     },
     "resetPasswordPage": {
       "title": "Reset password",

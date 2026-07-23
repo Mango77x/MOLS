@@ -3,6 +3,7 @@ package com.mls.logistics.controller;
 import com.mls.logistics.dto.request.CreateUserRequest;
 import com.mls.logistics.dto.request.ResetPasswordRequest;
 import com.mls.logistics.dto.request.SetEnabledRequest;
+import com.mls.logistics.dto.request.UpdateEmailRequest;
 import com.mls.logistics.dto.request.UpdateRoleRequest;
 import com.mls.logistics.dto.response.UserResponse;
 import com.mls.logistics.exception.ResourceNotFoundException;
@@ -103,7 +104,7 @@ public class UserController {
     @PostMapping
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
         AppUser created = appUserAdminService.createUser(
-                request.getUsername(), request.getPassword(), Role.from(request.getRole()));
+                request.getUsername(), request.getPassword(), Role.from(request.getRole()), request.getEmail());
         return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.from(created));
     }
 
@@ -173,6 +174,30 @@ public class UserController {
             @PathVariable Long id,
             @Valid @RequestBody SetEnabledRequest request) {
         AppUser updated = appUserAdminService.setEnabled(id, request.getEnabled());
+        return ResponseEntity.ok(UserResponse.from(updated));
+    }
+
+    /**
+     * Sets or clears a user's email — enables them for the low-stock/stale-order
+     * digest job and the self-service password-reset flow (Sprint 19).
+     *
+     * PATCH /api/users/{id}/email
+     */
+    @Operation(
+        summary = "Set a user's email",
+        description = "Sets or clears (blank) a user's email address."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Email updated successfully"),
+        @ApiResponse(responseCode = "404", description = "User not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid email, or already used by another user")
+    })
+    @PatchMapping("/{id}/email")
+    public ResponseEntity<UserResponse> updateEmail(
+            @Parameter(description = "User identifier", example = "1")
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateEmailRequest request) {
+        AppUser updated = appUserAdminService.updateEmail(id, request.getEmail());
         return ResponseEntity.ok(UserResponse.from(updated));
     }
 }

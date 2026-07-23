@@ -100,4 +100,5 @@ export interface UserEntity {
   username: string
   role: UserRole
   enabled: boolean
+  email: string | null
 }

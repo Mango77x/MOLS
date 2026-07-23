@@ -56,6 +56,15 @@
 			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
 
+		<!-- Auto-configures a JavaMailSender from spring.mail.* (host/port/
+		     username/password). Sending itself stays gated behind
+		     mols.mail.enabled (see MailProperties) so the app keeps booting
+		     cleanly with no SMTP server configured. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>

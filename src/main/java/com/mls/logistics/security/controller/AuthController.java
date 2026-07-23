@@ -6,13 +6,18 @@ import com.mls.logistics.security.config.JwtProperties;
 import com.mls.logistics.security.domain.AppUser;
 import com.mls.logistics.security.domain.Role;
 import com.mls.logistics.security.dto.AuthResponse;
+import com.mls.logistics.security.dto.ForgotPasswordRequest;
 import com.mls.logistics.security.dto.LoginRequest;
 import com.mls.logistics.security.dto.MeResponse;
 import com.mls.logistics.security.dto.RegisterRequest;
+import com.mls.logistics.security.dto.ResetPasswordWithTokenRequest;
 import com.mls.logistics.security.dto.SetupRequest;
 import com.mls.logistics.security.dto.SetupStatusResponse;
 import com.mls.logistics.security.repository.AppUserRepository;
+import com.mls.logistics.security.service.AppUserAdminService;
 import com.mls.logistics.security.service.JwtService;
+import com.mls.logistics.service.NotificationMailService;
+import io.jsonwebtoken.JwtException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -49,17 +54,23 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final JwtProperties jwtProperties;
+    private final AppUserAdminService appUserAdminService;
+    private final NotificationMailService notificationMailService;
 
     public AuthController(AppUserRepository appUserRepository,
                           PasswordEncoder passwordEncoder,
                           AuthenticationManager authenticationManager,
                           JwtService jwtService,
-                          JwtProperties jwtProperties) {
+                          JwtProperties jwtProperties,
+                          AppUserAdminService appUserAdminService,
+                          NotificationMailService notificationMailService) {
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.jwtProperties = jwtProperties;
+        this.appUserAdminService = appUserAdminService;
+        this.notificationMailService = notificationMailService;
     }
 
     @Operation(summary = "First-run setup status",
@@ -185,6 +196,58 @@ public class AuthController {
                 .findFirst()
                 .orElse(null);
         return ResponseEntity.ok(new MeResponse(authentication.getName(), role));
+    }
+
+    @Operation(summary = "Request a password-reset link",
+               description = "Self-service password reset, step 1. If the email matches an "
+                       + "account, emails it a short-lived reset link. Always answers 200 "
+                       + "regardless of whether the email matches anything, to avoid letting a "
+                       + "caller enumerate which emails have accounts.")
+    @ApiResponse(responseCode = "200", description = "Request accepted (email sent if the account exists)")
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        appUserRepository.findByEmail(request.getEmail().trim()).ifPresent(user -> {
+            String token = jwtService.generatePasswordResetToken(user);
+            notificationMailService.sendPasswordResetEmail(user, token);
+        });
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Redeem a password-reset link",
+               description = "Self-service password reset, step 2. Sets a new password if the "
+                       + "token is well-formed, unexpired, and not already redeemed. Revokes any "
+                       + "session issued under the old password, same as the admin-driven reset.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Password reset successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid, expired, or already-used reset link")
+    })
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPasswordWithToken(@Valid @RequestBody ResetPasswordWithTokenRequest request) {
+        AppUser user = resolveResetTokenUser(request.getToken());
+        appUserAdminService.resetPassword(user.getId(), request.getNewPassword());
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Resolves and fully validates the user a reset token belongs to, or
+     * throws a single generic message for every failure mode (malformed,
+     * expired, wrong purpose, already-redeemed, unknown user) — deliberately
+     * not distinguishing them in the response, for the same reason
+     * {@code forgot-password} always answers 200: nothing about a failed
+     * reset attempt should tell the caller more than "this link doesn't work".
+     */
+    private AppUser resolveResetTokenUser(String token) {
+        String username;
+        try {
+            username = jwtService.extractUsername(token);
+        } catch (JwtException | IllegalArgumentException ex) {
+            throw new InvalidRequestException("This reset link is invalid or has expired.");
+        }
+        AppUser user = appUserRepository.findByUsername(username).orElse(null);
+        if (user == null || !jwtService.isPasswordResetTokenValid(token, user)) {
+            throw new InvalidRequestException("This reset link is invalid or has expired.");
+        }
+        return user;
     }
 
     @Operation(summary = "Logout",
