@@ -22,6 +22,13 @@ public class JwtProperties {
     private long expirationMs;
 
     /**
+     * Password-reset token lifetime in milliseconds — deliberately much
+     * shorter than {@link #expirationMs}, since this token grants a
+     * password change rather than continued access.
+     */
+    private long resetTokenExpirationMs;
+
+    /**
      * Whether the auth cookie is flagged {@code Secure} (HTTPS-only).
      * Keep {@code false} only for plain-HTTP local development.
      */
@@ -41,6 +48,14 @@ public class JwtProperties {
 
     public void setExpirationMs(long expirationMs) {
         this.expirationMs = expirationMs;
+    }
+
+    public long getResetTokenExpirationMs() {
+        return resetTokenExpirationMs;
+    }
+
+    public void setResetTokenExpirationMs(long resetTokenExpirationMs) {
+        this.resetTokenExpirationMs = resetTokenExpirationMs;
     }
 
     public boolean isCookieSecure() {

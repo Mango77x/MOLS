@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Navigate, useLocation } from 'react-router-dom'
+import { Link, Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from './store'
 import { useSetupStatus } from './useSetupStatus'
 
@@ -105,7 +105,13 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">{t('login.lostAccessHint')}</p>
+        <p className="mt-4 text-center text-sm">
+          <Link to="/forgot-password" className="text-army-700 underline dark:text-army-300">
+            {t('login.forgotPassword')}
+          </Link>
+        </p>
+
+        <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">{t('login.lostAccessHint')}</p>
       </div>
     </main>
   )

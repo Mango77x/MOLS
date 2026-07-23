@@ -23,6 +23,7 @@ function buildSchema(t: TFunction) {
       .min(12, t('users.form.passwordLength'))
       .max(128, t('users.form.passwordLength')),
     role: z.enum(['ADMIN', 'OPERATOR', 'AUDITOR'], { message: t('users.form.selectRole') }),
+    email: z.string().email(t('users.form.invalidEmail')).or(z.literal('')),
   })
 }
 
@@ -41,13 +42,13 @@ export default function UserFormPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(buildSchema(t)),
-    defaultValues: { username: '', password: '', role: undefined },
+    defaultValues: { username: '', password: '', role: undefined, email: '' },
   })
 
   async function onSubmit(values: FormValues) {
     setBanner(null)
     try {
-      await api.post('/users', values)
+      await api.post('/users', { ...values, email: values.email || undefined })
       showToast(t('users.created'), 'success')
       navigate('/users')
     } catch (error) {
@@ -90,6 +91,15 @@ export default function UserFormPage() {
             </option>
           ))}
         </SelectField>
+        <TextField
+          label={t('users.form.emailOptional')}
+          id="email"
+          type="email"
+          autoComplete="email"
+          hint={t('users.form.emailHint')}
+          registration={register('email')}
+          error={errors.email?.message}
+        />
         <div className="flex gap-3">
           <SubmitButton submitting={isSubmitting}>{isSubmitting ? t('common.saving') : t('common.save')}</SubmitButton>
           <SecondaryButton onClick={() => navigate('/users')}>{t('common.cancel')}</SecondaryButton>

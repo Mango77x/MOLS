@@ -54,9 +54,36 @@ services:
       # default in the containerized deployment. Opt back in for demos by
       # setting SPRINGDOC_ENABLED=true in your .env file.
       SPRINGDOC_ENABLED: ${SPRINGDOC_ENABLED:-false}
+      # Email (Sprint 19): off unless explicitly enabled, same as local dev —
+      # see MOLS_MAIL_ENABLED in .env.example. When enabled without a real
+      # SMTP server, point SPRING_MAIL_HOST at the mailpit service below.
+      MOLS_MAIL_ENABLED: ${MOLS_MAIL_ENABLED:-false}
+      MOLS_MAIL_FROM: ${MOLS_MAIL_FROM:-mols-noreply@example.com}
+      MOLS_MAIL_APP_BASE_URL: ${MOLS_MAIL_APP_BASE_URL:-http://localhost:8080}
+      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST:-mailpit}
+      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-1025}
+      SPRING_MAIL_SMTP_AUTH: ${SPRING_MAIL_SMTP_AUTH:-false}
+      SPRING_MAIL_SMTP_STARTTLS: ${SPRING_MAIL_SMTP_STARTTLS:-false}
     depends_on:
       db:
         condition: service_healthy   # Wait for PostgreSQL to be ready before starting app
+
+  # -----------------------------------------------
+  # Mailpit — local SMTP catcher for dev/testing (Sprint 19)
+  #
+  # Not a real mail server: every message sent to it is caught and shown in
+  # its web UI (http://localhost:8025) instead of actually being delivered.
+  # Set MOLS_MAIL_ENABLED=true in .env to have the app send through it while
+  # developing the digest/password-reset email flows without a real SMTP
+  # account. Always running (cheap, no real network access) but harmless if
+  # unused — the app never talks to it unless mail is enabled.
+  # -----------------------------------------------
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: mols-mailpit
+    ports:
+      - "8025:8025"   # Web UI
+      - "1025:1025"   # SMTP
 
 # -----------------------------------------------
 # Named volumes (data persists between restarts)

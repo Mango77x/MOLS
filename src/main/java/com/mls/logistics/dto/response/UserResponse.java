@@ -13,15 +13,17 @@ public class UserResponse {
     private String username;
     private String role;
     private boolean enabled;
+    private String email;
 
     public UserResponse() {
     }
 
-    public UserResponse(Long id, String username, String role, boolean enabled) {
+    public UserResponse(Long id, String username, String role, boolean enabled, String email) {
         this.id = id;
         this.username = username;
         this.role = role;
         this.enabled = enabled;
+        this.email = email;
     }
 
     public static UserResponse from(AppUser user) {
@@ -29,7 +31,8 @@ public class UserResponse {
                 user.getId(),
                 user.getUsername(),
                 user.getRole() != null ? user.getRole().name() : null,
-                user.isEnabledFlag()
+                user.isEnabledFlag(),
+                user.getEmail()
         );
     }
 
@@ -63,5 +66,13 @@ public class UserResponse {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }

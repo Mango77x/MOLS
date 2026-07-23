@@ -50,19 +50,47 @@ class AppUserAdminServiceTest {
         when(passwordEncoder.encode("a-long-enough-password")).thenReturn("hashed");
         when(appUserRepository.save(any(AppUser.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        AppUser result = appUserAdminService.createUser("newuser", "a-long-enough-password", Role.OPERATOR);
+        AppUser result = appUserAdminService.createUser("newuser", "a-long-enough-password", Role.OPERATOR, null);
 
         assertThat(result.getUsername()).isEqualTo("newuser");
         assertThat(result.getPassword()).isEqualTo("hashed");
         assertThat(result.getRole()).isEqualTo(Role.OPERATOR);
         assertThat(result.isEnabledFlag()).isTrue();
+        assertThat(result.getEmail()).isNull();
+    }
+
+    @Test
+    void createUser_WithEmail_ShouldSetIt() {
+        when(appUserRepository.existsByUsername("newuser")).thenReturn(false);
+        when(appUserRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(passwordEncoder.encode("a-long-enough-password")).thenReturn("hashed");
+        when(appUserRepository.save(any(AppUser.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        AppUser result = appUserAdminService.createUser(
+                "newuser", "a-long-enough-password", Role.OPERATOR, " new@example.com ");
+
+        assertThat(result.getEmail()).isEqualTo("new@example.com");
+    }
+
+    @Test
+    void createUser_WithDuplicateEmail_ShouldThrow() {
+        when(appUserRepository.existsByUsername("newuser")).thenReturn(false);
+        when(appUserRepository.existsByEmail("taken@example.com")).thenReturn(true);
+
+        assertThatThrownBy(() -> appUserAdminService.createUser(
+                "newuser", "a-long-enough-password", Role.OPERATOR, "taken@example.com"))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("email already exists");
+
+        verify(appUserRepository, never()).save(any());
     }
 
     @Test
     void createUser_WithDuplicateUsername_ShouldThrow() {
         when(appUserRepository.existsByUsername("taken")).thenReturn(true);
 
-        assertThatThrownBy(() -> appUserAdminService.createUser("taken", "a-long-enough-password", Role.OPERATOR))
+        assertThatThrownBy(() ->
+                appUserAdminService.createUser("taken", "a-long-enough-password", Role.OPERATOR, null))
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("already exists");
 
@@ -71,7 +99,7 @@ class AppUserAdminServiceTest {
 
     @Test
     void createUser_ShorterThanTwelveButAtLeastSix_ShouldThrow() {
-        assertThatThrownBy(() -> appUserAdminService.createUser("newuser", "eightchr", Role.OPERATOR))
+        assertThatThrownBy(() -> appUserAdminService.createUser("newuser", "eightchr", Role.OPERATOR, null))
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("12 characters");
 
@@ -80,9 +108,57 @@ class AppUserAdminServiceTest {
 
     @Test
     void createUser_WithBlankUsername_ShouldThrow() {
-        assertThatThrownBy(() -> appUserAdminService.createUser("  ", "a-long-enough-password", Role.OPERATOR))
+        assertThatThrownBy(() ->
+                appUserAdminService.createUser("  ", "a-long-enough-password", Role.OPERATOR, null))
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("Username is required");
+    }
+
+    @Test
+    void updateEmail_WithValidEmail_ShouldSetIt() {
+        when(appUserRepository.findById(1L)).thenReturn(Optional.of(admin));
+        when(appUserRepository.existsByEmail("admin@example.com")).thenReturn(false);
+        when(appUserRepository.save(any(AppUser.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        AppUser result = appUserAdminService.updateEmail(1L, "admin@example.com");
+
+        assertThat(result.getEmail()).isEqualTo("admin@example.com");
+    }
+
+    @Test
+    void updateEmail_Blank_ShouldClearIt() {
+        admin.setEmail("old@example.com");
+        when(appUserRepository.findById(1L)).thenReturn(Optional.of(admin));
+        when(appUserRepository.save(any(AppUser.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        AppUser result = appUserAdminService.updateEmail(1L, "  ");
+
+        assertThat(result.getEmail()).isNull();
+        verify(appUserRepository, never()).existsByEmail(any());
+    }
+
+    @Test
+    void updateEmail_AlreadyUsedByAnotherUser_ShouldThrow() {
+        when(appUserRepository.findById(1L)).thenReturn(Optional.of(admin));
+        when(appUserRepository.existsByEmail("taken@example.com")).thenReturn(true);
+
+        assertThatThrownBy(() -> appUserAdminService.updateEmail(1L, "taken@example.com"))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("already exists");
+
+        verify(appUserRepository, never()).save(any());
+    }
+
+    @Test
+    void updateEmail_UnchangedValue_ShouldNotCheckUniqueness() {
+        admin.setEmail("admin@example.com");
+        when(appUserRepository.findById(1L)).thenReturn(Optional.of(admin));
+        when(appUserRepository.save(any(AppUser.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        AppUser result = appUserAdminService.updateEmail(1L, "admin@example.com");
+
+        assertThat(result.getEmail()).isEqualTo("admin@example.com");
+        verify(appUserRepository, never()).existsByEmail(any());
     }
 
     @Test
