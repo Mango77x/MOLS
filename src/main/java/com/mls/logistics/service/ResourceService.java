@@ -3,22 +3,33 @@ package com.mls.logistics.service;
 import com.mls.logistics.domain.Resource;
 import com.mls.logistics.dto.request.CreateResourceRequest;
 import com.mls.logistics.dto.request.UpdateResourceRequest;
+import com.mls.logistics.dto.response.ImportPreviewResponse;
+import com.mls.logistics.dto.response.ImportRowResult;
+import com.mls.logistics.dto.response.ImportRowStatus;
 import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.OrderItemRepository;
 import com.mls.logistics.repository.ResourceRepository;
 import com.mls.logistics.repository.StockRepository;
+import com.mls.logistics.service.imports.CsvImportSupport;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
+import org.apache.commons.csv.CSVRecord;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Service layer for Resource-related business operations.
@@ -33,6 +44,7 @@ public class ResourceService {
     private final ResourceRepository resourceRepository;
     private final StockRepository stockRepository;
     private final OrderItemRepository orderItemRepository;
+    private final Validator validator;
 
     /**
      * Constructor-based dependency injection.
@@ -41,10 +53,12 @@ public class ResourceService {
     public ResourceService(
             ResourceRepository resourceRepository,
             StockRepository stockRepository,
-            OrderItemRepository orderItemRepository) {
+            OrderItemRepository orderItemRepository,
+            Validator validator) {
         this.resourceRepository = resourceRepository;
         this.stockRepository = stockRepository;
         this.orderItemRepository = orderItemRepository;
+        this.validator = validator;
     }
 
     /**
@@ -164,5 +178,70 @@ public class ResourceService {
                 "Cannot delete resource referenced by order items. Resource id: " + id);
         }
         resourceRepository.deleteById(id);
+    }
+
+    private static final List<String> IMPORT_REQUIRED_COLUMNS = List.of("name", "type", "criticality");
+
+    /**
+     * Parses and validates a CSV file of resources without persisting
+     * anything.
+     */
+    public ImportPreviewResponse<CreateResourceRequest> previewImport(MultipartFile file) {
+        return ImportPreviewResponse.from(buildImportRows(file));
+    }
+
+    /**
+     * Re-parses and re-validates the same file, then persists every row
+     * that isn't an ERROR. One transaction for the whole file.
+     */
+    @Transactional
+    public ImportPreviewResponse<CreateResourceRequest> commitImport(MultipartFile file) {
+        List<ImportRowResult<CreateResourceRequest>> rows = buildImportRows(file);
+        for (ImportRowResult<CreateResourceRequest> row : rows) {
+            if (row.getStatus() != ImportRowStatus.ERROR) {
+                createResource(row.getData());
+            }
+        }
+        return ImportPreviewResponse.from(rows);
+    }
+
+    private List<ImportRowResult<CreateResourceRequest>> buildImportRows(MultipartFile file) {
+        List<CSVRecord> records = CsvImportSupport.parseRecords(file, IMPORT_REQUIRED_COLUMNS);
+        Set<String> existingNames = resourceRepository.findAll().stream()
+                .map(r -> r.getName().toLowerCase())
+                .collect(Collectors.toSet());
+        Set<String> seenInFile = new HashSet<>();
+
+        List<ImportRowResult<CreateResourceRequest>> rows = new ArrayList<>();
+        int rowNumber = 0;
+        for (CSVRecord record : records) {
+            rowNumber++;
+            List<String> errors = new ArrayList<>();
+            try {
+                CreateResourceRequest dto = new CreateResourceRequest();
+                dto.setName(CsvImportSupport.get(record, "name"));
+                dto.setType(CsvImportSupport.get(record, "type"));
+                dto.setCriticality(CsvImportSupport.get(record, "criticality"));
+
+                for (ConstraintViolation<CreateResourceRequest> violation : validator.validate(dto)) {
+                    errors.add(violation.getMessage());
+                }
+
+                if (!errors.isEmpty()) {
+                    rows.add(new ImportRowResult<>(rowNumber, ImportRowStatus.ERROR, errors, dto));
+                    continue;
+                }
+
+                String normalizedName = dto.getName().trim().toLowerCase();
+                boolean duplicate = existingNames.contains(normalizedName) || !seenInFile.add(normalizedName);
+                rows.add(new ImportRowResult<>(rowNumber,
+                        duplicate ? ImportRowStatus.DUPLICATE_WARNING : ImportRowStatus.VALID,
+                        List.of(), dto));
+            } catch (RuntimeException ex) {
+                rows.add(new ImportRowResult<>(rowNumber, ImportRowStatus.ERROR,
+                        List.of("Could not read this row: " + ex.getMessage()), null));
+            }
+        }
+        return rows;
     }
 }

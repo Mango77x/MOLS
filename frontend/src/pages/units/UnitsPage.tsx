@@ -45,12 +45,20 @@ export default function UnitsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold">{t('units.title')}</h1>
         {isAdmin && (
-          <Link
-            to="/units/new"
-            className="rounded bg-army-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-army-800"
-          >
-            {t('units.newUnit')}
-          </Link>
+          <div className="flex gap-3">
+            <Link
+              to="/units/import"
+              className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+            >
+              {t('units.importCsv')}
+            </Link>
+            <Link
+              to="/units/new"
+              className="rounded bg-army-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-army-800"
+            >
+              {t('units.newUnit')}
+            </Link>
+          </div>
         )}
       </div>
 

@@ -4,12 +4,14 @@ import com.mls.logistics.domain.Warehouse;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.service.WarehouseService;
 import com.mls.logistics.dto.request.PageQuery;
+import com.mls.logistics.dto.response.ImportPreviewResponse;
 import com.mls.logistics.dto.response.PageResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import com.mls.logistics.dto.request.CreateWarehouseRequest;
 import com.mls.logistics.dto.response.WarehouseResponse;
 import com.mls.logistics.dto.request.UpdateWarehouseRequest;
@@ -187,8 +189,50 @@ public class WarehouseController {
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteWarehouse(@Parameter(description = "Warehouse identifier", example = "1")
-            @PathVariable Long id) { 
+            @PathVariable Long id) {
         warehouseService.deleteWarehouse(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Bulk import, step 1: parses and validates a CSV of warehouses without
+     * persisting anything.
+     *
+     * POST /api/warehouses/import/preview (multipart, field name "file")
+     */
+    @Operation(
+        summary = "Preview a bulk warehouse import",
+        description = "Parses and validates a CSV file (columns: name, location, latitude, longitude) "
+                + "without persisting anything, so the result can be reviewed before committing."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "File parsed; see the per-row result"),
+        @ApiResponse(responseCode = "400", description = "The file itself is unusable (unreadable, empty, missing a required column)")
+    })
+    @PostMapping("/import/preview")
+    public ResponseEntity<ImportPreviewResponse<CreateWarehouseRequest>> previewImport(
+            @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(warehouseService.previewImport(file));
+    }
+
+    /**
+     * Bulk import, step 2: re-parses and re-validates the same file, then
+     * persists every non-error row.
+     *
+     * POST /api/warehouses/import/commit (multipart, field name "file")
+     */
+    @Operation(
+        summary = "Commit a bulk warehouse import",
+        description = "Re-validates the CSV file and persists every row that isn't an error "
+                + "(duplicate-name rows are only a warning, same as the single-record form)."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Import committed; see the per-row result"),
+        @ApiResponse(responseCode = "400", description = "The file itself is unusable (unreadable, empty, missing a required column)")
+    })
+    @PostMapping("/import/commit")
+    public ResponseEntity<ImportPreviewResponse<CreateWarehouseRequest>> commitImport(
+            @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(warehouseService.commitImport(file));
     }
 }
