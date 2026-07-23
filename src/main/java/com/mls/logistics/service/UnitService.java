@@ -3,21 +3,32 @@ package com.mls.logistics.service;
 import com.mls.logistics.domain.Unit;
 import com.mls.logistics.dto.request.CreateUnitRequest;
 import com.mls.logistics.dto.request.UpdateUnitRequest;
+import com.mls.logistics.dto.response.ImportPreviewResponse;
+import com.mls.logistics.dto.response.ImportRowResult;
+import com.mls.logistics.dto.response.ImportRowStatus;
 import com.mls.logistics.exception.InvalidRequestException;
 import com.mls.logistics.exception.ResourceNotFoundException;
 import com.mls.logistics.repository.OrderRepository;
 import com.mls.logistics.repository.UnitRepository;
+import com.mls.logistics.service.imports.CsvImportSupport;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
+import org.apache.commons.csv.CSVRecord;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Service layer for Unit-related business operations.
@@ -31,14 +42,16 @@ public class UnitService {
 
     private final UnitRepository unitRepository;
     private final OrderRepository orderRepository;
+    private final Validator validator;
 
     /**
      * Constructor-based dependency injection.
      * This is the recommended approach in Spring.
      */
-    public UnitService(UnitRepository unitRepository, OrderRepository orderRepository) {
+    public UnitService(UnitRepository unitRepository, OrderRepository orderRepository, Validator validator) {
         this.unitRepository = unitRepository;
         this.orderRepository = orderRepository;
+        this.validator = validator;
     }
 
     /**
@@ -153,5 +166,71 @@ public class UnitService {
                 "Cannot delete unit with existing orders. Unit id: " + id);
         }
         unitRepository.deleteById(id);
+    }
+
+    private static final List<String> IMPORT_REQUIRED_COLUMNS = List.of("name", "location");
+
+    /**
+     * Parses and validates a CSV file of units without persisting
+     * anything.
+     */
+    public ImportPreviewResponse<CreateUnitRequest> previewImport(MultipartFile file) {
+        return ImportPreviewResponse.from(buildImportRows(file));
+    }
+
+    /**
+     * Re-parses and re-validates the same file, then persists every row
+     * that isn't an ERROR. One transaction for the whole file.
+     */
+    @Transactional
+    public ImportPreviewResponse<CreateUnitRequest> commitImport(MultipartFile file) {
+        List<ImportRowResult<CreateUnitRequest>> rows = buildImportRows(file);
+        for (ImportRowResult<CreateUnitRequest> row : rows) {
+            if (row.getStatus() != ImportRowStatus.ERROR) {
+                createUnit(row.getData());
+            }
+        }
+        return ImportPreviewResponse.from(rows);
+    }
+
+    private List<ImportRowResult<CreateUnitRequest>> buildImportRows(MultipartFile file) {
+        List<CSVRecord> records = CsvImportSupport.parseRecords(file, IMPORT_REQUIRED_COLUMNS);
+        Set<String> existingNames = unitRepository.findAll().stream()
+                .map(u -> u.getName().toLowerCase())
+                .collect(Collectors.toSet());
+        Set<String> seenInFile = new HashSet<>();
+
+        List<ImportRowResult<CreateUnitRequest>> rows = new ArrayList<>();
+        int rowNumber = 0;
+        for (CSVRecord record : records) {
+            rowNumber++;
+            List<String> errors = new ArrayList<>();
+            try {
+                CreateUnitRequest dto = new CreateUnitRequest();
+                dto.setName(CsvImportSupport.get(record, "name"));
+                dto.setLocation(CsvImportSupport.get(record, "location"));
+                dto.setLatitude(CsvImportSupport.getOptionalDouble(record, "latitude", errors));
+                dto.setLongitude(CsvImportSupport.getOptionalDouble(record, "longitude", errors));
+
+                for (ConstraintViolation<CreateUnitRequest> violation : validator.validate(dto)) {
+                    errors.add(violation.getMessage());
+                }
+
+                if (!errors.isEmpty()) {
+                    rows.add(new ImportRowResult<>(rowNumber, ImportRowStatus.ERROR, errors, dto));
+                    continue;
+                }
+
+                String normalizedName = dto.getName().trim().toLowerCase();
+                boolean duplicate = existingNames.contains(normalizedName) || !seenInFile.add(normalizedName);
+                rows.add(new ImportRowResult<>(rowNumber,
+                        duplicate ? ImportRowStatus.DUPLICATE_WARNING : ImportRowStatus.VALID,
+                        List.of(), dto));
+            } catch (RuntimeException ex) {
+                rows.add(new ImportRowResult<>(rowNumber, ImportRowStatus.ERROR,
+                        List.of("Could not read this row: " + ex.getMessage()), null));
+            }
+        }
+        return rows;
     }
 }

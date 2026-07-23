@@ -16,6 +16,7 @@ import OrderEditFormPage from './pages/orders/OrderEditFormPage'
 import OrderWizardPage from './pages/orders/OrderWizardPage'
 import OrdersPage from './pages/orders/OrdersPage'
 import ResourceFormPage from './pages/resources/ResourceFormPage'
+import ResourceImportPage from './pages/resources/ResourceImportPage'
 import ResourcesPage from './pages/resources/ResourcesPage'
 import ShipmentDetailPage from './pages/shipments/ShipmentDetailPage'
 import ShipmentFormPage from './pages/shipments/ShipmentFormPage'
@@ -24,6 +25,7 @@ import StockAdjustFormPage from './pages/stocks/StockAdjustFormPage'
 import StockCreateFormPage from './pages/stocks/StockCreateFormPage'
 import StocksPage from './pages/stocks/StocksPage'
 import UnitFormPage from './pages/units/UnitFormPage'
+import UnitImportPage from './pages/units/UnitImportPage'
 import UnitsPage from './pages/units/UnitsPage'
 import UserFormPage from './pages/users/UserFormPage'
 import UserResetPasswordPage from './pages/users/UserResetPasswordPage'
@@ -31,6 +33,7 @@ import UsersPage from './pages/users/UsersPage'
 import VehicleFormPage from './pages/vehicles/VehicleFormPage'
 import VehiclesPage from './pages/vehicles/VehiclesPage'
 import WarehouseFormPage from './pages/warehouses/WarehouseFormPage'
+import WarehouseImportPage from './pages/warehouses/WarehouseImportPage'
 import WarehousesPage from './pages/warehouses/WarehousesPage'
 
 /**
@@ -85,6 +88,14 @@ export default function App() {
               </RequireAuth>
             }
           />
+          <Route
+            path="warehouses/import"
+            element={
+              <RequireAuth roles={['ADMIN']}>
+                <WarehouseImportPage />
+              </RequireAuth>
+            }
+          />
 
           <Route path="resources" element={<ResourcesPage />} />
           <Route
@@ -100,6 +111,14 @@ export default function App() {
             element={
               <RequireAuth roles={['ADMIN']}>
                 <ResourceFormPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="resources/import"
+            element={
+              <RequireAuth roles={['ADMIN']}>
+                <ResourceImportPage />
               </RequireAuth>
             }
           />
@@ -136,6 +155,14 @@ export default function App() {
             element={
               <RequireAuth roles={['ADMIN']}>
                 <UnitFormPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="units/import"
+            element={
+              <RequireAuth roles={['ADMIN']}>
+                <UnitImportPage />
               </RequireAuth>
             }
           />

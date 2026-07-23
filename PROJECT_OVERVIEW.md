@@ -121,6 +121,19 @@ Tailwind 4) and is served at `/app/**`:
   `lib/csv.ts` builds the file client-side (RFC-4180-ish escaping, UTF-8 BOM
   so Excel renders accented ES/FR text correctly) — no new backend endpoint.
   A shared `ExportCsvButton` owns the loading state and an error toast.
+  Resources, Warehouses and Units (Sprint 20) each have the inverse: an
+  "Import CSV" action next to "New X", going to a shared `ImportPage`
+  (`components/imports/`) parameterized per module by its columns and API
+  path. Two-step preview-then-commit: `POST .../import/preview` parses and
+  validates a CSV without persisting (reusing each entity's existing
+  `CreateXRequest` validation via a real `jakarta.validation.Validator`,
+  not a parallel set of rules), returning a row-by-row result the operator
+  reviews in a color-coded table; `POST .../import/commit` re-validates the
+  same file and persists everything that isn't an error row in one
+  transaction (a duplicate name is only a warning — there's no unique
+  constraint on these names — so it's committed like the single-record
+  form already allows). "Commit N rows" stays disabled while any row has
+  an error, and again once the file has actually been committed.
   Below the `sm` breakpoint, `DataTable` swaps its `<table>` for a card list
   driven by the same `columns`/`data` props (Sprint 12) — one labeled row per
   column instead of a `<td>` — so the actions column (previously scrolled out
@@ -752,7 +765,22 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 
 - **Maintainer**: See `pom.xml` for project details
 
-**Last updated**: 2026-07-23 (Sprint 19: low-stock/stale-order email digest
+**Last updated**: 2026-07-23 (Sprint 20: two-step preview/commit bulk CSV
+import for Resources, Warehouses, and Units — closes out Nivel 1. Added
+`commons-csv`; a shared `CsvImportSupport` parses the file and checks
+required columns, while each entity service builds its own rows by
+running the *same* `CreateXRequest` DTO through a real injected
+`jakarta.validation.Validator`, so a bad CSV row fails with the identical
+message the single-record form would give, not a re-implemented rule.
+Duplicate names are a warning, not a blocker — matches the existing
+form's advisory-only `useDuplicateNameWarning`, since there's no unique
+constraint on these names in the database. One shared `ImportPage`
+component drives all three modules, parameterized by column list and API
+path. Verified live end to end: a 3-row CSV mixing valid/duplicate/error
+rows previewed correctly with Commit disabled, then an all-valid file
+committed and the new warehouse showed up in the list right after.
+
+Sprint 19: low-stock/stale-order email digest
 and self-service password reset, off by default. `spring-boot-starter-mail`
 + `MailProperties`; `spring.mail.host` always has a default so the
 auto-configured `JavaMailSender` bean exists even with no real SMTP server,
