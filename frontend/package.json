@@ -13,7 +13,7 @@
     "i18n:extract": "i18next-cli extract"
   },
   "dependencies": {
-    "@hookform/resolvers": "^5.4.0",
+    "@hookform/resolvers": "^5.5.7",
     "@tanstack/react-table": "^8.21.3",
     "axios": "^1.18.1",
     "i18next": "^26.3.6",
