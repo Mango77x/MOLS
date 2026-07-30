@@ -85,7 +85,7 @@ export default function StockCreateFormPage() {
           </option>
           {Object.values(warehouses).map((w) => (
             <option key={w.id} value={w.id}>
-              {w.name} — {w.location}
+              {w.name}: {w.location}
             </option>
           ))}
         </SelectField>

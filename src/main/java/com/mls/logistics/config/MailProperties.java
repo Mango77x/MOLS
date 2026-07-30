@@ -3,10 +3,10 @@ package com.mls.logistics.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * Application-level email config (Sprint 19).
+ * Application-level email config.
  *
  * SMTP connection details (host/port/username/password) are Spring Boot's
- * own {@code spring.mail.*} properties — {@code spring-boot-starter-mail}
+ * own {@code spring.mail.*} properties: {@code spring-boot-starter-mail}
  * auto-configures a {@code JavaMailSender} bean from those regardless of
  * whether they're set. What lives here is the app's own on/off switch:
  * actual sending only happens when {@link #isEnabled()} is true, so the app

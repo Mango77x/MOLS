@@ -51,7 +51,7 @@ describe('DeleteAction', () => {
   /**
    * Regression coverage: a failed delete (e.g. the API rejecting it because
    * dependent records exist) used to leave the row exactly as if the delete
-   * had succeeded — no error, no toast, nothing. RowActions now surfaces the
+   * had succeeded: no error, no toast, nothing. RowActions now surfaces the
    * API's message via a toast; this pins that behavior so it can't quietly
    * regress back to silent again.
    */

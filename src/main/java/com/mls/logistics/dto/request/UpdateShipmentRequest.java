@@ -12,10 +12,10 @@ import java.util.List;
  * All fields are optional - only provided fields will be updated.
  *
  * <p>No warehouse field: it always follows the shipment's order (see
- * {@code CreateShipmentRequest}) — re-derived automatically by
+ * {@code CreateShipmentRequest}): re-derived automatically by
  * {@code ShipmentService} if {@code orderId} changes.</p>
  *
- * <p>{@code items}, when provided (even as an empty list, which is rejected —
+ * <p>{@code items}, when provided (even as an empty list, which is rejected:
  * a shipment must always carry at least one item), replaces the shipment's
  * entire item set. {@code null} leaves the existing items untouched. Only
  * allowed while the shipment is not yet {@code DELIVERED}.</p>

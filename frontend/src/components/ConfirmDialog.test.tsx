@@ -63,7 +63,7 @@ describe('ConfirmDialog', () => {
     const { onCancel } = setup(true)
 
     // The backdrop is the only element outside the dialog card that's part
-    // of this component's own markup — query it via its aria-hidden marker.
+    // of this component's own markup: query it via its aria-hidden marker.
     const backdrop = document.querySelector('[aria-hidden="true"]')
     expect(backdrop).not.toBeNull()
     await user.click(backdrop as Element)

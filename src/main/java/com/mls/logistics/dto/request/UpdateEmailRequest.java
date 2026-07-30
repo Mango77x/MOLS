@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Email;
 /**
  * Data Transfer Object for setting or clearing a user's email (admin-only).
  *
- * Blank/null clears it — there's no separate "remove email" endpoint, mirroring
+ * Blank/null clears it: there's no separate "remove email" endpoint, mirroring
  * how the rest of the app treats an empty optional field.
  */
 public class UpdateEmailRequest {

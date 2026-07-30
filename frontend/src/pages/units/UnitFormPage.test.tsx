@@ -48,8 +48,8 @@ function renderEdit(nameLookupResult: PageResponse<UnitEntity> = emptyPage) {
   )
 }
 
-/** Sprint 12: pins the create/update success toast (see WarehouseFormPage.test.tsx for context). */
-describe('UnitFormPage — success toast', () => {
+/** Checks the create/update success toast fires here too (see WarehouseFormPage.test.tsx for the full scenario). */
+describe('UnitFormPage: success toast', () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })
@@ -79,8 +79,8 @@ describe('UnitFormPage — success toast', () => {
   })
 })
 
-/** Sprint 14: non-blocking duplicate-name nudge (see WarehouseFormPage.test.tsx for the full scenario coverage). */
-describe('UnitFormPage — duplicate-name warning', () => {
+/** Checks the same duplicate-name nudge fires here (see WarehouseFormPage.test.tsx for the full scenario). */
+describe('UnitFormPage: duplicate-name warning', () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })

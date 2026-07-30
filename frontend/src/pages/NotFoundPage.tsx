@@ -4,10 +4,10 @@ import { Link, useLocation } from 'react-router-dom'
 /**
  * Catch-all for any /app/* path that doesn't match a real route.
  *
- * Before this existed, an unmatched path (e.g. /app/stock — singular, the
+ * Before this existed, an unmatched path (e.g. /app/stock: singular, the
  * exact URL a user would guess from the sidebar's "Stock" label, whose real
  * route is /app/stocks) rendered a completely blank page with no error, no
- * navigation, nothing to click — see the nav label vs. route table below.
+ * navigation, nothing to click: see the nav label vs. route table below.
  */
 export default function NotFoundPage() {
   const { t } = useTranslation()

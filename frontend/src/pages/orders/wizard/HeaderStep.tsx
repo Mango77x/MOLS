@@ -9,7 +9,7 @@ import { SecondaryButton, SelectField, SubmitButton, TextField } from '../../../
 import { enumLabel, ORDER_STATUS_LABELS } from '../../../lib/enumLabels'
 import { positiveId, type WizardHeader } from './shared'
 
-// PARTIALLY_SHIPPED deliberately excluded — that status is shipment-driven,
+// PARTIALLY_SHIPPED deliberately excluded: that status is shipment-driven,
 // never set manually at order creation/header-edit time.
 const STATUS_OPTIONS = ['CREATED', 'VALIDATED', 'COMPLETED', 'CANCELLED'] as const
 
@@ -61,7 +61,7 @@ export default function HeaderStep({
         {Object.values(units).map((u) => (
           <option key={u.id} value={u.id}>
             {u.name}
-            {u.location ? ` — ${u.location}` : ''}
+            {u.location ? `: ${u.location}` : ''}
           </option>
         ))}
       </SelectField>
@@ -78,7 +78,7 @@ export default function HeaderStep({
         {Object.values(warehouses).map((w) => (
           <option key={w.id} value={w.id}>
             {w.name}
-            {w.location ? ` — ${w.location}` : ''}
+            {w.location ? `: ${w.location}` : ''}
           </option>
         ))}
       </SelectField>

@@ -20,7 +20,7 @@ function buildSchema(t: TFunction) {
 type FormValues = z.infer<ReturnType<typeof buildSchema>>
 
 /**
- * Self-service password reset, step 2 — redeems the token from the emailed
+ * Self-service password reset, step 2: redeems the token from the emailed
  * link (see AuthController.resetPasswordWithToken). Unlike forgot-password's
  * always-succeeds confirmation, a failure here (expired/already-used/malformed
  * token) is shown directly: the token itself, not an email address, so there's

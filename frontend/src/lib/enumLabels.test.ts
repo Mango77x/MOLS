@@ -81,7 +81,7 @@ describe('label map completeness', () => {
         const label = enumLabel(map, value)
         expect(label.length).toBeGreaterThan(0)
         // A friendly label should read as a sentence fragment, not
-        // SHOUT_CASE — this is what the whole module exists to fix.
+        // SHOUT_CASE: this is what the whole module exists to fix.
         expect(label).not.toBe(value)
         expect(label).not.toMatch(/_/)
       }

@@ -17,13 +17,13 @@ import java.util.List;
  * digest and the self-service password-reset link.
  *
  * <p>Plain-text {@link SimpleMailMessage} rather than an HTML template
- * engine — keeps this sprint's scope to "an email channel exists" rather
+ * engine: keeps this sprint's scope to "an email channel exists" rather
  * than also standing up templating infrastructure nobody asked for yet.</p>
  *
  * <p>Every send is gated behind {@link MailProperties#isEnabled()}: with it
  * off (the default), this service logs and returns instead of touching
- * {@link JavaMailSender} at all, so the app works normally — including every
- * other feature — with no SMTP server configured.</p>
+ * {@link JavaMailSender} at all, so the app works normally: including every
+ * other feature: with no SMTP server configured.</p>
  */
 @Service
 public class NotificationMailService {
@@ -40,7 +40,7 @@ public class NotificationMailService {
 
     /**
      * Sends the daily low-stock/stale-order digest to one recipient. Skips
-     * silently (no email sent) if both alert lists are empty — nothing
+     * silently (no email sent) if both alert lists are empty: nothing
      * actionable to report.
      */
     public void sendDigest(AppUser recipient,
@@ -49,12 +49,12 @@ public class NotificationMailService {
         if (lowStock.isEmpty() && staleOrders.isEmpty()) {
             return;
         }
-        send(recipient.getEmail(), "MOLS — daily alert digest", digestBody(lowStock, staleOrders));
+        send(recipient.getEmail(), "MOLS: daily alert digest", digestBody(lowStock, staleOrders));
     }
 
     /**
      * Sends the password-reset link. {@code token} is opaque to this
-     * method — validity/expiry/single-use are all enforced by
+     * method: validity/expiry/single-use are all enforced by
      * {@code JwtService.isPasswordResetTokenValid} when the link is
      * redeemed, not here.
      */
@@ -66,12 +66,12 @@ public class NotificationMailService {
                 + "If you didn't request this, you can safely ignore this email.\n\n"
                 + link + "\n\n"
                 + "This link expires shortly and can only be used once.";
-        send(user.getEmail(), "MOLS — reset your password", body);
+        send(user.getEmail(), "MOLS: reset your password", body);
     }
 
     private void send(String to, String subject, String body) {
         if (!mailProperties.isEnabled()) {
-            log.debug("Mail disabled (mols.mail.enabled=false) — skipping send to {}", to);
+            log.debug("Mail disabled (mols.mail.enabled=false): skipping send to {}", to);
             return;
         }
         if (to == null || to.isBlank()) {
@@ -87,7 +87,7 @@ public class NotificationMailService {
         } catch (MailException ex) {
             // A down/misconfigured SMTP server must never break the caller
             // (the scheduled digest job, or a user-facing forgot-password
-            // request that always answers 200 regardless) — log and move on.
+            // request that always answers 200 regardless): log and move on.
             log.warn("Failed to send email to {}: {}", to, ex.getMessage());
         }
     }

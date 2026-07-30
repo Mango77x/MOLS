@@ -29,7 +29,7 @@ interface StockRecord {
 
 /**
  * Best-effort client-side check: physical stock minus what's already
- * reserved, for this resource in the order's warehouse specifically — the
+ * reserved, for this resource in the order's warehouse specifically: the
  * same (resource, warehouse) pair the server will actually check against
  * (see OrderItemService.reserve). At most one row can match, since stocks
  * are unique per (resource, warehouse).

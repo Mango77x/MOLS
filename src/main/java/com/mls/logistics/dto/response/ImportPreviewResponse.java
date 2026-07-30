@@ -3,7 +3,7 @@ package com.mls.logistics.dto.response;
 import java.util.List;
 
 /**
- * Full result of a Sprint 20 bulk import call — used for both
+ * Full result of a bulk import call, used for both
  * {@code /import/preview} (nothing persisted yet) and {@code /import/commit}
  * (VALID/DUPLICATE_WARNING rows have been persisted; ERROR rows were
  * skipped), so the frontend can reuse the same result-table rendering for

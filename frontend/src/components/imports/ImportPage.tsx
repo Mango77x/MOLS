@@ -21,8 +21,8 @@ export interface ImportColumn<T> {
 }
 
 /**
- * Shared two-step (preview → commit) bulk CSV import page for the Sprint 20
- * catalog imports (Resources/Warehouses/Units) — the only thing that
+ * Shared two-step (preview → commit) bulk CSV import page for the
+ * catalog imports (Resources/Warehouses/Units): the only thing that
  * differs between them is which columns to show and which endpoint to hit,
  * both passed in by the thin per-entity wrapper page.
  */

@@ -23,7 +23,7 @@ import java.util.Optional;
  * <p>Movements are an <strong>append-only</strong> audit record: they are
  * created exclusively by {@code StockService} when stock changes, and are
  * never updated or deleted. Corrections are made by applying a new stock
- * adjustment (which records a compensating movement) — never by rewriting
+ * adjustment (which records a compensating movement): never by rewriting
  * history. This service therefore only exposes query operations.</p>
  */
 @Service

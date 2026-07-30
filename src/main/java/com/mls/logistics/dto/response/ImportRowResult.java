@@ -3,7 +3,7 @@ package com.mls.logistics.dto.response;
 import java.util.List;
 
 /**
- * One row's outcome from a Sprint 20 bulk import (preview or commit).
+ * One row's outcome from a bulk import (preview or commit).
  *
  * @param <T> the parsed create-request DTO type (e.g. {@code CreateWarehouseRequest})
  */
@@ -17,7 +17,7 @@ public class ImportRowResult<T> {
     /** Validation/parse failure messages; empty unless status is ERROR. */
     private List<String> errors;
 
-    /** The parsed row, when parseable — null for a row that failed to parse at all. */
+    /** The parsed row, when parseable: null for a row that failed to parse at all. */
     private T data;
 
     public ImportRowResult() {

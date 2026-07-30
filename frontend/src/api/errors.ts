@@ -22,7 +22,7 @@ export interface ApiError {
  * surface as a single form-level message instead.
  *
  * When the backend attaches a `code` (+ `params`) and it's a recognized key
- * under `errors.*`, that's translated and shown instead of `message` — the
+ * under `errors.*`, that's translated and shown instead of `message`: the
  * backend's `message` is always English (a fallback for logs/Swagger/older
  * clients), so this is what actually localizes API error text. Not every
  * exception carries a code yet; `message` is shown as-is for the rest.

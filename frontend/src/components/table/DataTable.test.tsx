@@ -38,15 +38,15 @@ function renderTable(overrides: Partial<Parameters<typeof DataTable<Row>>[0]> = 
 }
 
 /**
- * Sprint 12: DataTable.tsx:49 wrapped the table in overflow-x-auto only —
- * on mobile the actions column just scrolled out of view. jsdom doesn't
+ * DataTable.tsx wraps the table in overflow-x-auto, but that alone isn't
+ * enough: on mobile the actions column just scrolled out of view. jsdom doesn't
  * compute Tailwind's `sm:` breakpoints, so this can't assert visibility;
  * instead it pins that the card markup (a parallel, non-table rendering
  * path driven by the same columns/data) exists and carries the same rows,
  * alongside the standard <table> which real browsers hide below `sm` via
  * CSS and is therefore excluded from the accessibility tree there.
  */
-describe('DataTable — mobile card view', () => {
+describe('DataTable: mobile card view', () => {
   it('renders the same rows as labeled cards, scoped to the card container', () => {
     renderTable()
 
@@ -77,10 +77,10 @@ describe('DataTable — mobile card view', () => {
 })
 
 /**
- * Sprint 14: the caption said "1 results" for a single row (contrast with
+ * The caption used to say "1 results" for a single row (contrast with
  * the pagination summary just below it, which already special-cased 0).
  */
-describe('DataTable — result count caption', () => {
+describe('DataTable: result count caption', () => {
   it('uses the singular "result" for exactly one row', () => {
     const { container } = renderTable({ data: [rows[0]], totalElements: 1 })
     expect(container.querySelector('caption')).toHaveTextContent('1 result')
@@ -93,7 +93,7 @@ describe('DataTable — result count caption', () => {
 
   it('uses the plural "results" for zero rows too', () => {
     // The pagination summary below the table already says "0 results" too
-    // (it special-cased 0 from the start) — scope to the caption
+    // (it special-cased 0 from the start): scope to the caption
     // specifically so this test only pins the caption's own behavior.
     const { container } = renderTable({ data: [], totalElements: 0 })
     expect(container.querySelector('caption')).toHaveTextContent('0 results')
@@ -101,16 +101,16 @@ describe('DataTable — result count caption', () => {
 })
 
 /**
- * Sprint 16: the Sprint 14 fix above is itself only correct for languages
- * that share English's singular/plural boundary (1 vs. everything else).
- * French doesn't: 0 is grammatically singular ("0 résultat"), not plural
- * — a hand-rolled `count === 1 ? singular : plural` ternary would get this
+ * The singular/plural fix above is itself only correct for languages that
+ * share English's singular/plural boundary (1 vs. everything else). French
+ * doesn't: 0 is grammatically singular ("0 résultat"), not plural, so a
+ * hand-rolled `count === 1 ? singular : plural` ternary would get this
  * wrong. Routing through i18next's `count`-based plural keys (CLDR plural
  * rules under the hood) gets it right without hand-writing per-locale
  * logic, which is the whole reason that mechanism was adopted here instead
  * of just translating the words in the old ternary.
  */
-describe('DataTable — result count caption across locales', () => {
+describe('DataTable: result count caption across locales', () => {
   afterEach(() => {
     void i18n.changeLanguage('en')
   })

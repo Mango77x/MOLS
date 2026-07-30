@@ -8,9 +8,9 @@ import org.springframework.http.HttpMethod;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * End-to-end coverage for the admin-only /api/users/** endpoints added in
- * Sprint 6: role gating (ADMIN-only including reads, unlike other
- * resources) and the "can't touch the last enabled ADMIN" business rules.
+ * End-to-end coverage for the admin-only /api/users/** endpoints: role
+ * gating (ADMIN-only including reads, unlike other resources) and the
+ * "can't touch the last enabled ADMIN" business rules.
  */
 class UserManagementIntegrationTest extends AbstractIntegrationTest {
 
@@ -98,7 +98,7 @@ class UserManagementIntegrationTest extends AbstractIntegrationTest {
                 jsonEntity("{\"enabled\":false}", admin), String.class).getStatusCode().value())
                 .isEqualTo(200);
 
-        // The same, still-unexpired token must stop working immediately —
+        // The same, still-unexpired token must stop working immediately:
         // not just future login attempts.
         assertThat(restTemplate.exchange("/api/warehouses", HttpMethod.GET,
                 jsonEntity(null, targetToken), String.class).getStatusCode().value()).isEqualTo(401);

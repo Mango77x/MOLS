@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Proves that order-item creation reserves stock instead of only checking
  * it, closing the gap where two orders (sequential or concurrent) could
  * each independently pass an availability check and together commit more
- * demand than physically exists — see {@code OrderItemService.reserve}.
+ * demand than physically exists: see {@code OrderItemService.reserve}.
  *
  * <p>Every order has a fixed origin warehouse, so all reservations in these
  * tests are scoped to a single {@code (resource, warehouse)} stock row.</p>
@@ -37,7 +37,7 @@ class OrderItemReservationIntegrationTest extends AbstractIntegrationTest {
         postForId("/api/stocks",
                 "{\"resourceId\":" + resourceId + ",\"warehouseId\":" + warehouseId + ",\"quantity\":50}", token);
 
-        // First order claims 40 of the 50 physical units — still just CREATED,
+        // First order claims 40 of the 50 physical units: still just CREATED,
         // nothing physically deducted yet.
         long orderA = postForId("/api/orders",
                 "{\"unitId\":" + unitId + ",\"warehouseId\":" + warehouseId +
@@ -151,7 +151,7 @@ class OrderItemReservationIntegrationTest extends AbstractIntegrationTest {
             assertThat(succeeded * quantityEach).isLessThanOrEqualTo(initialStock);
 
             // The stock row's committed total must exactly match what was
-            // actually accepted — no lost updates, no phantom over-reservation.
+            // actually accepted: no lost updates, no phantom over-reservation.
             var stock = getJson("/api/stocks/" + stockId, token);
             assertThat(stock.get("reservedQuantity").asInt()).isEqualTo(succeeded * quantityEach);
         } finally {

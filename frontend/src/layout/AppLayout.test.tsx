@@ -19,13 +19,13 @@ function renderLayout() {
 }
 
 /**
- * Sprint 16: verifies the language switcher end to end — the select
+ * Verifies the language switcher end to end: the select
  * itself, useLocale's persistence/DOM-attribute wiring, and that nav
  * labels actually re-render in the newly chosen language. Everything
  * else in this sprint (individual `t()` calls) is covered by not
  * breaking the existing English-text assertions across the suite.
  */
-describe('AppLayout — language switcher', () => {
+describe('AppLayout: language switcher', () => {
   afterEach(() => {
     localStorage.removeItem('mols-locale')
   })

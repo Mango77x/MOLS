@@ -94,7 +94,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 }
             }
         } catch (JwtException | IllegalArgumentException | AuthenticationException ex) {
-            // Expired, malformed, tampered, or otherwise unusable token —
+            // Expired, malformed, tampered, or otherwise unusable token:
             // or a user that no longer resolves (unknown / temporarily
             // locked account).
             SecurityContextHolder.clearContext();
@@ -124,15 +124,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
      *
      * <p>{@code isTokenValid} only checks username + expiration, so without
      * this a disabled user or a just-reset password wouldn't actually revoke
-     * a token already in the wild — it would keep working until it expired
+     * a token already in the wild: it would keep working until it expired
      * naturally (up to {@code security.jwt.expiration-ms}, 24h by default).
-     * This compares an incrementing integer claim, not a timestamp — two
+     * This compares an incrementing integer claim, not a timestamp: two
      * earlier versions of this check (before/after comparison, then
      * equality on a truncated-to-seconds timestamp) both broke under fast
      * sequential requests (e.g. login immediately followed by a reset in a
      * test/script), because two distinct password-set events landing in the
      * same wall-clock second produce an identical value once a timestamp
-     * loses precision — see {@code AppUser.passwordVersion}'s javadoc.</p>
+     * loses precision: see {@code AppUser.passwordVersion}'s javadoc.</p>
      */
     private boolean isNotRevoked(String jwt, UserDetails userDetails) {
         if (!userDetails.isEnabled()) {

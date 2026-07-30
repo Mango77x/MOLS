@@ -4,13 +4,13 @@ import i18n from '../i18n'
  * Human-readable labels for the app's status/type enums.
  *
  * Before the shared-label module existed, each page/form hardcoded its own
- * copy of these labels — list-page filter dropdowns and status badges ended
+ * copy of these labels: list-page filter dropdowns and status badges ended
  * up showing the raw enum value (e.g. "PARTIALLY_SHIPPED") while forms
  * showed a friendly one ("Partially shipped"), and the two copies drifted.
  * One source of truth here fixes the whole class of inconsistency instead
  * of one call site at a time.
  *
- * The maps hold i18next keys rather than literal text — `enumLabel()`
+ * The maps hold i18next keys rather than literal text: `enumLabel()`
  * resolves through the global `i18n` instance directly (not the
  * `useTranslation()` hook) so it stays a plain function callable from
  * non-component code (column defs, sort comparators) as well as JSX.

@@ -1,4 +1,4 @@
-/** Mirrors the REST API's Sprint 20 bulk-import DTOs (dto/request/CreateXRequest.java, dto/response/Import*.java). */
+/** Mirrors the REST API's bulk-import DTOs (dto/request/CreateXRequest.java, dto/response/Import*.java). */
 
 export interface CreateWarehouseRequest {
   name: string

@@ -10,9 +10,9 @@ function mockNameLookup(rows: { id: number; name: string }[]) {
 }
 
 /**
- * Sprint 14: there's no uniqueness constraint on Warehouse/Resource/Unit
+ * There's no uniqueness constraint on Warehouse/Resource/Unit
  * names, so two records can silently share a name today. This is a
- * non-blocking nudge only — it must never surface as a validation error
+ * non-blocking nudge only: it must never surface as a validation error
  * or stop a submit.
  */
 describe('useDuplicateNameWarning', () => {

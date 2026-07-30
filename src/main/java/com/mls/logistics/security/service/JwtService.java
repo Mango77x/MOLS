@@ -33,12 +33,12 @@ public class JwtService {
 
     /**
      * Deliberately a different claim key than the ordinary session token's
-     * {@code pwdVersion} (see {@link #generateToken}) — a reset token must
+     * {@code pwdVersion} (see {@link #generateToken}): a reset token must
      * never pass {@link com.mls.logistics.security.filter.JwtAuthFilter}'s
      * revocation check as if it were a session credential. Using a
      * differently-named claim means {@code JwtAuthFilter.extractPasswordVersion}
      * simply never finds it there, so a reset token is always treated as
-     * revoked/invalid for that purpose — regardless of this class's own,
+     * revoked/invalid for that purpose: regardless of this class's own,
      * separate validation in {@link #isPasswordResetTokenValid}.
      */
     private static final String RESET_PWD_VERSION_CLAIM = "resetPwdVersion";
@@ -54,13 +54,13 @@ public class JwtService {
      *
      * <p>Embeds the user's {@code passwordVersion} at the moment of
      * issuance, so JwtAuthFilter can later reject the token if that no
-     * longer matches the current value — i.e. the password was
+     * longer matches the current value: i.e. the password was
      * changed/reset since. This is an integer-equality check rather than a
      * timestamp comparison specifically because a timestamp can only be
      * compared at whatever precision it's embedded at (a JWT's {@code iat}
      * is whole-seconds), so two password-set events within the same second
-     * — e.g. account creation immediately followed by a reset in a fast
-     * test/script — would be indistinguishable; an incrementing counter
+     * (e.g. account creation immediately followed by a reset in a fast
+     * test/script) would be indistinguishable; an incrementing counter
      * can't collide like that no matter how fast the events happen.</p>
      *
      * @param userDetails the authenticated user
@@ -87,7 +87,7 @@ public class JwtService {
     }
 
     /**
-     * Extracts the {@code pwdVersion} claim embedded at token issuance —
+     * Extracts the {@code pwdVersion} claim embedded at token issuance:
      * see {@link #generateToken}. {@code null} if the token predates this
      * claim existing.
      *
@@ -118,8 +118,8 @@ public class JwtService {
      *
      * <p>Embeds the user's current {@code passwordVersion} under a
      * dedicated claim name (not the session token's {@code pwdVersion}) so
-     * redeeming it — which bumps {@code passwordVersion}, same as an
-     * admin-driven reset — makes any other outstanding copy of this exact
+     * redeeming it: which bumps {@code passwordVersion}, same as an
+     * admin-driven reset: makes any other outstanding copy of this exact
      * token (e.g. from clicking an old email twice) fail
      * {@link #isPasswordResetTokenValid} afterward.</p>
      */
@@ -141,7 +141,7 @@ public class JwtService {
      * correctly signed, not expired, carries the password-reset purpose
      * claim (not some other token type), names this exact user, and its
      * embedded password version still matches the user's current one
-     * (single-use — see {@link #generatePasswordResetToken}).
+     * (single-use: see {@link #generatePasswordResetToken}).
      */
     public boolean isPasswordResetTokenValid(String token, AppUser user) {
         try {

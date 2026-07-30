@@ -33,7 +33,7 @@ type TextFieldProps = {
   registration: UseFormRegisterReturn
   error?: string
   hint?: string
-  /** Non-blocking nudge (e.g. a likely duplicate name) — shown instead of `hint`, never in place of `error`. */
+  /** Non-blocking nudge (e.g. a likely duplicate name): shown instead of `hint`, never in place of `error`. */
   warning?: string | null
 } & InputHTMLAttributes<HTMLInputElement>
 

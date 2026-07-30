@@ -97,7 +97,7 @@ public class GlobalExceptionHandler {
             WebRequest request) {
 
         // Spring MVC exceptions (405 Method Not Allowed, 406, 415, ...) carry
-        // their own status — preserve it instead of masking it as a 500.
+        // their own status: preserve it instead of masking it as a 500.
         if (ex instanceof org.springframework.web.ErrorResponse springError) {
             HttpStatus status = HttpStatus.valueOf(springError.getStatusCode().value());
             ErrorResponse body = new ErrorResponse(

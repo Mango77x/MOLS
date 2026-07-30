@@ -31,7 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Unit tests for WarehouseService's Sprint 20 bulk-import preview/commit,
+ * Unit tests for WarehouseService's bulk-import preview/commit,
  * using a real {@link Validator} (Hibernate Validator, already on the
  * classpath via spring-boot-starter-validation) so the same constraint
  * annotations CreateWarehouseRequest already carries are actually
@@ -57,7 +57,7 @@ class WarehouseServiceImportTest {
         warehouseService = new WarehouseService(
                 warehouseRepository, stockRepository, orderRepository, shipmentRepository, validator);
         // Not every test reaches the duplicate-name lookup (some fail before
-        // it, at file-parsing time) — lenient so those aren't flagged as
+        // it, at file-parsing time): lenient so those aren't flagged as
         // unnecessary stubbing.
         lenient().when(warehouseRepository.findAll()).thenReturn(List.of());
     }
@@ -81,7 +81,7 @@ class WarehouseServiceImportTest {
 
     @Test
     void previewImport_RowFailingFieldValidation_IsMarkedError() {
-        // Location is required (@NotBlank) — this row leaves it blank.
+        // Location is required (@NotBlank): this row leaves it blank.
         var file = csv("name,location\nAlpha,\n");
 
         ImportPreviewResponse<CreateWarehouseRequest> result = warehouseService.previewImport(file);

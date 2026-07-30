@@ -96,7 +96,7 @@ class MovementServiceTest {
     @Test
     void getMovementCountByType_ShouldMapDatabaseProjectionRowsToEnumNames() {
         // Given: the COUNT(*)-per-type grouping happens in SQL
-        // (MovementRepository.countByTypeSince) — this test only checks the
+        // (MovementRepository.countByTypeSince): this test only checks the
         // service maps those projection rows into a Map keyed by enum name.
         LocalDateTime since = LocalDateTime.of(2024, 1, 1, 0, 0);
         var entryRow = mock(MovementRepository.TypeCount.class);

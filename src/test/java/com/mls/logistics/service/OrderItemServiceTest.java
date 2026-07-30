@@ -254,7 +254,7 @@ class OrderItemServiceTest {
     @Test
     void updateOrderItem_WhenNothingReservationAffectingChanges_ShouldNotTouchReservation() {
         // Given: only moving the item to a different order sourced from the SAME warehouse,
-        // same resource/quantity — nothing about the reservation actually changes.
+        // same resource/quantity: nothing about the reservation actually changes.
         Order otherOrder = new Order();
         otherOrder.setId(2L);
         otherOrder.setStatus(OrderStatus.CREATED);

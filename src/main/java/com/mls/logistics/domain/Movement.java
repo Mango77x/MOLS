@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  * Append-only audit record of a stock change.
  *
  * <p>Movements are created exclusively by {@code StockService} whenever stock
- * quantity changes. They are never updated or deleted — corrections are made
+ * quantity changes. They are never updated or deleted: corrections are made
  * by recording a new compensating movement. The acting user is captured
  * automatically via JPA auditing ({@link CreatedBy}).</p>
  */

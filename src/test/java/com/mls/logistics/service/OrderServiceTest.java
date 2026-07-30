@@ -201,7 +201,7 @@ class OrderServiceTest {
     @Test
     void deleteOrder_WithNonDeliveredShipment_ShouldThrowException() {
         // Given: shipments no longer cascade-delete with their order (see
-        // Order.shipments) — a PLANNED/IN_TRANSIT shipment still holds a
+        // Order.shipments): a PLANNED/IN_TRANSIT shipment still holds a
         // required FK to this order and must be deleted first.
         when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
         when(shipmentRepository.existsByOrderIdAndStatus(1L, ShipmentStatus.DELIVERED)).thenReturn(false);
@@ -261,7 +261,7 @@ class OrderServiceTest {
 
     @Test
     void updateOrder_WithInvalidTransition_ShouldThrowException() {
-        // Given: COMPLETED is terminal — reopening is forbidden
+        // Given: COMPLETED is terminal, so reopening is forbidden
         testOrder.setStatus(OrderStatus.COMPLETED);
         when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
 

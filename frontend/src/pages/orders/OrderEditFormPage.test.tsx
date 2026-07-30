@@ -60,12 +60,12 @@ function renderPage() {
 }
 
 /**
- * Regression coverage for the Sprint 10 order-lock fix: editing a
+ * Regression coverage for the order-lock fix: editing a
  * COMPLETED/CANCELLED order used to present a fully live status select
  * (including invalid transitions) and item Add/Update/Remove controls, all
  * of which failed on submit since the API rejects any change in that state.
  */
-describe('OrderEditFormPage — terminal-state lock', () => {
+describe('OrderEditFormPage: terminal-state lock', () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })
@@ -111,8 +111,8 @@ describe('OrderEditFormPage — terminal-state lock', () => {
   })
 })
 
-/** Sprint 12: pins the update success toast (see WarehouseFormPage.test.tsx for context). */
-describe('OrderEditFormPage — success toast', () => {
+/** Checks the update success toast fires here too (see WarehouseFormPage.test.tsx for the full scenario). */
+describe('OrderEditFormPage: success toast', () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })

@@ -7,7 +7,7 @@ function apiErrorLike(data: unknown) {
 }
 
 /**
- * Sprint 17: extractApiError gained a `code`/`params` path — when the
+ * extractApiError has a `code`/`params` path: when the
  * backend attaches a recognized code, it's translated via `errors.*`
  * instead of showing the backend's (always-English) `message` verbatim.
  * `message` stays as the fallback for the ~50 exception sites not yet

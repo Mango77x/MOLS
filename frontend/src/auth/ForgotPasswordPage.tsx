@@ -6,7 +6,7 @@ import { api } from '../api/client'
 /**
  * Self-service password reset, step 1. The backend always answers 200
  * regardless of whether the email matches an account (avoids account
- * enumeration) — this page mirrors that by always showing the same
+ * enumeration): this page mirrors that by always showing the same
  * "check your email" message rather than a success/failure branch.
  */
 export default function ForgotPasswordPage() {
@@ -21,7 +21,7 @@ export default function ForgotPasswordPage() {
     try {
       await api.post('/auth/forgot-password', { email })
     } catch {
-      // Deliberately ignored — see the module doc: the outcome is always
+      // Deliberately ignored: see the module doc: the outcome is always
       // the same generic confirmation, regardless of what the API returns.
     } finally {
       setSubmitting(false)

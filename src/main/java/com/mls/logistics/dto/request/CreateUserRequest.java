@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size;
  * Data Transfer Object for creating a new application user (admin-only).
  *
  * Role is kept as a raw String, like every other status/enum field in the
- * API, and parsed via {@code Role.from(String)} — a plain enum-typed field
+ * API, and parsed via {@code Role.from(String)}: a plain enum-typed field
  * would fail Jackson deserialization on an unknown value with a generic
  * error instead of the app's usual friendly "Unknown X: valid values are…"
  * message.
@@ -27,8 +27,8 @@ public class CreateUserRequest {
     private String role;
 
     /**
-     * Optional — enables this user for the low-stock/stale-order digest job
-     * and the self-service password-reset flow (Sprint 19). Not required at
+     * Optional: enables this user for the low-stock/stale-order digest job
+     * and the self-service password-reset flow. Not required at
      * creation; can be set later via {@code PATCH /api/users/{id}/email}.
      */
     @Email(message = "Must be a valid email address")

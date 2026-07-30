@@ -7,7 +7,7 @@ import java.util.List;
  * coordinates, and shipment routes resolved from the shipment's origin
  * warehouse to the destination unit of its order. Warehouses/units without
  * coordinates, and shipments whose origin or destination lacks coordinates,
- * are left out — the map can only plot what has a location.
+ * are left out: the map can only plot what has a location.
  */
 public record MapResponse(
         List<WarehousePin> warehouses,

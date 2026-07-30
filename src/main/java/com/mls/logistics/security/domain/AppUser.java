@@ -56,17 +56,17 @@ public class AppUser implements UserDetails {
      * timestamp: a timestamp can only be compared at whatever precision it's
      * stored/embedded at (a JWT's {@code iat} is whole-seconds), so two
      * distinct password-set events landing in the same second would produce
-     * indistinguishable values — an integer bump can never collide like
+     * indistinguishable values: an integer bump can never collide like
      * that, however fast the events happen.</p>
      */
     @Column(nullable = false)
     private int passwordVersion;
 
     /**
-     * Optional — nullable for the same upgrade-compatibility reason as
+     * Optional: nullable for the same upgrade-compatibility reason as
      * {@code enabled}: existing accounts (including the first-run ADMIN)
      * have none until an admin sets one. Used by the low-stock/stale-order
-     * digest job (Sprint 19) and the self-service password-reset flow, both
+     * digest job and the self-service password-reset flow, both
      * of which simply skip a user with no email set.
      */
     @Column

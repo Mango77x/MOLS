@@ -11,7 +11,7 @@ import java.net.URI;
 /**
  * Courtesy redirects for old {@code /ui/**} bookmarks/links now that the
  * Thymeleaf admin UI has been fully replaced by the React SPA at
- * {@code /app/**} (Sprint 6 cutover). Uses a plain 302 {@code Location}
+ * {@code /app/**}. Uses a plain 302 {@code Location}
  * header rather than Spring MVC's {@code "redirect:"} view convention, since
  * that relies on view-resolution machinery this app no longer configures now
  * that Thymeleaf is gone.
@@ -21,7 +21,7 @@ import java.net.URI;
  * {@code /app/warehouses/5/edit}), so a single prefix swap covers all of
  * them. The handful of session-draft-only POST routes the old order wizard
  * used (e.g. {@code /ui/orders/draft/items}) have no GET equivalent and
- * simply 404 now, which is fine — nothing links to them directly.</p>
+ * simply 404 now, which is fine: nothing links to them directly.</p>
  */
 @RestController
 public class LegacyUiRedirectController {

@@ -45,7 +45,7 @@ import WarehousesPage from './pages/warehouses/WarehousesPage'
 export default function App() {
   const restore = useAuthStore((state) => state.restore)
   // Applies the persisted/browser-detected locale at the app root, not just
-  // inside AppLayout (which only mounts once authenticated) — otherwise
+  // inside AppLayout (which only mounts once authenticated): otherwise
   // Login/ForgotPassword/ResetPassword/Setup always rendered in i18next's
   // built-in fallback language regardless of what the user last chose.
   useLocale()
@@ -168,7 +168,7 @@ export default function App() {
           />
 
           <Route path="stocks" element={<StocksPage />} />
-          {/* "Stock" is the sidebar label — alias the singular guess to the real (plural) route. */}
+          {/* "Stock" is the sidebar label: alias the singular guess to the real (plural) route. */}
           <Route path="stock" element={<Navigate to="/stocks" replace />} />
           <Route
             path="stocks/new"
@@ -226,7 +226,7 @@ export default function App() {
           />
 
           <Route path="movements" element={<MovementsPage />} />
-          {/* "Audit log" is the sidebar label — alias the guessable slug to the real route. */}
+          {/* "Audit log" is the sidebar label: alias the guessable slug to the real route. */}
           <Route path="audit-log" element={<Navigate to="/movements" replace />} />
 
           <Route

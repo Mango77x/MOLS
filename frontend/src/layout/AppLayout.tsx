@@ -25,7 +25,7 @@ export default function AppLayout() {
   const items = user ? visibleNavItems(user.role) : []
 
   // A native <dialog> shown via showModal() traps focus and closes on
-  // Escape for free — no hand-rolled focus trap needed. We just keep the
+  // Escape for free: no hand-rolled focus trap needed. We just keep the
   // dialog's open/closed state in sync with `sidebarOpen`.
   useEffect(() => {
     const dialog = dialogRef.current

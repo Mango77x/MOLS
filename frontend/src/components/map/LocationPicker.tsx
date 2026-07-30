@@ -2,7 +2,7 @@ import 'leaflet/dist/leaflet.css'
 import { MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet'
 import { warehouseIcon } from '../../pages/dashboard/mapIcons'
 
-const DEFAULT_CENTER: [number, number] = [40.4168, -3.7038] // Madrid — a neutral default when no coordinates are set yet
+const DEFAULT_CENTER: [number, number] = [40.4168, -3.7038] // Madrid: a neutral default when no coordinates are set yet
 
 function ClickToPlace({ onPick }: { onPick: (lat: number, lng: number) => void }) {
   useMapEvents({

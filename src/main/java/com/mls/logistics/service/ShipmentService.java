@@ -43,9 +43,9 @@ import java.util.Optional;
  *   quantity ({@link ShipmentItem}), fixed at creation and only replaceable as a whole
  *   set on update while the shipment is not yet {@code DELIVERED} (see
  *   {@link #replaceItems}). A line's quantity can never exceed what's still unallocated
- *   on that order item across every shipment (any status) — see {@link #buildItems}.</li>
+ *   on that order item across every shipment (any status): see {@link #buildItems}.</li>
  *   <li>When a shipment transitions to {@code DELIVERED}, the system deducts stock from the
- *   shipment's origin warehouse only for <strong>that shipment's own items</strong> — not
+ *   shipment's origin warehouse only for <strong>that shipment's own items</strong>: not
  *   gated on sibling shipments of the same order also being delivered, so delivering the
  *   first of several shipments for an order has an immediate, visible effect.</li>
  *   <li>Stock deduction is performed via {@link StockService#adjustStock(Long, com.mls.logistics.dto.request.AdjustStockRequest)}
@@ -54,7 +54,7 @@ import java.util.Optional;
  *   {@link OrderItemService#releasePartialReservation}.</li>
  *   <li>After each delivery, the parent order moves to {@code COMPLETED} once every item is
  *   fully delivered, or {@code PARTIALLY_SHIPPED} once some (but not all) items are.</li>
- *   <li>The origin warehouse is never chosen independently — it is always inherited from the
+ *   <li>The origin warehouse is never chosen independently: it is always inherited from the
  *   order ({@code Order.warehouse}), the same warehouse {@code OrderItemService} reserved stock
  *   against, so this deduction can never target a different, unreserved warehouse.</li>
  * </ul>
@@ -161,7 +161,7 @@ public class ShipmentService {
      * {@link Shipment} with references to {@link Order} and {@link Vehicle} by id; the warehouse is
      * inherited from the order, not part of the request. The status string is validated and converted
      * to {@link ShipmentStatus}. {@code request.getItems()} is validated against each order item's
-     * remaining (unallocated) quantity and attached to the shipment — see {@link #buildItems}.</p>
+     * remaining (unallocated) quantity and attached to the shipment: see {@link #buildItems}.</p>
      *
      * <p>If the shipment is created with status {@code DELIVERED}, fulfillment is executed immediately.</p>
      *
@@ -184,7 +184,7 @@ public class ShipmentService {
         shipment.setVehicle(vehicle);
         // Inherited from the order, never chosen independently: the order's
         // items already reserved stock against this specific warehouse, so
-        // delivery must deduct from that same warehouse — never a different
+        // delivery must deduct from that same warehouse: never a different
         // one the caller might otherwise have picked.
         shipment.setWarehouse(order.getWarehouse());
         shipment.setStatus(ShipmentStatus.from(request.getStatus()));
@@ -204,7 +204,7 @@ public class ShipmentService {
      *
      * <p>Only non-null fields from {@code request} are applied. Status changes are validated
      * against the {@link ShipmentStatus} state machine. When {@code request.getItems()} is
-     * provided, it replaces the shipment's entire item set (see {@link #replaceItems}) — only
+     * provided, it replaces the shipment's entire item set (see {@link #replaceItems}): only
      * allowed while the shipment is not yet {@code DELIVERED}.</p>
      *
      * <p>When the shipment transitions from a non-delivered status to {@code DELIVERED}, this method
@@ -240,7 +240,7 @@ public class ShipmentService {
                     .orElseThrow(() -> new ResourceNotFoundException("Order", "id", request.getOrderId()));
             assertOrderIsOpen(order);
             shipment.setOrder(order);
-            // Follows the new order's warehouse — see createShipment for why
+            // Follows the new order's warehouse: see createShipment for why
             // a shipment never chooses its own independently of its order.
             shipment.setWarehouse(order.getWarehouse());
         }
@@ -299,7 +299,7 @@ public class ShipmentService {
 
         // Non-delivered shipments never touched stock reservations, so deleting
         // them (cascading their items via Shipment.items' orphanRemoval) simply
-        // frees the allocation for future shipments — no extra bookkeeping.
+        // frees the allocation for future shipments: no extra bookkeeping.
         shipmentRepository.deleteById(id);
     }
 
@@ -334,7 +334,7 @@ public class ShipmentService {
     /**
      * Builds (but does not persist) {@link ShipmentItem}s for the given lines, validating
      * that each line's order item belongs to the shipment's order and that its quantity
-     * does not exceed what's still unallocated on that order item — the order item's
+     * does not exceed what's still unallocated on that order item: the order item's
      * quantity minus what every shipment (any status) has already claimed.
      *
      * @throws ResourceNotFoundException if a referenced order item doesn't exist

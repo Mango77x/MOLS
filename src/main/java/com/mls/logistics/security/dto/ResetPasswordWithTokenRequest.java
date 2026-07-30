@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
- * Data Transfer Object for {@code POST /api/auth/reset-password} — the
+ * Data Transfer Object for {@code POST /api/auth/reset-password}: the
  * self-service flow, redeeming a token minted by {@code forgot-password}.
  * Not to be confused with {@link com.mls.logistics.dto.request.ResetPasswordRequest},
  * the admin-only {@code PATCH /api/users/{id}/password} counterpart.

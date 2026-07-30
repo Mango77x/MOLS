@@ -51,7 +51,7 @@ export default function DataTable<T>({
 
   return (
     <div className="rounded-xl bg-white shadow-sm dark:bg-gray-900">
-      {/* Card list — mobile only. Same columns/data as the table below, one
+      {/* Card list: mobile only. Same columns/data as the table below, one
           labeled row per column instead of a <td>, so the actions column
           never scrolls out of view on a narrow viewport. */}
       <div className="divide-y divide-gray-100 sm:hidden dark:divide-gray-800" data-testid="data-table-cards">

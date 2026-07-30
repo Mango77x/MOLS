@@ -12,9 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * Sprint 19: a scheduled job that emails every enabled ADMIN with an email
+ * A scheduled job that emails every enabled ADMIN with an email
  * on file the same low-stock/stale-order alerts the Dashboard already
- * computes — {@link DashboardService#lowStockAlerts()} and
+ * computes. {@link DashboardService#lowStockAlerts()} and
  * {@link DashboardService#staleOrderAlerts()} are reused directly rather
  * than duplicating that query/threshold logic here.
  */

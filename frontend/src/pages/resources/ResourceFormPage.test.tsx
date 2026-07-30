@@ -44,8 +44,8 @@ function renderEdit(nameLookupResult: PageResponse<ResourceEntity> = emptyPage) 
   )
 }
 
-/** Sprint 12: pins the create/update success toast (see WarehouseFormPage.test.tsx for context). */
-describe('ResourceFormPage — success toast', () => {
+/** Same create/update toast coverage as WarehouseFormPage.test.tsx, adapted for this entity. */
+describe('ResourceFormPage: success toast', () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })
@@ -76,8 +76,8 @@ describe('ResourceFormPage — success toast', () => {
   })
 })
 
-/** Sprint 14: non-blocking duplicate-name nudge (see WarehouseFormPage.test.tsx for the full scenario coverage). */
-describe('ResourceFormPage — duplicate-name warning', () => {
+/** Same non-blocking duplicate-name nudge as WarehouseFormPage.test.tsx. */
+describe('ResourceFormPage: duplicate-name warning', () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })

@@ -16,7 +16,7 @@ type PendingAction =
   | { type: 'role'; user: UserEntity; role: UserRole }
   | { type: 'toggle'; user: UserEntity }
 
-/** Inline, immediately-persisted email editor for one row — not destructive, so no confirm dialog. */
+/** Inline, immediately-persisted email editor for one row: not destructive, so no confirm dialog. */
 function EmailCell({ user, onSaved }: { user: UserEntity; onSaved: () => void }) {
   const { t } = useTranslation()
   const [value, setValue] = useState(user.email ?? '')

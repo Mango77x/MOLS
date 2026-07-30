@@ -75,7 +75,7 @@ public class AuthController {
 
     @Operation(summary = "First-run setup status",
                description = "Reports whether the application still needs its first-run setup "
-                       + "(no application users exist yet). Public — the SPA calls this before "
+                       + "(no application users exist yet). Public: the SPA calls this before "
                        + "showing the login page to decide whether to redirect to /setup instead.")
     @ApiResponse(responseCode = "200", description = "Setup status returned")
     @GetMapping("/setup-status")
@@ -85,7 +85,7 @@ public class AuthController {
 
     @Operation(summary = "First-run setup",
                description = "Creates the very first ADMIN user. Only works while the database "
-                       + "has zero application users — rejected once any user exists. Public, "
+                       + "has zero application users: rejected once any user exists. Public, "
                        + "since by definition no one can be authenticated yet at that point.")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "First ADMIN user created successfully"),
@@ -231,7 +231,7 @@ public class AuthController {
     /**
      * Resolves and fully validates the user a reset token belongs to, or
      * throws a single generic message for every failure mode (malformed,
-     * expired, wrong purpose, already-redeemed, unknown user) — deliberately
+     * expired, wrong purpose, already-redeemed, unknown user): deliberately
      * not distinguishing them in the response, for the same reason
      * {@code forgot-password} always answers 200: nothing about a failed
      * reset attempt should tell the caller more than "this link doesn't work".

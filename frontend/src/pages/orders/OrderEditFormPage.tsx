@@ -98,7 +98,7 @@ export default function OrderEditFormPage() {
           {Object.values(units).map((u) => (
             <option key={u.id} value={u.id}>
               {u.name}
-              {u.location ? ` — ${u.location}` : ''}
+              {u.location ? `: ${u.location}` : ''}
             </option>
           ))}
         </SelectField>
@@ -108,7 +108,7 @@ export default function OrderEditFormPage() {
           </span>
           <p className="mt-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-300">
             {warehouses[order.warehouseId]
-              ? `${warehouses[order.warehouseId].name}${warehouses[order.warehouseId].location ? ` — ${warehouses[order.warehouseId].location}` : ''}`
+              ? `${warehouses[order.warehouseId].name}${warehouses[order.warehouseId].location ? `: ${warehouses[order.warehouseId].location}` : ''}`
               : '…'}
           </p>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('orders.edit.fixedAtCreation')}</p>

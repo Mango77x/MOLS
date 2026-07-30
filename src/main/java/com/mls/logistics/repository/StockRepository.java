@@ -63,7 +63,7 @@ public interface StockRepository
     /**
      * Total stock quantity per warehouse, summed in the database instead of
      * loading every stock row into memory. Ordered by total descending, then
-     * warehouse name (case-insensitive) ascending — feeds the dashboard's
+     * warehouse name (case-insensitive) ascending: feeds the dashboard's
      * "stock by warehouse" chart, which wants the busiest warehouses first.
      */
     @Query("""

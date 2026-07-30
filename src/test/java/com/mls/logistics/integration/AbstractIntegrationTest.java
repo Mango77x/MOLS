@@ -38,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * started by Testcontainers. The container follows the singleton pattern:
  * it starts once for the whole test run and is shared by every subclass, so
  * the JVM pays the container cost a single time. {@code @ServiceConnection}
- * wires the datasource automatically — no URL/credentials properties needed.</p>
+ * wires the datasource automatically: no URL/credentials properties needed.</p>
  *
  * <p>Each test method starts from a clean database (see {@link #cleanDatabase()}),
  * and subclasses seed exactly the data they need through the helpers below.</p>
@@ -48,7 +48,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @AutoConfigureTestRestTemplate
 public abstract class AbstractIntegrationTest {
 
-    /** Password used for all test users — satisfies the 12+ chars policy. */
+    /** Password used for all test users: satisfies the 12+ chars policy. */
     protected static final String TEST_PASSWORD = "integration-test-pw";
 
     @ServiceConnection
@@ -101,7 +101,7 @@ public abstract class AbstractIntegrationTest {
 
     /**
      * Wipes all application data in FK-dependency order so every test method
-     * starts from a known-empty state. (This is a test database — the
+     * starts from a known-empty state. (This is a test database: the
      * append-only audit rule applies to application behavior, not test setup.)
      */
     @BeforeEach

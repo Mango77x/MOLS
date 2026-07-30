@@ -4,7 +4,7 @@ import axios from 'axios'
  * Shared API client.
  *
  * Authentication rides on the HttpOnly `MOLS_AUTH` cookie set by
- * POST /api/auth/login — the token never touches script-accessible storage,
+ * POST /api/auth/login: the token never touches script-accessible storage,
  * so there is no Authorization header to manage here.
  */
 export const api = axios.create({

@@ -9,8 +9,8 @@ import RecentActivity from './dashboard/RecentActivity'
 import type { DashboardData } from './dashboard/types'
 
 /**
- * Dashboard landing page: KPI cards, charts and actionable alerts from
- * GET /api/dashboard. The logistics map lands in Sprint 3.
+ * Dashboard landing page: KPI cards, charts, the logistics map and
+ * actionable alerts, all fed by GET /api/dashboard.
  */
 export default function DashboardPage() {
   const { t } = useTranslation()

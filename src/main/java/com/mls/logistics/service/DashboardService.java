@@ -114,7 +114,7 @@ public class DashboardService {
         return new DashboardResponse(kpis, charts, alerts, recentMovements, thresholds);
     }
 
-    /** Public (not just used internally by {@link #getDashboard}) so the Sprint 19 alert-digest job can reuse it. */
+    /** Public (not just used internally by {@link #getDashboard}) so AlertDigestJob can reuse it. */
     public List<DashboardResponse.LowStockAlert> lowStockAlerts() {
         List<Stock> lowStock = stockService.getLowStockItems(properties.getLowStockThreshold());
         lowStock.sort(Comparator
@@ -131,7 +131,7 @@ public class DashboardService {
                 .toList();
     }
 
-    /** Public (not just used internally by {@link #getDashboard}) so the Sprint 19 alert-digest job can reuse it. */
+    /** Public (not just used internally by {@link #getDashboard}) so AlertDigestJob can reuse it. */
     public List<DashboardResponse.StaleOrderAlert> staleOrderAlerts() {
         LocalDate today = LocalDate.now();
         return orderService.getStaleOrders(properties.getStaleOrderDays()).stream()

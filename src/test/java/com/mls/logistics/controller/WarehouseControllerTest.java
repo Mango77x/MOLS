@@ -83,7 +83,7 @@ class WarehouseControllerTest {
     @Test
     @WithMockUser
     void getAllWarehouses_WithPagination_ShouldReturnPageEnvelope() throws Exception {
-        // Given — 11 matching rows, page of 5
+        // Given: 11 matching rows, page of 5
         when(warehouseService.searchWarehouses(any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(testWarehouse),
                         PageRequest.of(0, 5, Sort.by("name")), 11));
@@ -112,7 +112,7 @@ class WarehouseControllerTest {
         when(warehouseService.searchWarehouses(any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(testWarehouse)));
 
-        // When & Then — a filter alone also switches to the paginated envelope
+        // When & Then: a filter alone also switches to the paginated envelope
         mockMvc.perform(get("/api/warehouses").param("name", "central"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(1)));
@@ -124,7 +124,7 @@ class WarehouseControllerTest {
     @Test
     @WithMockUser
     void getAllWarehouses_WithUnknownSortField_ShouldReturn400() throws Exception {
-        // Sort fields are whitelisted — arbitrary property paths must be rejected
+        // Sort fields are whitelisted: arbitrary property paths must be rejected
         mockMvc.perform(get("/api/warehouses").param("sort", "stockItems.quantity"))
                 .andExpect(status().isBadRequest());
 

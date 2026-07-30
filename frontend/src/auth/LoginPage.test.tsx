@@ -22,7 +22,7 @@ function renderLoginPage() {
  * username or password." with no path forward. This pins the static,
  * security-safe hint added to close that dead end.
  */
-describe('LoginPage — lost-access hint', () => {
+describe('LoginPage: lost-access hint', () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })

@@ -23,7 +23,7 @@ class SecurityRolesIntegrationTest extends AbstractIntegrationTest {
         assertThat(restTemplate.postForEntity("/api/warehouses",
                 jsonEntity(WAREHOUSE_BODY, null), String.class).getStatusCode().value()).isEqualTo(403);
 
-        // Registration is not public — no self-signup
+        // Registration is not public: no self-signup
         assertThat(restTemplate.postForEntity("/api/auth/register",
                 jsonEntity("{\"username\":\"intruder\",\"password\":\"whatever-long-pw\",\"role\":\"ADMIN\"}", null),
                 String.class).getStatusCode().value()).isEqualTo(403);

@@ -25,7 +25,7 @@ public class OpenApiConfig {
 
         return new OpenAPI()
                 .info(new Info()
-                        .title("MOLS — Multimodal Operative Logistics System API")
+                        .title("MOLS: Multimodal Operative Logistics System API")
                         .version("1.0.0")
                         .description("""
                                 Backend REST API for managing logistics operations.
@@ -37,7 +37,7 @@ public class OpenApiConfig {
                                 - ADMIN: full access (GET, POST, PUT, PATCH, DELETE)
                                 - OPERATOR: read access everywhere, plus write access
                                   (POST, PUT, PATCH, and DELETE on order items) on
-                                  orders, order items and shipments — everything else
+                                  orders, order items and shipments: everything else
                                   is ADMIN-only
                                 - AUDITOR: read only (GET)
                                 """)

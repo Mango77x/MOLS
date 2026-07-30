@@ -64,7 +64,7 @@ class StockConcurrencyIntegrationTest extends AbstractIntegrationTest {
             // At least one adjustment must have gone through
             assertThat(succeeded).isGreaterThan(0);
 
-            // Invariant: final quantity reflects EXACTLY the successful deltas —
+            // Invariant: final quantity reflects EXACTLY the successful deltas:
             // no lost updates, no phantom deductions.
             var stock = restTemplate.exchange("/api/stocks/" + stockId, HttpMethod.GET,
                     jsonEntity(null, token), String.class);

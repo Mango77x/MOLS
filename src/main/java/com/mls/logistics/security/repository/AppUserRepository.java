@@ -54,10 +54,10 @@ public interface AppUserRepository extends JpaRepository<AppUser, Long> {
     boolean existsByEmail(String email);
 
     /**
-     * Recipients for the low-stock/stale-order digest job (Sprint 19):
-     * every enabled ADMIN. Callers still filter out accounts with no email
-     * set — this query can't do that itself without excluding them from the
-     * count elsewhere too.
+     * Recipients for the low-stock/stale-order digest job: every enabled
+     * ADMIN. Callers still filter out accounts with no email set, since this
+     * query can't do that itself without excluding them from the count
+     * elsewhere too.
      */
     List<AppUser> findAllByRoleAndEnabledTrue(Role role);
 }

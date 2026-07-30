@@ -24,7 +24,7 @@ public class Order {
      * Origin warehouse this order is fulfilled from. Fixed at creation and
      * immutable afterwards: every item's stock reservation is made against
      * this warehouse (see {@code OrderItemService}), and shipments inherit
-     * it automatically instead of choosing their own — the whole point is
+     * it automatically instead of choosing their own: the whole point is
      * that a validated order can no longer fail at delivery for a warehouse
      * mismatch.
      */
@@ -35,7 +35,7 @@ public class Order {
     /** Date of creation */
     private LocalDate dateCreated;
 
-    /** Lifecycle status — transitions are enforced by OrderService (see OrderStatus) */
+    /** Lifecycle status: transitions are enforced by OrderService (see OrderStatus) */
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private OrderStatus status;

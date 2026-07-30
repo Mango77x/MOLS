@@ -116,7 +116,7 @@ public class AppUserAdminService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
 
         user.setPassword(passwordEncoder.encode(rawPassword));
-        // Revokes any token issued before this reset — see JwtAuthFilter
+        // Revokes any token issued before this reset: see JwtAuthFilter
         // and AppUser.passwordVersion's javadoc for why this is a counter
         // bump rather than a timestamp comparison.
         user.setPasswordVersion(user.getPasswordVersion() + 1);

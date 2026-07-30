@@ -50,7 +50,7 @@ export default function ShipmentStep({
   const { byId: warehouses } = useLookup<WarehouseEntity>('/warehouses')
   const warehouse = warehouses[warehouseId]
 
-  // Ship-now quantity per draft item, keyed by resourceId — defaults to the
+  // Ship-now quantity per draft item, keyed by resourceId: defaults to the
   // full ordered quantity (the common case: one shipment covers everything).
   const [itemQuantities, setItemQuantities] = useState<Record<number, number>>(() =>
     Object.fromEntries(draftItems.map((item) => [item.resourceId, item.quantity])),
@@ -110,7 +110,7 @@ export default function ShipmentStep({
                 {t('orders.originWarehouse')}
               </span>
               <p className="mt-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-300">
-                {warehouse ? `${warehouse.name}${warehouse.location ? ` — ${warehouse.location}` : ''}` : '…'}
+                {warehouse ? `${warehouse.name}${warehouse.location ? `: ${warehouse.location}` : ''}` : '…'}
               </p>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 {t('orders.wizard.shipment.warehouseFixedHint')}

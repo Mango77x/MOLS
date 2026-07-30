@@ -27,7 +27,7 @@ public class AppUserService implements UserDetailsService {
      * Loads a user by username for Spring Security authentication.
      *
      * <p>Rejects the lookup while the username is under a brute-force
-     * lockout — this applies to both password logins and JWT-authenticated
+     * lockout: this applies to both password logins and JWT-authenticated
      * requests, so a locked account cannot keep using an existing token.</p>
      *
      * @param username the username to look up

@@ -72,9 +72,9 @@ const STATUS_COLORS: Record<string, string> = {
 const FALLBACK_COLORS = [ARMY_GREEN, STATUS_WARN, STATUS_CRITICAL, STATUS_OK]
 
 // NOTE: row.label here is the raw series label the backend sends (movement
-// type / order status grouping), not translated — the dashboard's chart
+// type / order status grouping), not translated. The dashboard's chart
 // series contracts need their own look before extending enumLabels.ts to
-// cover them, tracked as Sprint 17 scope, not this sprint's shared-chrome pass.
+// cover them; tracked separately, out of scope for this component.
 function DonutLegend({ series }: { series: ChartSeries }) {
   const rows = toRows(series)
   return (

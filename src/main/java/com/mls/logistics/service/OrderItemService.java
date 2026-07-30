@@ -42,10 +42,10 @@ import java.util.Optional;
  * reservation itself means a second order sourced from the same warehouse
  * can no longer promise stock a first order already claimed. Because the
  * warehouse is fixed at order creation, a validated item can never fail at
- * delivery for a warehouse mismatch — the deduction in {@code ShipmentService}
+ * delivery for a warehouse mismatch: the deduction in {@code ShipmentService}
  * always targets the same stock row the reservation was made against. The
- * reservation is released exactly once — via {@link #releaseReservation} /
- * {@link #releaseReservationsForOrder} — when the order is cancelled,
+ * reservation is released exactly once: via {@link #releaseReservation} /
+ * {@link #releaseReservationsForOrder}: when the order is cancelled,
  * completed, or the item/order is deleted; see {@code OrderService} and
  * {@code ShipmentService} for the call sites.</p>
  */
@@ -79,7 +79,7 @@ public class OrderItemService {
     /**
      * Computes {@link ShippingProgress} for a batch of order items in two
      * database round trips total (one for delivered totals, one for overall
-     * allocated totals), regardless of how many items are passed — building
+     * allocated totals), regardless of how many items are passed: building
      * an {@code OrderItemResponse} page never costs a query per row.
      */
     public Map<Long, ShippingProgress> shippingProgress(List<OrderItem> items) {
@@ -228,7 +228,7 @@ public class OrderItemService {
 
         // An item already carried (in full or in part) by a shipment can't
         // change what it represents, or shrink below what's already
-        // allocated — the shipment's own line would then refer to more (or
+        // allocated: the shipment's own line would then refer to more (or
         // something else) than this item actually is.
         int allocated = allocatedQuantity(id);
         if (allocated > 0) {
@@ -312,7 +312,7 @@ public class OrderItemService {
 
     /**
      * Releases every still-outstanding reservation held by an order's
-     * items. Idempotent per item — safe to call from multiple paths
+     * items. Idempotent per item: safe to call from multiple paths
      * (order cancellation, manual completion, fulfillment-driven
      * completion, order deletion) without double-releasing.
      *
@@ -351,12 +351,12 @@ public class OrderItemService {
      * shipment (see {@code ShipmentService.fulfillIfOrderIsComplete}). Unlike
      * {@link #releaseReservation}, this drains only {@code quantity} from the
      * held reservation instead of the item's full quantity, since a single
-     * shipment may cover only part of an item — once stock physically leaves
+     * shipment may cover only part of an item: once stock physically leaves
      * the warehouse for that portion, holding it as "reserved" as well would
      * double-count it against availability.
      *
      * @param fullyDelivered whether this call brings the item's cumulative
-     *        delivered quantity up to its full {@code quantity} — if so, the
+     *        delivered quantity up to its full {@code quantity}: if so, the
      *        reservation is marked inactive so {@link #releaseReservation}
      *        (fired on order completion/cancellation) never re-releases it
      */
@@ -378,7 +378,7 @@ public class OrderItemService {
     /**
      * Locks the {@code (resource, warehouse)} stock row, checks it has
      * enough physical stock left after subtracting what's already reserved
-     * by other order items sourced from the same warehouse, and — if so —
+     * by other order items sourced from the same warehouse, and: if so:
      * reserves {@code quantity} against it.
      *
      * <p>The lock is held for the rest of the caller's transaction, so a
@@ -417,7 +417,7 @@ public class OrderItemService {
     /**
      * Locks the {@code (resource, warehouse)} stock row and releases a
      * previously-held reservation. Clamped at zero and silently no-ops when
-     * no matching stock row exists — a release must never itself fail, or a
+     * no matching stock row exists: a release must never itself fail, or a
      * cancellation/deletion could get stuck unable to complete.
      */
     private void release(Long resourceId, Long warehouseId, int quantity) {

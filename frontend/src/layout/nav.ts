@@ -1,7 +1,7 @@
 import type { Role } from '../auth/store'
 
 export interface NavItem {
-  /** i18next key (under `nav.*`) — resolved with `t()` at render time. */
+  /** i18next key (under `nav.*`): resolved with `t()` at render time. */
   labelKey: string
   to: string
   /** Only shown to (and reachable by) ADMIN users. */

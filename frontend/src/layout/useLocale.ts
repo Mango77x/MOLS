@@ -12,7 +12,7 @@ function initialLocale(): Locale {
   if (stored && isSupportedLocale(stored)) {
     return stored
   }
-  // navigator.language is a full BCP-47 tag (e.g. "es-ES") — match on the
+  // navigator.language is a full BCP-47 tag (e.g. "es-ES"): match on the
   // primary subtag so any regional variant of a supported language works.
   const browserPrimary = navigator.language.split('-')[0]
   if (isSupportedLocale(browserPrimary)) {
@@ -22,7 +22,7 @@ function initialLocale(): Locale {
 }
 
 /**
- * Active UI language, with persistence and `<html lang>`/`dir` — mirrors
+ * Active UI language, with persistence and `<html lang>`/`dir`: mirrors
  * `useTheme`'s shape exactly (localStorage, then a platform signal, then a
  * fixed default; a `useEffect` keeps the DOM in sync with state).
  */

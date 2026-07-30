@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Size;
 
 /**
  * DTO for the first-run setup request: creates the very first ADMIN user
- * when the database has none yet. No role field — the first user is always
+ * when the database has none yet. No role field: the first user is always
  * ADMIN (mirrors the old Thymeleaf {@code /ui/setup} form).
  */
 public class SetupRequest {

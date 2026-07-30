@@ -6,7 +6,7 @@ import { useSetupStatus } from './useSetupStatus'
 
 /**
  * First-run setup: creates the very first ADMIN user. React replacement for
- * the old Thymeleaf {@code /ui/setup} page (Sprint 6 cutover) — only
+ * the old Thymeleaf {@code /ui/setup} page. Only
  * reachable while the database has zero application users; once one exists,
  * redirects to /login like the old page did.
  */
@@ -45,7 +45,7 @@ export default function SetupPage() {
       <div className="w-full max-w-sm rounded-xl bg-white p-8 shadow-lg dark:bg-gray-900">
         <h1 className="mb-1 text-2xl font-bold text-army-800 dark:text-army-200">MOLS</h1>
         <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">
-          First-run setup — create the initial administrator account.
+          First-run setup: create the initial administrator account.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">

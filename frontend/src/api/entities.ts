@@ -71,7 +71,7 @@ export interface OrderItemEntity {
   quantity: number
   /** Quantity actually delivered so far, summed across DELIVERED shipments. */
   deliveredQuantity: number
-  /** Quantity not yet allocated to any shipment — the ceiling a new shipment may still claim. */
+  /** Quantity not yet allocated to any shipment: the ceiling a new shipment may still claim. */
   remainingQuantity: number
 }
 

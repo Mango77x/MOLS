@@ -48,7 +48,7 @@ export default function ShipmentsPage() {
       header: t('shipments.vehicle'),
       cell: ({ row }) => {
         const vehicle = vehicles[row.original.vehicleId]
-        return vehicle ? `#${vehicle.id} — ${enumLabel(VEHICLE_TYPE_LABELS, vehicle.type)}` : `#${row.original.vehicleId}`
+        return vehicle ? `#${vehicle.id}: ${enumLabel(VEHICLE_TYPE_LABELS, vehicle.type)}` : `#${row.original.vehicleId}`
       },
     },
     {

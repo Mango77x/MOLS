@@ -168,7 +168,7 @@ public class WarehouseService {
         }
         // A warehouse is referenced by stock (audit-relevant once it has
         // movement history), and, independently, by orders/shipments that
-        // use it as their origin — all three FKs are required (non-null),
+        // use it as their origin: all three FKs are required (non-null),
         // so any of them existing must block the delete rather than cascade.
         if (stockRepository.existsByWarehouseId(id)) {
             throw new InvalidRequestException(
@@ -196,7 +196,7 @@ public class WarehouseService {
 
     /**
      * Parses and validates a CSV file of warehouses without persisting
-     * anything — lets the operator review row-by-row status before
+     * anything: lets the operator review row-by-row status before
      * committing.
      */
     public ImportPreviewResponse<CreateWarehouseRequest> previewImport(MultipartFile file) {
@@ -205,7 +205,7 @@ public class WarehouseService {
 
     /**
      * Re-parses and re-validates the same file, then persists every row
-     * that isn't an ERROR (VALID and DUPLICATE_WARNING both go through —
+     * that isn't an ERROR (VALID and DUPLICATE_WARNING both go through:
      * see {@link com.mls.logistics.dto.response.ImportRowStatus}). One
      * transaction for the whole file: if persisting somehow fails partway
      * through, nothing from this commit is kept.

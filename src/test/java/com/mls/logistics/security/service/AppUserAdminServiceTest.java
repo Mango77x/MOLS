@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for AppUserAdminService, focused on the "last enabled ADMIN"
- * protection rules that had zero coverage before Sprint 6.
+ * protection rules.
  */
 @ExtendWith(MockitoExtension.class)
 class AppUserAdminServiceTest {
@@ -227,7 +227,7 @@ class AppUserAdminServiceTest {
     @Test
     void resetPassword_ShorterThanTwelveButAtLeastSix_ShouldThrow() {
         // This used to pass under a stale, unreachable-from-the-API 6-char
-        // floor here — confirms the service now matches the 12-character
+        // floor here: confirms the service now matches the 12-character
         // policy enforced everywhere else (CreateUserRequest/ResetPasswordRequest).
         assertThatThrownBy(() -> appUserAdminService.resetPassword(1L, "eightchr"))
                 .isInstanceOf(InvalidRequestException.class)
@@ -247,7 +247,7 @@ class AppUserAdminServiceTest {
         AppUser result = appUserAdminService.resetPassword(1L, "a-new-long-password");
 
         // JwtAuthFilter rejects any token whose embedded pwdVersion no longer
-        // matches — bumping it is what actually revokes tokens minted under
+        // matches: bumping it is what actually revokes tokens minted under
         // the old password. An incrementing counter (not a timestamp) so two
         // resets in quick succession can never produce an indistinguishable
         // value, however fast they happen.

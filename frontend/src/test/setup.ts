@@ -13,7 +13,7 @@ afterEach(() => {
 
 // i18next defaults to English (see src/i18n/index.ts), so every existing
 // `getByRole(..., { name: 'Delete' })`-style assertion keeps passing
-// unchanged — `t('common.delete')` resolves to the same "Delete" those
+// unchanged: `t('common.delete')` resolves to the same "Delete" those
 // tests already expect. Reset after each test in case one switches
 // language (e.g. testing the language switcher itself) so that doesn't
 // leak into the next test in the same file.

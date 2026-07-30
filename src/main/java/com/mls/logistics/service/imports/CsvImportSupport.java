@@ -12,12 +12,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
- * Shared CSV-parsing plumbing for the Sprint 20 bulk-import endpoints
+ * Shared CSV-parsing plumbing for the bulk-import endpoints
  * (Resources/Warehouses/Units).
  *
  * <p>Two error tiers, matching the plan: a problem with the file itself
  * (unreadable, missing a required column) fails the whole request via
- * {@link InvalidRequestException} — there's nothing row-level to report.
+ * {@link InvalidRequestException}: there's nothing row-level to report.
  * A problem with one row's data is the caller's job to turn into an
  * {@code ImportRowResult} with {@code ERROR} status instead, so one bad row
  * doesn't abort the rest of the file; see {@link #get} deliberately never
@@ -64,7 +64,7 @@ public final class CsvImportSupport {
                 return parser.getRecords();
             } catch (RuntimeException ex) {
                 // e.g. UncheckedIOException from malformed quoting the parser
-                // can't recover from — a file-level problem, not a row-level one.
+                // can't recover from: a file-level problem, not a row-level one.
                 throw new InvalidRequestException("Could not parse the uploaded file as CSV.");
             }
         } catch (IOException ex) {

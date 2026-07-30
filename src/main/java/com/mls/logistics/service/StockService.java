@@ -131,8 +131,8 @@ public class StockService {
             );
         }
 
-        // stocks has a UNIQUE(resource_id, warehouse_id) constraint (see V2)
-        // — check it up front so a duplicate returns a clean 409 instead of a
+        // stocks has a UNIQUE(resource_id, warehouse_id) constraint (see V2).
+        // Check it up front so a duplicate returns a clean 409 instead of a
         // raw DataIntegrityViolationException from the DB.
         if (stockRepository.findByResourceIdAndWarehouseId(request.getResourceId(), request.getWarehouseId()).isPresent()) {
             throw new DuplicateResourceException(
@@ -189,7 +189,7 @@ public class StockService {
 
         int delta = request.getDelta();
 
-        // Reject zero adjustments — they serve no purpose and pollute the audit trail
+        // Reject zero adjustments: they serve no purpose and pollute the audit trail
         if (delta == 0) {
             throw new InvalidRequestException(
                 "Stock adjustment delta cannot be zero."
@@ -288,7 +288,7 @@ public class StockService {
     /**
      * Records a Movement audit entry for a stock change.
      *
-     * Private method — called internally after every stock quantity change.
+     * Private method: called internally after every stock quantity change.
      * Movements are never created directly from the API for stock changes.
      *
      * @param stock    the stock that was modified

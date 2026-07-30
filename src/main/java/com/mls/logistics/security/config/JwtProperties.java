@@ -22,7 +22,7 @@ public class JwtProperties {
     private long expirationMs;
 
     /**
-     * Password-reset token lifetime in milliseconds — deliberately much
+     * Password-reset token lifetime in milliseconds: deliberately much
      * shorter than {@link #expirationMs}, since this token grants a
      * password change rather than continued access.
      */

@@ -47,7 +47,7 @@ class FulfillmentFlowIntegrationTest extends AbstractIntegrationTest {
                 "{\"orderId\":" + orderId + ",\"resourceId\":" + resourceId + ",\"quantity\":30}", token);
 
         // --- Shipment: planned, then delivered. Inherits its warehouse from
-        // the order automatically — no warehouseId in the request. Carries
+        // the order automatically: no warehouseId in the request. Carries
         // the order item in full. ---
         long shipmentId = postForId("/api/shipments",
                 "{\"orderId\":" + orderId + ",\"vehicleId\":" + vehicleId + ",\"status\":\"PLANNED\"," +
@@ -58,7 +58,7 @@ class FulfillmentFlowIntegrationTest extends AbstractIntegrationTest {
         assertThat(deliver.getStatusCode().value()).isEqualTo(200);
 
         // --- Shipment reads (single and filtered list) serialize `items` without
-        // a LazyInitializationException — regression coverage for a real bug found
+        // a LazyInitializationException: regression coverage for a real bug found
         // manually: the session used to build the response had already closed. ---
         var shipmentById = getJson("/api/shipments/" + shipmentId, token);
         assertThat(shipmentById.get("items").size()).isEqualTo(1);

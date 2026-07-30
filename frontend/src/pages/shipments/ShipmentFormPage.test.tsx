@@ -35,8 +35,8 @@ function renderCreate() {
   )
 }
 
-/** Sprint 12: pins the create success toast (see WarehouseFormPage.test.tsx for context). */
-describe('ShipmentFormPage — success toast', () => {
+/** Verifies the create toast, same coverage as WarehouseFormPage.test.tsx. */
+describe('ShipmentFormPage: success toast', () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })

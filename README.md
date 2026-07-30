@@ -1,4 +1,4 @@
-# MOLS — Multimodal Operative Logistics System
+# MOLS - Multimodal Operative Logistics System
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/6c3cae38-df16-4c85-a334-6a53cb1f27fa" width="300" alt="MOLS logo">
@@ -21,7 +21,7 @@
 
 MOLS is a logistics app to manage warehouses, resources, stock, orders and shipments, with an audit log (movements) so you can trace what changed and why.
 
-🔗 **Live demo:** [mols-demo.onrender.com/app](https://mols-demo.onrender.com/app) — log in with a read-only auditor account: `AuditorDemo` / `DemoPassword77` (see [HELP.md](HELP.md) for what each role can do). First load may take up to a minute — this runs on free-tier hosting that sleeps when idle.
+🔗 **Live demo:** [mols-demo.onrender.com/app](https://mols-demo.onrender.com/app), log in with a read-only auditor account: `AuditorDemo` / `DemoPassword77` (see [HELP.md](HELP.md) for what each role can do). First load may take up to a minute, since this runs on free-tier hosting that sleeps when idle.
 
 ---
 

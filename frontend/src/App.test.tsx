@@ -26,7 +26,7 @@ function renderAppAt(path: string) {
 }
 
 /**
- * Regression coverage for the Sprint 10 routing fixes: an unmatched /app/*
+ * Regression coverage for the routing fixes: an unmatched /app/*
  * path used to render a completely blank page, and the guessable /stock and
  * /audit-log slugs (the singular/hyphenated forms of the sidebar labels)
  * went nowhere at all.

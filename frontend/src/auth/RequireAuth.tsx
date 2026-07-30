@@ -9,7 +9,7 @@ import { useAuthStore, type Role } from './store'
  * where they were headed.
  *
  * With `roles`, users whose role isn't in the list are bounced to the
- * dashboard — this is a UX guard only; the real enforcement lives in the API
+ * dashboard: this is a UX guard only; the real enforcement lives in the API
  * role matrix.
  */
 export default function RequireAuth({

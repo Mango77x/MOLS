@@ -29,8 +29,8 @@ public class OrderItem {
     /**
      * Whether {@code quantity} is still counted against the resource's
      * {@link Resource#getReservedQuantity()}. Set to {@code false} exactly
-     * once the reservation is released — order cancellation, completion, or
-     * item/order deletion — so a release is never applied twice.
+     * once the reservation is released: order cancellation, completion, or
+     * item/order deletion: so a release is never applied twice.
      */
     @Column(name = "reservation_active", nullable = false)
     private boolean reservationActive = true;

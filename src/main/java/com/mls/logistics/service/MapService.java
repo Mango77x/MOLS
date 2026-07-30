@@ -73,7 +73,7 @@ public class MapService {
     /**
      * OK / WARNING / CRITICAL based on the warehouse's lowest stock quantity,
      * mirroring the dashboard's low/critical stock thresholds. A warehouse
-     * with no stock records at all reads OK — there is nothing to warn about.
+     * with no stock records at all reads OK: there is nothing to warn about.
      */
     private String stockStatus(Integer minQuantity) {
         if (minQuantity == null) {
@@ -91,7 +91,7 @@ public class MapService {
     /**
      * Resolves a shipment's route from its origin warehouse to its order's
      * destination unit. Returns {@code null} when either endpoint is missing
-     * coordinates — the map can only draw what has a location.
+     * coordinates: the map can only draw what has a location.
      */
     private MapResponse.ShipmentRoute toRoute(Shipment shipment) {
         Warehouse warehouse = shipment.getWarehouse();

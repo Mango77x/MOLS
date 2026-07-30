@@ -30,8 +30,8 @@ import java.util.stream.Collectors;
  * This controller is responsible only for HTTP request/response handling.
  * All business logic (including the "can't touch the last enabled ADMIN"
  * rules) is delegated to {@link AppUserAdminService}. Access is restricted to
- * ADMIN by {@code SecurityConfig} — including reads, unlike every other
- * {@code /api/**} resource — since user accounts are sensitive.
+ * ADMIN by {@code SecurityConfig}: including reads, unlike every other
+ * {@code /api/**} resource: since user accounts are sensitive.
  */
 @RestController
 @RequestMapping("/api/users")
@@ -178,8 +178,8 @@ public class UserController {
     }
 
     /**
-     * Sets or clears a user's email — enables them for the low-stock/stale-order
-     * digest job and the self-service password-reset flow (Sprint 19).
+     * Sets or clears a user's email: enables them for the low-stock/stale-order
+     * digest job and the self-service password-reset flow.
      *
      * PATCH /api/users/{id}/email
      */

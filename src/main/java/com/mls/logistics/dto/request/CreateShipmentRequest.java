@@ -18,11 +18,11 @@ import java.util.List;
  *
  * <p>No warehouse field: a shipment always ships from its order's fixed
  * origin warehouse (see {@code Order.warehouse}), set automatically by
- * {@code ShipmentService} — asking for it again here would let a shipment
+ * {@code ShipmentService}: asking for it again here would let a shipment
  * disagree with the warehouse its order's items reserved stock against.</p>
  *
  * <p>{@code items} fixes, at creation, which order items (and how much of
- * each) this shipment carries — see {@code ShipmentService} for the
+ * each) this shipment carries: see {@code ShipmentService} for the
  * over-allocation check against each order item's remaining quantity.</p>
  */
 public class CreateShipmentRequest {

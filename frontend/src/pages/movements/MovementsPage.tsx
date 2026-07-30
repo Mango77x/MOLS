@@ -24,7 +24,7 @@ const TYPE_TONE: Record<MovementType, BadgeTone> = {
 
 // Locale passed explicitly (the active i18next language) so the date
 // format always matches the UI language, rather than silently following
-// whatever the browser happens to report — see RecentActivity.tsx's
+// whatever the browser happens to report: see RecentActivity.tsx's
 // identical fix for the same underlying gap.
 function formatDateTime(value: string, locale: string) {
   return new Date(value).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' })

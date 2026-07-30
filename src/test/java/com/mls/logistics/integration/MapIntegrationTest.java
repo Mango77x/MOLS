@@ -26,14 +26,14 @@ class MapIntegrationTest extends AbstractIntegrationTest {
         postForId("/api/stocks",
                 "{\"resourceId\":" + resourceId + ",\"warehouseId\":" + madridWarehouseId + ",\"quantity\":3}", admin);
 
-        // A second warehouse with no coordinates — must not appear as a pin
+        // A second warehouse with no coordinates: must not appear as a pin
         postForId("/api/warehouses", "{\"name\":\"Uncharted Depot\",\"location\":\"Unknown\"}", admin);
 
         // Destination unit with coordinates
         long sevillaUnitId = postForId("/api/units",
                 "{\"name\":\"Alpha Unit\",\"location\":\"Sevilla\","
                         + "\"latitude\":37.3891,\"longitude\":-5.9845}", admin);
-        // A second unit with no coordinates — must not appear as a pin
+        // A second unit with no coordinates: must not appear as a pin
         long uncoordinatedUnitId = postForId("/api/units", "{\"name\":\"Beta Unit\",\"location\":\"Unknown\"}", admin);
 
         long vehicleId = postForId("/api/vehicles",
@@ -48,7 +48,7 @@ class MapIntegrationTest extends AbstractIntegrationTest {
                 "{\"orderId\":" + orderToSevilla + ",\"vehicleId\":" + vehicleId + ",\"status\":\"IN_TRANSIT\"," +
                         "\"items\":[{\"orderItemId\":" + itemToSevillaId + ",\"quantity\":1}]}", admin);
 
-        // A shipment to the uncoordinated unit — its route must be omitted
+        // A shipment to the uncoordinated unit: its route must be omitted
         long orderToUncoordinated = postForId("/api/orders",
                 "{\"unitId\":" + uncoordinatedUnitId + ",\"warehouseId\":" + madridWarehouseId +
                         ",\"dateCreated\":\"2026-07-01\",\"status\":\"CREATED\"}", admin);

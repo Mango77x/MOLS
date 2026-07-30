@@ -18,7 +18,7 @@ export function RouteActionLink({ to, children }: { to: string; children: ReactN
  * Destructive row action: confirms via a styled dialog (not the native
  * `window.confirm()`, which looks jarring next to the rest of the themed
  * UI) before calling `onConfirm`, then reports success or failure as a
- * toast (previously both were silent — a failed delete looked identical to
+ * toast (previously both were silent: a failed delete looked identical to
  * a successful one).
  */
 export function DeleteAction({

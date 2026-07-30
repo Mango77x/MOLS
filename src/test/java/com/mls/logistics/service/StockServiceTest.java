@@ -122,7 +122,7 @@ class StockServiceTest {
 
     @Test
     void createStock_WhenResourceAlreadyStockedInWarehouse_ShouldThrowException() {
-        // Given: stocks has a UNIQUE(resource_id, warehouse_id) constraint —
+        // Given: stocks has a UNIQUE(resource_id, warehouse_id) constraint:
         // a duplicate must be rejected with a clean 409, not a raw DB error.
         CreateStockRequest request = new CreateStockRequest(1L, 1L, 20);
         when(stockRepository.findByResourceIdAndWarehouseId(1L, 1L)).thenReturn(Optional.of(testStock));
@@ -153,7 +153,7 @@ class StockServiceTest {
 
     @Test
     void deleteStock_WithMovementHistory_ShouldThrowException() {
-        // Given: the stock has audit history — deleting it would erase the trail
+        // Given: the stock has audit history, so deleting it would erase the trail
         when(stockRepository.existsById(1L)).thenReturn(true);
         when(movementRepository.existsByStockId(1L)).thenReturn(true);
 
@@ -168,7 +168,7 @@ class StockServiceTest {
     @Test
     void getMinQuantityByWarehouseId_ShouldMapDatabaseProjectionRowsToAMap() {
         // Given: the MIN(quantity)-per-warehouse grouping happens in SQL
-        // (StockRepository.minQuantityByWarehouse) — this test only checks
+        // (StockRepository.minQuantityByWarehouse): this test only checks
         // the service correctly maps those projection rows into a Map.
         var rowOne = mock(StockRepository.WarehouseMinQuantity.class);
         when(rowOne.getWarehouseId()).thenReturn(1L);
@@ -189,7 +189,7 @@ class StockServiceTest {
     @Test
     void getStockQuantityByWarehouse_ShouldMapDatabaseProjectionRowsToAMap() {
         // Given: the SUM(quantity)-per-warehouse grouping and ordering
-        // happens in SQL (StockRepository.sumQuantityByWarehouse) — this
+        // happens in SQL (StockRepository.sumQuantityByWarehouse): this
         // test only checks the service preserves that order in the Map.
         var rowOne = mock(StockRepository.WarehouseQuantity.class);
         when(rowOne.getWarehouseName()).thenReturn("Central Depot");

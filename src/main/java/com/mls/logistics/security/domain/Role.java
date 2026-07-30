@@ -16,7 +16,7 @@ public enum Role {
 
     /**
      * Parses a role from a request value, same friendly-error convention as
-     * OrderStatus/ShipmentStatus/VehicleStatus.from(String) — an unknown
+     * OrderStatus/ShipmentStatus/VehicleStatus.from(String): an unknown
      * value gets a clear 400 message instead of falling through to Jackson's
      * generic enum-deserialization error.
      */

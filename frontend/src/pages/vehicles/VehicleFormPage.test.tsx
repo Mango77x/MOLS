@@ -34,8 +34,8 @@ function renderEdit() {
   )
 }
 
-/** Sprint 12: pins the create/update success toast (see WarehouseFormPage.test.tsx for context). */
-describe('VehicleFormPage — success toast', () => {
+/** Same create/update toast coverage as WarehouseFormPage.test.tsx. */
+describe('VehicleFormPage: success toast', () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })

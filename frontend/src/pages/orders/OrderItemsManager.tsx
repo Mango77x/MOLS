@@ -23,11 +23,11 @@ function buildSchema(t: TFunction) {
 type AddValues = z.infer<ReturnType<typeof buildSchema>>
 
 /**
- * Inline items manager for an existing order — each change is persisted
+ * Inline items manager for an existing order: each change is persisted
  * immediately (no draft).
  *
  * `locked` hides the add form and the per-row Update/Remove actions,
- * leaving a read-only table — the API rejects any item change on a
+ * leaving a read-only table: the API rejects any item change on a
  * COMPLETED/CANCELLED order anyway (see OrderItemService), so this mirrors
  * ShipmentFormPage's `itemsLocked` pattern instead of presenting live
  * controls that would only fail on submit.

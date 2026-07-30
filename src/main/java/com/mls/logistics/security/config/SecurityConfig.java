@@ -53,13 +53,13 @@ public class SecurityConfig {
                 "/swagger-ui.html", "/swagger-ui/**",
                 "/v3/api-docs/**",
                 "/actuator/**")
-            // Disable CSRF — not needed for stateless REST APIs
+            // Disable CSRF: not needed for stateless REST APIs
             .csrf(AbstractHttpConfigurer::disable)
-            // Stateless sessions — JWT handles auth, no server sessions
+            // Stateless sessions: JWT handles auth, no server sessions
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Public endpoints — no token required
+                // Public endpoints: no token required
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                 // First-run setup: by definition no one can be authenticated
                 // yet, and the status check itself must be reachable to know
@@ -68,7 +68,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/auth/setup").permitAll()
                 // Registration is ADMIN-only (no public self-signup)
                 .requestMatchers(HttpMethod.POST, "/api/auth/register").hasRole("ADMIN")
-                // Logout only clears the HttpOnly auth cookie — safe to allow
+                // Logout only clears the HttpOnly auth cookie: safe to allow
                 .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
                 // Self-service password reset: by definition reachable by
                 // someone who isn't authenticated yet.
@@ -86,12 +86,12 @@ public class SecurityConfig {
                     "/actuator/info").permitAll()
                 .requestMatchers("/actuator/**").hasRole("ADMIN")
                 // User administration is ADMIN-only end to end, including reads
-                // (unlike every other /api/** resource) — account lists/roles
+                // (unlike every other /api/** resource): account lists/roles
                 // are sensitive. Must come before the generic GET rule below.
                 .requestMatchers("/api/users/**").hasRole("ADMIN")
-                // Read operations — any authenticated user (ADMIN/OPERATOR/AUDITOR)
+                // Read operations: any authenticated user (ADMIN/OPERATOR/AUDITOR)
                 .requestMatchers(HttpMethod.GET, "/api/**").authenticated()
-                // Operational writes — parity with the UI role model: OPERATOR
+                // Operational writes: parity with the UI role model. OPERATOR
                 // manages orders (incl. line items) and shipments. Deleting a
                 // whole order or shipment stays ADMIN-only (matches the UI's
                 // /ui/*/delete rules), but removing a line item is part of
@@ -107,7 +107,7 @@ public class SecurityConfig {
                     .hasAnyRole("ADMIN", "OPERATOR")
                 .requestMatchers(HttpMethod.DELETE, "/api/order-items/**")
                     .hasAnyRole("ADMIN", "OPERATOR")
-                // Remaining write operations — ADMIN only
+                // Remaining write operations: ADMIN only
                 .requestMatchers(HttpMethod.POST, "/api/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/api/**").hasRole("ADMIN")
@@ -137,8 +137,8 @@ public class SecurityConfig {
                 "/webjars/**",
                 "/favicon.ico")
             // No forms, no server-rendered pages, nothing to protect with a
-            // session anymore now that Thymeleaf is gone (Sprint 6 cutover) —
-            // this chain only serves the public SPA shell/static assets and
+            // session anymore now that Thymeleaf is gone. This chain only
+            // serves the public SPA shell/static assets and
             // /ui/** courtesy redirects (LegacyUiRedirectController). Real
             // protection for everything the SPA does is the JWT-cookie API
             // chain above.
@@ -146,10 +146,10 @@ public class SecurityConfig {
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
-            // Content-Security-Policy for the SPA (Sprint 6, once Thymeleaf's
+            // Content-Security-Policy for the SPA. Once Thymeleaf's
             // CDN-loaded Bootstrap/Icons were removed there was nothing left
-            // to accommodate — everything the React build needs is bundled
-            // by Vite). style-src needs 'unsafe-inline': Leaflet positions
+            // to accommodate, since everything the React build needs is bundled
+            // by Vite. style-src needs 'unsafe-inline' because Leaflet positions
             // map tiles via inline `style="transform:..."` attributes for
             // performance, not stylesheets. img-src allows the OpenStreetMap
             // tile hosts the logistics map fetches tiles from.

@@ -7,15 +7,15 @@ import { ToastProvider } from '../../components/toast/ToastProvider'
 import UserFormPage from './UserFormPage'
 
 /**
- * Regression coverage for the Sprint 10 SelectField/defaultValue bug: a
+ * Regression coverage for a SelectField/defaultValue bug: a
  * plain <select> with no `defaultValue` auto-selects its first non-disabled
  * <option> on mount, so leaving the Role field untouched used to submit
  * silently as ADMIN instead of being rejected as "required". This is the
- * most severe instance of that bug class — accidentally creating an admin
- * account — so it gets its own dedicated test rather than just relying on
+ * most severe instance of that bug class: accidentally creating an admin
+ * account: so it gets its own dedicated test rather than just relying on
  * the shared enumLabels/SelectField pattern being right elsewhere.
  */
-describe('UserFormPage — role select', () => {
+describe('UserFormPage: role select', () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })
@@ -82,8 +82,8 @@ describe('UserFormPage — role select', () => {
   })
 })
 
-/** Sprint 12: pins the create success toast (see WarehouseFormPage.test.tsx for context). */
-describe('UserFormPage — success toast', () => {
+/** Confirms the create success toast, mirroring WarehouseFormPage.test.tsx. */
+describe('UserFormPage: success toast', () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })

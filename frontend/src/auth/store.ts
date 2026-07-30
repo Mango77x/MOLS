@@ -9,7 +9,7 @@ export interface SessionUser {
 }
 
 export type AuthStatus =
-  /** Session not checked yet (first load) — show nothing until restore() settles. */
+  /** Session not checked yet (first load): show nothing until restore() settles. */
   | 'unknown'
   | 'authenticated'
   | 'anonymous'

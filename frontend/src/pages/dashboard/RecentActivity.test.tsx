@@ -32,13 +32,13 @@ function renderWithLookups(movements: RecentMovement[]) {
 }
 
 /**
- * Sprint 13: RecentActivity used to render the raw stock id (#{stockId})
+ * RecentActivity used to render the raw stock id (#{stockId})
  * instead of a name, unlike the dashboard's own "Low stock" panel which
  * already resolves names server-side. Mirrors MovementsPage.tsx's
  * client-side resourceName/warehouseName lookup pattern instead of
  * changing the API contract.
  */
-describe('RecentActivity — resource/warehouse name resolution', () => {
+describe('RecentActivity: resource/warehouse name resolution', () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })

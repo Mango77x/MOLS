@@ -87,13 +87,13 @@ export default function ShipmentFormPage() {
     }
   }, [shipment, orders, vehicles, reset])
 
-  // The origin warehouse is never chosen here — it's fixed on the order and
+  // The origin warehouse is never chosen here: it's fixed on the order and
   // the shipment inherits it automatically, so the order's items and the
   // delivery deduction always agree on which warehouse. Just shown read-only.
   const selectedOrderId = watch('orderId')
   const originWarehouse = selectedOrderId ? warehouses[orders[selectedOrderId]?.warehouseId] : undefined
 
-  // This shipment's own current line per order item — only known once both
+  // This shipment's own current line per order item: only known once both
   // the shipment (edit mode) and the order's items have loaded.
   const currentQuantityByItem = useMemo(() => {
     if (!isEdit || !shipment) return {} as Record<number, number>
@@ -221,7 +221,7 @@ export default function ShipmentFormPage() {
           </span>
           <p className="mt-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-300">
             {originWarehouse
-              ? `${originWarehouse.name}${originWarehouse.location ? ` — ${originWarehouse.location}` : ''}`
+              ? `${originWarehouse.name}${originWarehouse.location ? `: ${originWarehouse.location}` : ''}`
               : t('shipments.form.selectOrderFirst')}
           </p>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('shipments.form.originWarehouseHint')}</p>

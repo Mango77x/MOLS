@@ -32,7 +32,7 @@ public class Shipment {
     @JoinColumn(name = "warehouse_id")
     private Warehouse warehouse;
 
-    /** Lifecycle status — transitions are enforced by ShipmentService (see ShipmentStatus) */
+    /** Lifecycle status: transitions are enforced by ShipmentService (see ShipmentStatus) */
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private ShipmentStatus status;
@@ -45,7 +45,7 @@ public class Shipment {
      * <p>{@code EAGER} + {@code SUBSELECT}: {@code ShipmentResponse} always
      * serializes this collection, including from list endpoints where the
      * request's Hibernate session has already closed by the time the
-     * controller builds the DTO — {@code LAZY} would throw
+     * controller builds the DTO: {@code LAZY} would throw
      * {@code LazyInitializationException} there. {@code SUBSELECT} fetches
      * every result row's items in one extra query instead of one per
      * shipment (N+1).</p>

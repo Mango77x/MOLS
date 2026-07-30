@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 /**
  * Styled confirmation modal, replacing native `window.confirm()` for
- * destructive actions — a browser-native dialog looks jarring next to the
+ * destructive actions: a browser-native dialog looks jarring next to the
  * rest of the app's themed UI and can't be styled for dark mode.
  */
 export default function ConfirmDialog({

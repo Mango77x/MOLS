@@ -7,7 +7,7 @@ import org.springframework.http.HttpMethod;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * First-run setup flow (Sprint 6 React replacement for the old Thymeleaf
+ * First-run setup flow (the React replacement for the old Thymeleaf
  * {@code /ui/setup} page): reports whether the app needs setup, and lets the
  * very first ADMIN be created exactly once.
  */

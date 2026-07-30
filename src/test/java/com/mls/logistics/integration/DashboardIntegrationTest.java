@@ -78,12 +78,12 @@ class DashboardIntegrationTest extends AbstractIntegrationTest {
         long resourceTwo = postForId("/api/resources",
                 "{\"name\":\"Fuel can\",\"type\":\"SUPPLY\",\"criticality\":\"LOW\"}", admin);
 
-        // Alpha: 40 total (two stock rows, same warehouse) — highest, must be first
+        // Alpha: 40 total (two stock rows, same warehouse), highest, must be first
         postForId("/api/stocks",
                 "{\"resourceId\":" + resourceOne + ",\"warehouseId\":" + depotA + ",\"quantity\":25}", admin);
         postForId("/api/stocks",
                 "{\"resourceId\":" + resourceTwo + ",\"warehouseId\":" + depotA + ",\"quantity\":15}", admin);
-        // Bravo and Charlie tie at 10 — alphabetical tie-break
+        // Bravo and Charlie tie at 10: alphabetical tie-break
         postForId("/api/stocks",
                 "{\"resourceId\":" + resourceOne + ",\"warehouseId\":" + depotC + ",\"quantity\":10}", admin);
         postForId("/api/stocks",

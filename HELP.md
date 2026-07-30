@@ -1,10 +1,10 @@
-# MOLS — Quick Help
+# MOLS: Quick Help
 
 Short operational guide for local development and validation.
 
 ## Prerequisites
 
-- Java 21+ (Maven is not needed — the wrapper `mvnw`/`mvnw.cmd` is included)
+- Java 21+ (Maven is not needed: the wrapper `mvnw`/`mvnw.cmd` is included)
 - PostgreSQL running locally (or use Docker Compose, which brings its own)
 - Docker, for the Testcontainers integration tests (`./mvnw.cmd verify`)
 - Node.js is NOT required for building: the Maven build downloads its own
@@ -17,12 +17,12 @@ Short operational guide for local development and validation.
 	- Password: logistics123 (override via `SPRING_DATASOURCE_PASSWORD`)
 
 Configuration lives in src/main/resources/application.properties. Secrets are
-read from the environment — see `.env.example`. The database schema is managed
+read from the environment: see `.env.example`. The database schema is managed
 by Flyway migrations (`src/main/resources/db/migration`); Hibernate runs in
 `validate` mode and never modifies the schema.
 
 `docker compose` reads `.env` automatically and fails fast if it's missing
-`SECURITY_JWT_SECRET_KEY` (`.env` is gitignored, so each clone needs its own —
+`SECURITY_JWT_SECRET_KEY` (`.env` is gitignored, so each clone needs its own:
 run `cp .env.example .env` and fill in the key with `openssl rand -hex 32`
 before your first `docker compose up`).
 
@@ -82,7 +82,7 @@ Protected endpoint policy (aligned with the UI role model):
 
 - GET /api/** requires authenticated token (ADMIN / OPERATOR / AUDITOR)
 - POST/PUT/PATCH on /api/orders/**, /api/order-items/**, /api/shipments/**
-  requires ADMIN or OPERATOR (DELETE /api/order-items/** too — removing a
+  requires ADMIN or OPERATOR (DELETE /api/order-items/** too: removing a
   line item is part of editing an order)
 - Deleting whole orders/shipments and every other write requires ADMIN
 
@@ -91,37 +91,37 @@ JWT settings (read from the environment, see `.env.example`):
 - `SECURITY_JWT_SECRET_KEY` (required, no committed default)
 - `SECURITY_JWT_EXPIRATION_MS` (optional, default 24h)
 - `SECURITY_JWT_COOKIE_SECURE` (optional, default false; true behind HTTPS)
-- `SECURITY_JWT_RESET_TOKEN_EXPIRATION_MS` (optional, default 30 min — password-reset link lifetime)
+- `SECURITY_JWT_RESET_TOKEN_EXPIRATION_MS` (optional, default 30 min: password-reset link lifetime)
 
 ## Email (optional, off by default)
 
 Powers two features: a daily digest emailing every enabled ADMIN with an
 email on file the current low-stock/stale-order alerts, and self-service
 password reset ("Forgot your password?" on the login page). Neither runs
-unless `MOLS_MAIL_ENABLED=true` — the app boots and works normally with
+unless `MOLS_MAIL_ENABLED=true`: the app boots and works normally with
 none of this set.
 
 - `MOLS_MAIL_ENABLED` (optional, default false)
 - `MOLS_MAIL_FROM` (optional, default `mols-noreply@example.com`)
-- `MOLS_MAIL_APP_BASE_URL` (optional, default `http://localhost:8080` — used to build the password-reset link)
+- `MOLS_MAIL_APP_BASE_URL` (optional, default `http://localhost:8080`: used to build the password-reset link)
 - `MOLS_MAIL_DIGEST_CRON` (optional, default `0 0 7 * * *`, 07:00 daily)
-- `SPRING_MAIL_HOST` / `SPRING_MAIL_PORT` / `SPRING_MAIL_USERNAME` / `SPRING_MAIL_PASSWORD` — your real SMTP server details (ignored while `MOLS_MAIL_ENABLED=false`)
+- `SPRING_MAIL_HOST` / `SPRING_MAIL_PORT` / `SPRING_MAIL_USERNAME` / `SPRING_MAIL_PASSWORD`: your real SMTP server details (ignored while `MOLS_MAIL_ENABLED=false`)
 
 To try it locally without a real SMTP account, `docker-compose.yml`
 includes an optional `mailpit` service (a catcher, not a real mail
-server) — every email sent shows up at http://localhost:8025 instead of
+server): every email sent shows up at http://localhost:8025 instead of
 being delivered. Set `MOLS_MAIL_ENABLED=true` in `.env` and leave
 `SPRING_MAIL_HOST=mailpit` (the default) to use it.
 
-A user needs an email on file for either feature to apply to them — set
+A user needs an email on file for either feature to apply to them: set
 one for any account under Users management (`PATCH /api/users/{id}/email`).
 
 ## CSV bulk import (Resources, Warehouses, Units)
 
 ADMIN-only, one file at a time, two steps: **Import CSV** on each list
 page opens a page that first *previews* the file (nothing is saved yet,
-every row is checked and shown with its status) and only *commits* it —
-a separate click — once you've reviewed the preview. A row with a
+every row is checked and shown with its status) and only *commits* it:
+a separate click: once you've reviewed the preview. A row with a
 duplicate name is only a warning, not an error, and is still committed;
 only rows marked as errors are skipped. "Commit" stays disabled until
 every row is either valid or a duplicate warning.
@@ -135,7 +135,7 @@ ignored):
 | Warehouses | `name`, `location`, `latitude`, `longitude` (`latitude`/`longitude` optional) |
 | Units | `name`, `location`, `latitude`, `longitude` (`latitude`/`longitude` optional) |
 
-Not available for Orders, Shipments, or Stock — those reference other
+Not available for Orders, Shipments, or Stock: those reference other
 records (a resource id, a warehouse id, existing stock levels) that a
 plain CSV can't safely resolve on its own.
 
@@ -160,8 +160,8 @@ Bootstrap admin (dev-only) can be configured via environment variables:
 If the user has an email on file and mail is enabled, they can self-serve
 via "Forgot your password?" on the login page instead. Otherwise, or with
 mail disabled, an ADMIN can reset it directly from Users management
-(`PATCH /api/users/{id}/password`), or — if no ADMIN account is usable
-either — reset it in DB (requires `pgcrypto`):
+(`PATCH /api/users/{id}/password`), or: if no ADMIN account is usable
+either: reset it in DB (requires `pgcrypto`):
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
@@ -173,7 +173,7 @@ WHERE username = 'admin';
 
 ## Run Tests
 
-Full suite (unit + Testcontainers integration tests — requires a running
+Full suite (unit + Testcontainers integration tests: requires a running
 Docker daemon):
 
 ```powershell
@@ -192,12 +192,12 @@ Docker, exclude the integration package:
 
 GitHub Actions workflows:
 
-- .github/workflows/ci.yml — on push/PR to main: `./mvnw verify -B`
+- .github/workflows/ci.yml, on push/PR to main: `./mvnw verify -B`
   (full test suite, JaCoCo coverage gate), publishes the SBOM and the
   coverage report as artifacts
-- .github/workflows/codeql.yml — CodeQL static security analysis
-- .github/workflows/security-scan.yml — weekly OWASP Dependency-Check
-- .github/dependabot.yml — weekly dependency update PRs
+- .github/workflows/codeql.yml: CodeQL static security analysis
+- .github/workflows/security-scan.yml: weekly OWASP Dependency-Check
+- .github/dependabot.yml: weekly dependency update PRs
 
 ## Useful References
 

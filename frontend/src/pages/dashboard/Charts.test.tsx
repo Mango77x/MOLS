@@ -10,13 +10,13 @@ const charts: DashboardCharts = {
 }
 
 /**
- * Sprint 13: the donut charts (movements-by-type, orders-by-status) only
- * identified slice colors via the Recharts Tooltip on hover — no way to
+ * The donut charts (movements-by-type, orders-by-status) used to only
+ * identify slice colors via the Recharts Tooltip on hover, with no way to
  * read them without a mouse, or on touch. Pins the fix: a plain-text
  * legend row (reusing the same color logic as the slices) always renders
  * alongside each donut, independent of hover.
  */
-describe('Charts — donut legend', () => {
+describe('Charts: donut legend', () => {
   it('shows a legend with each label and its value for both donut charts', () => {
     render(<Charts charts={charts} />)
 

@@ -91,7 +91,7 @@ class ShipmentServiceTest {
     }
 
     /**
-     * Builds an order item. Does NOT stub {@code orderItemService.getOrderItemById} —
+     * Builds an order item. Does NOT stub {@code orderItemService.getOrderItemById}:
      * that lookup only happens when a request's {@code items} go through
      * {@code ShipmentService.buildItems}; tests that instead pre-populate
      * {@code testShipment.getItems()} directly never trigger it, and stubbing it

@@ -56,11 +56,11 @@ function renderEdit(nameLookupResult: PageResponse<WarehouseEntity> = emptyPage)
 }
 
 /**
- * Sprint 12: forms used to navigate away on success with zero feedback,
+ * Forms used to navigate away on success with zero feedback,
  * unlike RowActions' delete flow which already showed a toast. Pins the
- * fix — a success toast now fires right before the redirect.
+ * fix: a success toast now fires right before the redirect.
  */
-describe('WarehouseFormPage — success toast', () => {
+describe('WarehouseFormPage: success toast', () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })
@@ -91,10 +91,10 @@ describe('WarehouseFormPage — success toast', () => {
 })
 
 /**
- * Sprint 14: there's no uniqueness constraint on warehouse names, so this
- * is a non-blocking nudge only — it must never stop a submit.
+ * There's no uniqueness constraint on warehouse names, so this
+ * is a non-blocking nudge only: it must never stop a submit.
  */
-describe('WarehouseFormPage — duplicate-name warning', () => {
+describe('WarehouseFormPage: duplicate-name warning', () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })

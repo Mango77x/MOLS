@@ -1,4 +1,4 @@
-# MOLS — Project Overview
+# MOLS - Project Overview
 
 ## Purpose
 
@@ -6,7 +6,7 @@ MOLS is a Spring Boot logistics app with:
 
 - a REST API (JWT-secured) for CRUD operations
 - a React SPA admin UI (`/app`) for day-to-day usage
-- stock + movement auditing so changes are traceable — the movement log is
+- stock + movement auditing so changes are traceable: the movement log is
   **append-only** (never updated or deleted) and records **who** made each change
 
 The goal of this doc is to help a developer understand where things live, how the flow works, and which business rules are enforced in the services.
@@ -17,7 +17,7 @@ The goal of this doc is to help a developer understand where things live, how th
 - Database: PostgreSQL (local or via Docker Compose)
 - API: `/api/**` (Swagger at `/swagger-ui.html`)
 - UI: React SPA served at `/app/**` (see `frontend/`). The old Thymeleaf
-  admin UI (`/ui/**`) was fully removed in Sprint 6 — `/ui/**` now just
+  admin UI (`/ui/**`) was fully removed once the React SPA caught up; `/ui/**` now just
   302-redirects to the `/app` equivalent for old bookmarks/links.
 - Build/tests: Maven wrapper (`./mvnw.cmd verify`); the Maven build also
   lints, tests and builds the frontend (skippable with `-Dskip.frontend=true`)
@@ -28,15 +28,15 @@ The goal of this doc is to help a developer understand where things live, how th
 ### REST API
 
 Controllers live in `src/main/java/com/mls/logistics/controller` and expose endpoints like:
-- `WarehouseController` — `/api/warehouses`
-- `UnitController` — `/api/units`
-- `ResourceController` — `/api/resources`
-- `StockController` — `/api/stocks`
-- `OrderController` — `/api/orders`
-- `OrderItemController` — `/api/order-items`
-- `VehicleController` — `/api/vehicles`
-- `ShipmentController` — `/api/shipments`
-- `MovementController` — `/api/movements`
+- `WarehouseController`: `/api/warehouses`
+- `UnitController`: `/api/units`
+- `ResourceController`: `/api/resources`
+- `StockController`: `/api/stocks`
+- `OrderController`: `/api/orders`
+- `OrderItemController`: `/api/order-items`
+- `VehicleController`: `/api/vehicles`
+- `ShipmentController`: `/api/shipments`
+- `MovementController`: `/api/movements`
 
 ### Services
 
@@ -75,18 +75,18 @@ Tailwind 4) and is served at `/app/**`:
 - **Shell**: sidebar/topbar layout, role-aware navigation (ADMIN-only entries
   hidden and route-guarded client-side; real enforcement is the API role
   matrix), light/dark theme, military-green design tokens in `src/index.css`.
-- **Language** (Sprint 16): `react-i18next`, resources in `src/i18n/`
+- **Language**: `react-i18next`, resources in `src/i18n/`
   (`en`/`es`/`fr`, single namespace). `useLocale.ts` mirrors the theme
-  hook's pattern — persists to `localStorage` (`mols-locale`), falls back
-  to the browser's language, sets `<html lang>`/`dir`; switcher lives next
+  hook's pattern: it persists to `localStorage` (`mols-locale`), falls back
+  to the browser's language, and sets `<html lang>`/`dir`; the switcher lives next
   to the theme toggle in `AppLayout`. Pluralized strings (e.g. `DataTable`'s
   result count) go through i18next's `count`-based plural keys rather than
   hand-rolled singular/plural ternaries, since languages don't all share
   English's singular/plural boundary (French treats 0 as singular).
-  Covers the shell chrome, the Dashboard (Sprint 16) and, as of Sprint 17,
-  every remaining page module — Warehouses, Resources, Vehicles, Units,
+  Covers the shell chrome, the Dashboard, and now
+  every remaining page module too: Warehouses, Resources, Vehicles, Units,
   Stock, Orders (list/wizard/edit/detail/items manager), Shipments,
-  Movements and Users — 100% ES/FR key coverage. `npm run i18n:status`/
+  Movements and Users, all at 100% ES/FR key coverage. `npm run i18n:status`/
   `i18n:extract` (`i18next-cli`, configured in `frontend/i18next.config.ts`)
   track key coverage across the three languages going forward. Backend
   errors also carry a machine-readable `code` (+ optional `params`) on the
@@ -95,13 +95,13 @@ Tailwind 4) and is served at `/app/**`:
   English `message` for anything not yet migrated, so error-message coverage
   can keep rolling out incrementally without a hard cutover.
 - **Pages**: the dashboard (fed by `GET /api/dashboard`) ships KPI cards,
-  Recharts charts (stock by warehouse, movements by type, orders by status —
+  Recharts charts (stock by warehouse, movements by type, orders by status,
   each with an empty-state fallback; the two donut charts also carry a
-  custom text legend, Sprint 13, since a Recharts `<Tooltip>` alone only
+  custom text legend, since a Recharts `<Tooltip>` alone only
   reveals slice colors on hover), a low-stock/stale-orders alerts panel
   and a recent-activity table (its Resource/Warehouse columns resolve
-  names client-side via `useLookup`, Sprint 13, mirroring `MovementsPage`'s
-  pattern — previously showed the raw `stockId`). Its hero section is the logistics map
+  names client-side via `useLookup`, mirroring `MovementsPage`'s
+  pattern; it used to just show the raw `stockId`). Its hero section is the logistics map
   (`react-leaflet` + OpenStreetMap tiles, fed by `GET /api/map`): warehouse
   pins colored by stock status, unit pins, animated shipment routes, a
   details panel on pin click, and "active shipments only"/"low stock only"
@@ -119,9 +119,9 @@ Tailwind 4) and is served at `/app/**`:
   the same paginated endpoint at the server's own page-size cap
   (`PageQuery.MAX_SIZE` = 100) honoring the page's current filters/sort, and
   `lib/csv.ts` builds the file client-side (RFC-4180-ish escaping, UTF-8 BOM
-  so Excel renders accented ES/FR text correctly) — no new backend endpoint.
+  so Excel renders accented ES/FR text correctly); no new backend endpoint needed.
   A shared `ExportCsvButton` owns the loading state and an error toast.
-  Resources, Warehouses and Units (Sprint 20) each have the inverse: an
+  Resources, Warehouses and Units each have the inverse: an
   "Import CSV" action next to "New X", going to a shared `ImportPage`
   (`components/imports/`) parameterized per module by its columns and API
   path. Two-step preview-then-commit: `POST .../import/preview` parses and
@@ -130,23 +130,23 @@ Tailwind 4) and is served at `/app/**`:
   not a parallel set of rules), returning a row-by-row result the operator
   reviews in a color-coded table; `POST .../import/commit` re-validates the
   same file and persists everything that isn't an error row in one
-  transaction (a duplicate name is only a warning — there's no unique
-  constraint on these names — so it's committed like the single-record
+  transaction (a duplicate name is only a warning, since there's no unique
+  constraint on these names, so it's committed like the single-record
   form already allows). "Commit N rows" stays disabled while any row has
   an error, and again once the file has actually been committed.
   Below the `sm` breakpoint, `DataTable` swaps its `<table>` for a card list
-  driven by the same `columns`/`data` props (Sprint 12) — one labeled row per
-  column instead of a `<td>` — so the actions column (previously scrolled out
+  driven by the same `columns`/`data` props: one labeled row per
+  column instead of a `<td>`, so the actions column (previously scrolled out
   of view on narrow viewports) is always visible; every page using `DataTable`
   picked this up automatically, no call-site changes needed.
   Users (`/app/users`, ADMIN-only) lists accounts, creates users, changes
   roles, resets passwords and enables/disables accounts against
-  `/api/users/**` (Sprint 6), plus an inline-editable optional email per
-  user (Sprint 19, `PATCH /api/users/{id}/email`) that powers the two
+  `/api/users/**`, plus an inline-editable optional email per
+  user (`PATCH /api/users/{id}/email`) that powers the two
   email features below. First-run setup (`/app/setup`) creates the
   initial ADMIN when the database has zero users, backed by
   `GET/POST /api/auth/setup-status` and `/api/auth/setup`.
-- **Email** (Sprint 19, off by default): `spring-boot-starter-mail` +
+- **Email** (off by default): `spring-boot-starter-mail` +
   `MailProperties` (`mols.mail.enabled`/`from`/`digest-cron`/`app-base-url`).
   SMTP connection is Spring Boot's own `spring.mail.*` properties;
   `spring.mail.host` always has a default so the auto-configured
@@ -157,35 +157,35 @@ Tailwind 4) and is served at `/app/**`:
   low-stock/stale-order alerts the Dashboard already computes
   (`DashboardService.lowStockAlerts()`/`staleOrderAlerts()`, reused
   directly); and self-service password reset (`ForgotPasswordPage`/
-  `ResetPasswordPage`, `POST /api/auth/forgot-password` — always 200, to
-  avoid account enumeration — and `POST /api/auth/reset-password`). The
+  `ResetPasswordPage`, `POST /api/auth/forgot-password` (always 200, to
+  avoid account enumeration) and `POST /api/auth/reset-password`). The
   reset token is a JWT (`JwtService.generatePasswordResetToken`) carrying
   a `purpose` claim and a `resetPwdVersion` claim under a different key
   than the session token's `pwdVersion`, so `JwtAuthFilter` can never
   authenticate a request with it; redeeming it reuses
-  `AppUserAdminService.resetPassword`, which bumps `passwordVersion` —
+  `AppUserAdminService.resetPassword`, which bumps `passwordVersion`:
   making the token single-use and revoking any session from the old
   password, for free. `docker-compose.yml` includes an optional `mailpit`
   service (a local SMTP catcher, http://localhost:8025) for trying this
   without a real SMTP account.
 - **Forms & detail pages** (Sprint 5): full create/edit flows built with
-  `react-hook-form` + a `zod` resolver — shared field components live in
+  `react-hook-form` + a `zod` resolver: shared field components live in
   `src/components/form/` (`TextField`/`SelectField`/`FormBanner`/buttons)
   plus `zodHelpers.ts` (numeric id/quantity/coordinate schema helpers, built
   with `z.custom` rather than `z.number()`/`z.preprocess` so an
   untouched/empty field shows a friendly message instead of zod's own
-  "expected number, received NaN" — see the comment there for why).
+  "expected number, received NaN": see the comment there for why).
   API errors are normalized by `api/errors.ts`: 400 validation failures map
   field-by-field onto the form via `setError`, 404/409 business conflicts
   (e.g. insufficient stock) surface as a banner. On success, every form calls
   `showToast(...)` (Sprint 12, e.g. `'Warehouse created.'`) right before
-  navigating away — previously a create/edit just redirected silently, unlike
+  navigating away: previously a create/edit just redirected silently, unlike
   `RowActions`'s delete flow which already toasted on both outcomes.
   Warehouse/Resource/Unit forms also carry a non-blocking duplicate-name nudge
   (Sprint 14, `useDuplicateNameWarning`): on blurring the Name field, a
   `?name=` fragment-filtered lookup checks for an existing case-insensitive
   exact match (excluding the record's own id when editing) and shows an
-  inline warning via `TextField`'s `warning` prop — there's no uniqueness
+  inline warning via `TextField`'s `warning` prop: there's no uniqueness
   constraint on these names in the database, so this is a courtesy nudge
   only and never blocks submit.
   - Warehouse/Resource/Vehicle/Unit/Stock (create + Stock's delta-based
@@ -195,7 +195,7 @@ Tailwind 4) and is served at `/app/**`:
   - **Order wizard** (`pages/orders/OrderWizardPage.tsx`, ADMIN/OPERATOR):
     header → items → optional shipment. Items get a best-effort
     client-side stock-availability check (sums `GET /api/stocks?resourceId=`)
-    that warns but doesn't block adding — the authoritative check is the
+    that warns but doesn't block adding: the authoritative check is the
     atomic `POST /api/orders/with-items` call (new in Sprint 5, wraps the
     existing transactional `OrderService.createOrderWithItems`: an
     insufficient-stock conflict on any item leaves nothing persisted). The
@@ -208,30 +208,30 @@ Tailwind 4) and is served at `/app/**`:
   - **Order/Shipment edit + detail pages**: order edit is header-only plus
     an inline, immediately-persisted items manager (`OrderItemsManager.tsx`,
     mirroring the Thymeleaf inline-add/update/delete flow); shipment
-    create/edit (`ShipmentFormPage.tsx`) includes an item picker — once an
+    create/edit (`ShipmentFormPage.tsx`) includes an item picker: once an
     order is selected, its items are listed with ordered/delivered quantities
     and a "ship now" input capped at each item's remaining (unallocated)
-    quantity — fixed at creation and replaceable as a whole set on edit while
+    quantity: fixed at creation and replaceable as a whole set on edit while
     not yet `DELIVERED` (Sprint 7). Transitioning to `DELIVERED` deducts stock
     for the shipment's own items only and is rejected on insufficient stock,
     same as the API. Detail pages are read-only traceability views: order
     detail shows items (with per-item shipped/ordered progress)/shipments/
     linked movements, shipment detail shows context/this shipment's own items
-    (not the full order)/linked movements — both link to each other
+    (not the full order)/linked movements: both link to each other
     (`Movement.shipmentId` → shipment detail) for end-to-end tracing. Order
     edit and `OrderItemsManager` (which takes a `locked` prop) lock down when
-    the order is `COMPLETED`/`CANCELLED` — the status select is disabled and
-    the items table drops to read-only — since the API rejects any change to
+    the order is `COMPLETED`/`CANCELLED`: the status select is disabled and
+    the items table drops to read-only: since the API rejects any change to
     either in that state anyway (Sprint 10).
   - `src/lib/enumLabels.ts` (Sprint 10) is the single source of truth for
     human-readable `OrderStatus`/`ShipmentStatus`/`VehicleStatus`/
-    `VehicleType` labels — used by every filter dropdown, status badge, and
+    `VehicleType` labels: used by every filter dropdown, status badge, and
     form select, replacing what used to be a raw-enum-value display on list
     pages next to a separately hardcoded friendly-label copy on forms.
   - `src/components/ConfirmDialog.tsx` (Sprint 10) is a themed, portal-based
     confirmation modal (Escape/backdrop-click to cancel) used everywhere a
-    destructive or consequential action needs confirming — row deletes,
-    order-item removal, user role/enabled changes — replacing native
+    destructive or consequential action needs confirming: row deletes,
+    order-item removal, user role/enabled changes: replacing native
     `window.confirm()`.
   - A catch-all route renders `NotFoundPage` (Sprint 10) for any unmatched
     `/app/*` path, with redirect aliases for the two most guessable
@@ -288,29 +288,29 @@ Implementation notes:
 - **Schema management**: **Flyway** owns the schema (`src/main/resources/db/migration`).
   Hibernate runs with `ddl-auto=validate` and never modifies the schema; a
   mismatch between the entity model and the migrated schema fails fast at startup.
-  - `V1` — baseline schema
-  - `V2` — integrity hardening: status/quantity CHECKs, NOT NULLs,
+  - `V1`: baseline schema
+  - `V2`: integrity hardening: status/quantity CHECKs, NOT NULLs,
     `UNIQUE (resource, warehouse)` on stocks, FK + audit-timeline indexes,
     `stocks.version` (optimistic locking) and `movements.created_by` (audit actor)
-  - `V3` — optional `latitude`/`longitude` on warehouses and units (range
+  - `V3`: optional `latitude`/`longitude` on warehouses and units (range
     CHECKs), groundwork for the logistics map in the React frontend
-  - `V4` — stock reservation counter (`resources.reserved_quantity` at the time,
+  - `V4`: stock reservation counter (`resources.reserved_quantity` at the time,
     `order_items.reservation_active`) so order-item creation commits demand instead of
     only checking current physical quantity
-  - `V5` — `orders.warehouse_id` (fixed origin warehouse per order); moves the reservation
+  - `V5`: `orders.warehouse_id` (fixed origin warehouse per order); moves the reservation
     counter from `resources` to `stocks.reserved_quantity` (per resource **and** warehouse)
-  - `V6` — `shipment_items` (shipment ↔ order item + quantity junction table) and
+  - `V6`: `shipment_items` (shipment ↔ order item + quantity junction table) and
     `PARTIALLY_SHIPPED` added to `orders.status`'s CHECK constraint, backing per-shipment
     partial fulfillment (see "Partial fulfillment" above)
-  - `V7` — backfills `shipment_items` for shipments that predate V6 (which didn't
+  - `V7`: backfills `shipment_items` for shipments that predate V6 (which didn't
     populate it for existing rows), fixing `deliveredQuantity` reading 0 on old
     delivered shipments even though their stock was genuinely deducted at the time
-  - `V8` — `app_users.password_version` (integer, default 0, bumped on every
+  - `V8`: `app_users.password_version` (integer, default 0, bumped on every
     reset), backing JWT revocation on password reset. Deliberately a counter
     rather than a timestamp: a timestamp can only be compared at whatever
     precision it's embedded in the token at (a JWT's `iat` is whole-seconds),
     so two password-set events within the same second are indistinguishable
-    once that precision is lost — an incrementing integer can't collide like
+    once that precision is lost: an incrementing integer can't collide like
     that no matter how fast the events happen (two earlier timestamp-based
     versions of this both broke under fast sequential requests, e.g. login
     immediately followed by a reset)
@@ -347,7 +347,7 @@ Implementation notes:
     - Token revocation (Sprint 9): a syntactically valid, unexpired token is
       still rejected (401) by `JwtAuthFilter` if the account has since been
       disabled, or if its embedded `pwdVersion` claim no longer matches the
-      user's current `app_users.password_version` (bumped on every reset) —
+      user's current `app_users.password_version` (bumped on every reset):
       otherwise disabling a user or resetting their password wouldn't take
       effect until the token's natural expiry (`SECURITY_JWT_EXPIRATION_MS`,
       24h by default). A role change is already effectively immediate, since
@@ -455,15 +455,15 @@ WHERE username = 'admin';
 
 ## Key Domain Concepts
 
-- **`Unit`** — Organizational branch requesting resources (has location, name, optional coordinates)
-- **`Warehouse`** — Physical storage location for resources (has location, name, optional coordinates)
-- **`Resource`** — Item, part, or material (has type, criticality)
-- **`Stock`** — Quantity of a resource in a warehouse (links Resource ↔ Warehouse)
-- **`Order`** — Request placed by a Unit (has status, date)
-- **`OrderItem`** — Individual line item in an order (links Order ↔ Resource, has quantity)
-- **`Vehicle`** — Transport asset: land/air/sea (has type, capacity, status)
-- **`Shipment`** — Assignment of resources to a vehicle (links Order ↔ Vehicle ↔ Warehouse)
-- **`Movement`** — Audit record of stock changes (tracks type, quantity, datetime)
+- **`Unit`**: Organizational branch requesting resources (has location, name, optional coordinates)
+- **`Warehouse`**: Physical storage location for resources (has location, name, optional coordinates)
+- **`Resource`**: Item, part, or material (has type, criticality)
+- **`Stock`**: Quantity of a resource in a warehouse (links Resource ↔ Warehouse)
+- **`Order`**: Request placed by a Unit (has status, date)
+- **`OrderItem`**: Individual line item in an order (links Order ↔ Resource, has quantity)
+- **`Vehicle`**: Transport asset: land/air/sea (has type, capacity, status)
+- **`Shipment`**: Assignment of resources to a vehicle (links Order ↔ Vehicle ↔ Warehouse)
+- **`Movement`**: Audit record of stock changes (tracks type, quantity, datetime)
 
 ## Important Business Rules (Conceptual)
 
@@ -473,7 +473,7 @@ These rules are **enforced in services**, not controllers:
 2. Order items must not exceed available stock (validated against total availability)
 3. Every stock change must generate a Movement record
 4. Shipment delivery triggers fulfillment: transitioning a shipment to `DELIVERED` deducts
-   stock (EXIT) and records movements for **that shipment's own items only** — not gated on
+   stock (EXIT) and records movements for **that shipment's own items only**: not gated on
    sibling shipments of the same order also being delivered (see "Partial fulfillment" below).
 5. The movement audit trail is **append-only**: no API or UI path can update or
    delete a movement; corrections are made with a new compensating adjustment.
@@ -482,7 +482,7 @@ These rules are **enforced in services**, not controllers:
    acting user (`created_by`) via JPA auditing.
    - This is enforced by direct delete guards on `Order`/`Shipment`/`Stock`
      themselves, **and** by equivalent guards on `Unit`/`Vehicle`/`Warehouse`/
-     `Resource` — none of the parent-side `@OneToMany` relations cascade a
+     `Resource`: none of the parent-side `@OneToMany` relations cascade a
      delete into their children anymore, so removing e.g. a warehouse that
      still has stock, orders, or shipments is rejected rather than silently
      cascading through them and orphaning `Movement` rows (Sprint 8).
@@ -497,7 +497,7 @@ These rules are **enforced in services**, not controllers:
 ### Partial fulfillment (shipment items)
 
 A shipment carries a specific subset of its order's items, each with its own quantity
-(`ShipmentItem`, table `shipment_items`) — fixed at creation (`POST /api/shipments` requires
+(`ShipmentItem`, table `shipment_items`): fixed at creation (`POST /api/shipments` requires
 a non-empty `items: [{ orderItemId, quantity }]`) and only replaceable as a whole set on
 `PUT` while the shipment is not yet `DELIVERED`. A line's quantity can never exceed what's
 still unallocated on that order item across every shipment (any status), mirroring the
@@ -565,7 +565,7 @@ src/main/resources/
 ```
 
 The Thymeleaf `web` package and `templates/` were fully removed in Sprint 6
-once the React SPA reached feature parity — see git history before this
+once the React SPA reached feature parity: see git history before this
 sprint if you need to reference the old server-rendered pages.
 
 ### Containerization
@@ -579,28 +579,28 @@ sprint if you need to reference the old server-rendered pages.
 
 ### Continuous Integration (GitHub Actions)
 
-- **`ci.yml`** — on every push/PR to `main`: `./mvnw verify -B` runs the full
-  suite (unit + Testcontainers integration tests — no DB service container
+- **`ci.yml`**: on every push/PR to `main`: `./mvnw verify -B` runs the full
+  suite (unit + Testcontainers integration tests: no DB service container
   needed), enforces the JaCoCo line-coverage floor, and publishes the
   CycloneDX SBOM and coverage report as artifacts.
-- **`codeql.yml`** — CodeQL static security analysis (push/PR + weekly).
-- **`security-scan.yml`** — OWASP Dependency-Check against the NVD
+- **`codeql.yml`**: CodeQL static security analysis (push/PR + weekly).
+- **`security-scan.yml`**: OWASP Dependency-Check against the NVD
   (weekly + manual dispatch, fails on CVSS ≥ 7). Supports an optional
   `NVD_API_KEY` secret for faster feed downloads.
-- **`dependabot.yml`** — weekly dependency update PRs (Maven + Actions).
+- **`dependabot.yml`**: weekly dependency update PRs (Maven + Actions).
 - CI optimization: Maven dependency caching (`~/.m2`)
 
 ### Test suite layout
 
-- **Unit / slice tests** (`@WebMvcTest`, Mockito) — controllers and services
+- **Unit / slice tests** (`@WebMvcTest`, Mockito): controllers and services
   in isolation.
-- **Integration tests** (`src/test/java/.../integration`) — boot the full
+- **Integration tests** (`src/test/java/.../integration`): boot the full
   application against a disposable PostgreSQL (Testcontainers,
   `@ServiceConnection`, singleton container). They cover the end-to-end
   fulfillment flow, the role authorization matrix, login lockout, audit
   immutability, and concurrent stock adjustments (optimistic locking).
 - **Frontend tests** (`frontend/src/**/*.test.{ts,tsx}`, Vitest + jsdom +
-  `@testing-library/react`) — 20 files / 71 tests covering pure helpers
+  `@testing-library/react`): 20 files / 71 tests covering pure helpers
   (enum labels, roles) and DOM/behavior tests (form validation, the
   `ConfirmDialog`/`RowActions` delete flow including a failed-delete-shows-
   a-toast regression guard, the order-edit terminal-state lock, app
@@ -627,7 +627,7 @@ All endpoints follow RESTful conventions:
 | OrderItem | `/api/order-items` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Vehicle | `/api/vehicles` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Shipment | `/api/shipments` | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Movement | `/api/movements` | ✅ | ✅ | — | — | — |
+| Movement | `/api/movements` | ✅ | ✅ |: |: |: |
 
 **Movements are read-only** (append-only audit trail): they are generated by the
 system on every stock change and cannot be created, edited, or deleted via the API.
@@ -659,10 +659,10 @@ Paginated movements default to newest first (`dateTime,desc`). Invalid
 pagination, sort or enum filter values return HTTP 400.
 
 Additional stock operation:
-- `PATCH /api/stocks/{id}/adjust` — adjusts stock by delta and auto-creates movement audit record.
+- `PATCH /api/stocks/{id}/adjust`: adjusts stock by delta and auto-creates movement audit record.
 
 Additional order operation:
-- `POST /api/orders/with-items` — creates an order and its line items in a
+- `POST /api/orders/with-items`: creates an order and its line items in a
   single transaction (ADMIN or OPERATOR, same rule as other order writes).
   Body is `{ header: CreateOrderRequest, items: [{ resourceId, quantity }] }`;
   reuses `OrderService.createOrderWithItems`, so an insufficient-stock
@@ -671,34 +671,34 @@ Additional order operation:
 
 Shipment items:
 - `POST /api/shipments` requires a non-empty `items: [{ orderItemId, quantity }]`
-  alongside `orderId`/`vehicleId`/`status` — a shipment always carries at
+  alongside `orderId`/`vehicleId`/`status`: a shipment always carries at
   least one order item. `PUT /api/shipments/{id}` accepts the same `items`
   field to replace the shipment's whole item set (omit it to leave items
   unchanged); replacing is rejected once the shipment is `DELIVERED`. A
   line's quantity is capped by that order item's remaining (unallocated)
   quantity across every shipment. `ShipmentResponse.items` and
   `OrderItemResponse.deliveredQuantity`/`remainingQuantity` expose the
-  resulting allocation/progress — see "Partial fulfillment" above.
+  resulting allocation/progress: see "Partial fulfillment" above.
 
 Dashboard endpoint:
-- `GET /api/dashboard` — aggregated operational snapshot (KPIs, chart series,
+- `GET /api/dashboard`: aggregated operational snapshot (KPIs, chart series,
   low-stock/stale-order alerts, recent movements and the thresholds used),
   assembled by `DashboardService` and readable by any authenticated role. This
   is the API counterpart of the `/ui` dashboard for the React frontend.
 
 Map endpoint:
-- `GET /api/map` — geo snapshot for the logistics map: warehouse pins (with
+- `GET /api/map`: geo snapshot for the logistics map: warehouse pins (with
   an OK/WARNING/CRITICAL stock status derived from the same low/critical
   stock thresholds as the dashboard) and unit pins, plus shipment routes
   resolved from the shipment's origin warehouse to its order's destination
   unit. Assembled by `MapService`, readable by any authenticated role.
   Warehouses/units without coordinates, and shipment routes with either
-  endpoint missing coordinates, are omitted — the map can only plot what has
+  endpoint missing coordinates, are omitted: the map can only plot what has
   a location.
 
 Authentication endpoints:
-- `POST /api/auth/register` — register user and return JWT
-- `POST /api/auth/login` — authenticate and return JWT
+- `POST /api/auth/register`: register user and return JWT
+- `POST /api/auth/login`: authenticate and return JWT
 
 ## Troubleshooting
 
@@ -766,13 +766,13 @@ ALTER DATABASE logistics_db OWNER TO logistics_user;
 - **Maintainer**: See `pom.xml` for project details
 
 **Last updated**: 2026-07-23 (Sprint 20: two-step preview/commit bulk CSV
-import for Resources, Warehouses, and Units — closes out Nivel 1. Added
+import for Resources, Warehouses, and Units: closes out Nivel 1. Added
 `commons-csv`; a shared `CsvImportSupport` parses the file and checks
 required columns, while each entity service builds its own rows by
 running the *same* `CreateXRequest` DTO through a real injected
 `jakarta.validation.Validator`, so a bad CSV row fails with the identical
 message the single-record form would give, not a re-implemented rule.
-Duplicate names are a warning, not a blocker — matches the existing
+Duplicate names are a warning, not a blocker: matches the existing
 form's advisory-only `useDuplicateNameWarning`, since there's no unique
 constraint on these names in the database. One shared `ImportPage`
 component drives all three modules, parameterized by column list and API
@@ -784,14 +784,14 @@ Sprint 19: low-stock/stale-order email digest
 and self-service password reset, off by default. `spring-boot-starter-mail`
 + `MailProperties`; `spring.mail.host` always has a default so the
 auto-configured `JavaMailSender` bean exists even with no real SMTP server,
-while actual sending stays gated behind `mols.mail.enabled` — verified live
+while actual sending stays gated behind `mols.mail.enabled`: verified live
 that the app boots cleanly either way. `AlertDigestJob` reuses
 `DashboardService`'s existing alert queries rather than duplicating them.
 The reset token is a JWT carrying a `purpose` claim and a `resetPwdVersion`
 claim under a different key than the session token's `pwdVersion`, so
 `JwtAuthFilter` can never treat it as a session credential; redeeming it
 reuses the existing `AppUserAdminService.resetPassword`, making the token
-single-use and revoking old sessions for free — the same `passwordVersion`
+single-use and revoking old sessions for free: the same `passwordVersion`
 mechanism Sprint 9 built for admin-driven resets. Verified the entire
 forgot/reset flow live end to end through a new optional `mailpit` service
 in `docker-compose.yml`: requested a reset, read the real token out of the
@@ -800,10 +800,10 @@ the new one signed in. Also fixed a gap the two new public pages exposed:
 the persisted UI locale was only ever applied inside `AppLayout`, which
 doesn't mount until after login, so `LoginPage` and the reset pages always
 rendered in the i18next fallback language regardless of what the user had
-chosen — moved `useLocale()`'s effect up to the app root.)
+chosen: moved `useLocale()`'s effect up to the app root.)
 
 **2026-07-22** (Sprint 18: CSV export on Stock/Movements/
-Orders — `fetchAllPages()` loops the existing paginated endpoints at the
+Orders: `fetchAllPages()` loops the existing paginated endpoints at the
 server's own 100-row page-size cap instead of adding an uncapped export
 endpoint, honoring each page's current filters/sort; `lib/csv.ts` builds
 the file client-side with a UTF-8 BOM so Excel renders accented ES/FR text
@@ -820,9 +820,9 @@ on `ErrorResponse`, covering 17 throw sites across `StockService`,
 `OrderItemService`, `WarehouseService`, `ResourceService`, `UnitService`,
 `VehicleService`, `OrderService` and `AppUserAdminService`; the frontend's
 `extractApiError` translates recognized codes and falls back to the raw
-English `message` otherwise. Translated the 9 remaining page modules —
+English `message` otherwise. Translated the 9 remaining page modules:
 Warehouses, Resources, Vehicles, Units, Stock, Orders (list, wizard,
-edit, detail, items manager), Shipments, Movements, Users — reaching 100%
+edit, detail, items manager), Shipments, Movements, Users: reaching 100%
 ES/FR key coverage (340/340 keys) and adding a `MOVEMENT_TYPE_LABELS` map
 so movement-type badges resolve through `enumLabel()` like every other
 status/type badge instead of showing the raw `ENTRY`/`EXIT` value. Found

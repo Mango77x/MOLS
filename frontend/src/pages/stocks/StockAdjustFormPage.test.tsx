@@ -29,8 +29,8 @@ function renderPage() {
   )
 }
 
-/** Sprint 12: pins the success toast on a stock adjustment (see WarehouseFormPage.test.tsx for context). */
-describe('StockAdjustFormPage — success toast', () => {
+/** Checks the success toast shows up after a stock adjustment (see WarehouseFormPage.test.tsx for the full scenario). */
+describe('StockAdjustFormPage: success toast', () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })

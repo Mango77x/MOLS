@@ -32,7 +32,7 @@ public class OrderItemResponse {
      * @param quantity requested quantity
      * @param deliveredQuantity quantity actually delivered so far, summed across DELIVERED shipments
      * @param remainingQuantity quantity not yet allocated to any shipment ({@code quantity} minus
-     *        allocations across shipments of any status) — the ceiling a new shipment may still claim
+     *        allocations across shipments of any status): the ceiling a new shipment may still claim
      */
     public OrderItemResponse(Long id, Long orderId, Long resourceId, int quantity,
                               int deliveredQuantity, int remainingQuantity) {

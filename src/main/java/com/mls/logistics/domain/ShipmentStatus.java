@@ -9,7 +9,7 @@ import com.mls.logistics.exception.InvalidRequestException;
  * <pre>
  * PLANNED    → IN_TRANSIT, DELIVERED
  * IN_TRANSIT → PLANNED, DELIVERED
- * DELIVERED  → (terminal — reverting a delivery would corrupt stock accounting)
+ * DELIVERED  → (terminal: reverting a delivery would corrupt stock accounting)
  * </pre>
  */
 public enum ShipmentStatus {

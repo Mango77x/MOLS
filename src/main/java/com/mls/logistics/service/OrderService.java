@@ -46,7 +46,7 @@ public class OrderService {
     private static final List<OrderStatus> OPEN_STATUSES =
             List.of(OrderStatus.CREATED, OrderStatus.VALIDATED, OrderStatus.PARTIALLY_SHIPPED);
 
-    /** Terminal statuses — no further changes allowed. */
+    /** Terminal statuses: no further changes allowed. */
     private static final List<OrderStatus> TERMINAL_STATUSES =
             List.of(OrderStatus.COMPLETED, OrderStatus.CANCELLED);
 
@@ -210,7 +210,7 @@ public class OrderService {
      * @throws ResourceNotFoundException if order doesn't exist
      * @throws InvalidRequestException if the order is COMPLETED, or still has any shipments
      *         (a DELIVERED one has stock movements that are part of the audit trail; any other
-     *         status must still be deleted/reassigned first — see {@link ShipmentService#deleteShipment})
+     *         status must still be deleted/reassigned first: see {@link ShipmentService#deleteShipment})
      */
     @Transactional
     public void deleteOrder(Long id) {
@@ -245,7 +245,7 @@ public class OrderService {
         }
 
         // Release any still-outstanding item reservations before the cascade
-        // delete removes the order_items rows — deleteById cascades via JPA,
+        // delete removes the order_items rows: deleteById cascades via JPA,
         // bypassing OrderItemService, so this is the only chance to do it. A
         // no-op for orders that were already CANCELLED (already released then).
         orderItemService.releaseReservationsForOrder(id);
@@ -278,7 +278,7 @@ public class OrderService {
      * Marks an order as completed.
      *
      * Used by shipment fulfillment: when all shipments of an order are
-     * delivered, the parent order is considered fulfilled. Idempotent —
+     * delivered, the parent order is considered fulfilled. Idempotent:
      * already-completed orders are left untouched.
      */
     @Transactional
@@ -303,7 +303,7 @@ public class OrderService {
      * Marks an order as partially shipped.
      *
      * Used by shipment fulfillment: when a shipment delivers some, but not
-     * all, of an order's items. Idempotent and only moves forward — a no-op
+     * all, of an order's items. Idempotent and only moves forward: a no-op
      * if the order is already {@code PARTIALLY_SHIPPED} or {@code COMPLETED}
      * (a faster concurrent delivery that already finished the order is never
      * regressed back to partial).
@@ -348,7 +348,7 @@ public class OrderService {
      * A null current status (legacy rows) is treated as CREATED.
      *
      * <p>Moving from an open status into a terminal one (COMPLETED or
-     * CANCELLED) releases every item's stock reservation — whether that
+     * CANCELLED) releases every item's stock reservation: whether that
      * happens here (manual completion, or cancellation) or via
      * {@link #markOrderCompleted} (fulfillment-driven completion), it's the
      * same idempotent release, so calling it from both places never

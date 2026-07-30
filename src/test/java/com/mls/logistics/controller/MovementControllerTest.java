@@ -95,7 +95,7 @@ class MovementControllerTest {
         when(movementService.searchMovements(any(), any(), any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(testMovement)));
 
-        // When & Then — enabling pagination without a sort orders by dateTime desc
+        // When & Then: enabling pagination without a sort orders by dateTime desc
         mockMvc.perform(get("/api/movements").param("page", "0"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(1)))

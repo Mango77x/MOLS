@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Slice tests for the Sprint 19 self-service password-reset endpoints on
+ * Slice tests for the self-service password-reset endpoints on
  * AuthController: HTTP layer only, business logic mocked. Both endpoints are
  * public (permitAll in SecurityConfig) so none of these need @WithMockUser.
  */
